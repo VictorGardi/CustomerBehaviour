@@ -17,7 +17,7 @@ class DGM:
         self.prices = self.prices / np.max(self.prices)
 
     def spawn_new_customer(self):
-        self.age = np.round(np.random.uniform(18,80))
+        self.age = np.floor(np.random.uniform(18,80))
         self.sex = np.round(np.random.uniform(0,1)) # Female = 1
 
         self.alpha0 = np.random.uniform(self.alpha0_lower,self.alpha0_upper)
@@ -25,9 +25,10 @@ class DGM:
         
         self.beta0 = np.random.uniform(-5,-2)
         self.beta1 = np.random.uniform(self.beta1_lower,self.beta1_upper)
-        self.gamma = np.random.triangular(0.1,0.1+0.2*(self.age-18)/62,0.3,(self.N,1)) + np.random.uniform(0,self.sex * 0.1)
+        self.gamma = np.random.triangular(0.1,0.1+0.2*((self.age-18))/62,0.3,(self.N,1)) + np.random.uniform(0,self.sex * 0.1)
         self.lambd = np.random.uniform(1,2,(self.N,1)) 
         self.cost = np.random.triangular(20, 20+580*(self.age-18)/62, 600, (self.N,1))
+        
         
         self.prices_dev = np.random.uniform(0,1,(self.N,1))
         self.prices_dev = self.prices_dev / np.sum(self.prices_dev)
