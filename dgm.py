@@ -41,12 +41,12 @@ class DGM:
     def _purchase(self, day):
         trigg = self.alpha0 - np.multiply(self.alpha1,self.inventory)
         trigg = np.divide(1,1 + np.exp(-trigg)) 
-        print("Sigma:     ", np.round(100*trigg.transpose()))
+        #print("Sigma:     ", np.round(100*trigg.transpose()))
         trigg = np.multiply(trigg, self.beta1)/self.N  
-        print("Beta:      ", np.round(100*trigg.transpose()))
+        #print("Beta:      ", np.round(100*trigg.transpose()))
         f = self.beta0 + np.sum(trigg) + 2*self.week_customer[day,0] 
         f = np.divide(1,1 + np.exp(-f)) 
-        print("Prob:      ", f)
+        #print("Prob:      ", f)
         return f > np.random.uniform(0,1)
     
     def _update(self, day):
@@ -61,13 +61,15 @@ class DGM:
                     
     def sample(self,L):
         self.inventory = np.divide(np.random.gamma(self.lambd),self.lambd)
-        print("Inventory: ", np.round(100*self.inventory.transpose()))
-        sample = np.zeros((self.N,L))        
+        #print("Inventory: ", np.round(100*self.inventory.transpose()))
+        sample = np.zeros((self.N,L))   
+        inventory = np.zeros((self.N, L))
         for l in range(L):
             purchase = self._update(day = np.mod(l,7))
-            print("")
-            print("Inventory: ", np.round(100*self.inventory.transpose()))
+            #print("")
+            #print("Inventory: ", np.round(100*self.inventory.transpose()))
             sample[:,[l]] = purchase
+            inventory[:,[l]] = np.round(100*self.inventory)
         return sample
             
             
