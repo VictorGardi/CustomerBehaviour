@@ -6,7 +6,6 @@ from dtw import dtw,accelerated_dtw
 import matplotlib.pyplot as plt
 
 
-
 time_steps = 10
 n_experts = 1
 data = np.zeros((n_experts*6, time_steps))
