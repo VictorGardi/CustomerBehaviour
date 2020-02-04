@@ -1,3 +1,4 @@
+import os
 import dgm as dgm
 import numpy as np
 import pandas as pd
@@ -5,12 +6,14 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 class User:
-    def __init__(self, model, time_steps = 50, n_product_groups = 6):
+    def __init__(self, model, time_steps = 50, n_product_groups = 6, n_historic_events = 20, analytic_level = 'discrete_events'):
         self.time_steps = time_steps
         self.model = model.DGM()
         self.model.spawn_new_customer()    
         self.age = self.model.age.transpose()
         self.sex = self.model.sex
+        self.analytic_level = analytic_level
+        self.n_historic_events = n_historic_events
         self.time_series = self.model.sample(time_steps) 
         self.time_series_discrete = self.get_discrete_receipt()
         self.discrete_buying_events = self.get_discrete_buying_event()
@@ -21,6 +24,7 @@ class User:
         self.n_product_groups = n_product_groups
         self.set_features()
         self.get_features()
+        self.save_trajectory_as_npz()
         
 
     def set_features(self):
@@ -28,8 +32,7 @@ class User:
             self.sex_color = 'red'
         elif self.sex == 0:
             self.sex_color = 'blue'
-
-        if self.age < 30:
+        elif self.age < 30:
             self.age_color = 'red'
             self.value = 0
         elif 30 <= self.age < 40:
@@ -61,6 +64,18 @@ class User:
                 discrete_buying_events[i] = 1
         return discrete_buying_events
 
+    def save_trajectory_as_npz(self):
+        states = list()
+        actions = list()
+        if self.analytic_level == 'discrete_events':
+            for i in range(self.time_steps-self.n_historic_events):
+                state = [self.value, self.sex]
+                state.append(self.discrete_buying_events[i:self.n_historic_events+i])
+                actions.append(self.discrete_buying_events[self.n_historic_events + i])
+                states.append(tuple(state))
+            np.savez(os.getcwd() + '/expert_trajectories.npz', states=np.array(states, dtype=object),
+             actions=np.array(actions, dtype=object))                
+                
     def get_features(self):
         self.mean_freq, self.std_freq = self.get_mean_std_freq()
         self.mean_cost, self.std_cost = self.get_mean_std_cost()
@@ -84,9 +99,9 @@ class User:
         return np.mean(costs), np.std(costs)
 
 
-usr = User(model = dgm, time_steps = 10)
-print(usr.time_series)
-print(usr.time_series_discrete)
+usr = User(model = dgm, time_steps = 30)
+#print(usr.time_series)
+#print(usr.time_series_discrete)
 print(usr.discrete_buying_events)
 print('Sex: ' + str(usr.sex))
 print('Age: ' + str(usr.age))
