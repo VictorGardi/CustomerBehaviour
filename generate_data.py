@@ -13,12 +13,17 @@ class User:
         self.sex = self.model.sex
         self.time_series = self.model.sample(time_steps) 
         self.time_series_discrete = self.get_discrete_receipt()
+        self.discrete_buying_events = self.get_discrete_buying_event()
         self.mean_freq = None
         self.var_freq = None
         self.mean_cost = None
         self.var_cost = None
         self.n_product_groups = n_product_groups
+        self.set_features()
         self.get_features()
+        
+
+    def set_features(self):
         if self.sex == 1:
             self.sex_color = 'red'
         elif self.sex == 0:
@@ -42,12 +47,19 @@ class User:
         elif 70 <= self.age:
             self.age_color = 'black'
             self.value = 5
-        
 
     def get_discrete_receipt(self):
-        time_series = self.model.sample(self.time_steps)
+        time_series = self.time_series.copy()
         time_series[time_series > 0] = 1
         return time_series
+
+    def get_discrete_buying_event(self):
+        time_series = self.time_series.copy()
+        discrete_buying_events = np.zeros((self.time_steps,))
+        for i in range(self.time_steps):
+            if np.sum(time_series[:,i]) > 0:
+                discrete_buying_events[i] = 1
+        return discrete_buying_events
 
     def get_features(self):
         self.mean_freq, self.std_freq = self.get_mean_std_freq()
@@ -72,41 +84,23 @@ class User:
         return np.mean(costs), np.std(costs)
 
 
-# usr = User(model = dgm, time_steps = 80)
-# print(usr.time_series)
-# print('Sex: ' + str(usr.sex))
-# print('Age: ' + str(usr.age))
+usr = User(model = dgm, time_steps = 10)
+print(usr.time_series)
+print(usr.time_series_discrete)
+print(usr.discrete_buying_events)
+print('Sex: ' + str(usr.sex))
+print('Age: ' + str(usr.age))
+
+
 # usr.get_features()
 # print('mean freq: ' + str(usr.mean_freq))
 # print('std freq: ' + str(usr.std_freq))
 # print('mean cost: ' + str(usr.mean_cost))
 # print('std cost: ' + str(usr.std_cost))
 
-n_experts = 1000
-costs = list()
-freqs = list()
-colors = ('red', 'green', 'blue', 'yellow', 'black', 'purple')
-values = list()
-legends = ('18-29', '30-39', '40-49', '50-59', '60-69', '70-80')
-sex_colors = ('red', 'blue')
-sex_values = list()
-sex_legends = ('Woman', 'Man')
-
-for i in range(n_experts):
-    usr = User(model=dgm, time_steps=300)
-    costs.append(usr.mean_cost)
-    freqs.append(usr.mean_freq)
-    values.append(usr.value)
-    sex_values.append(usr.sex)
-
-plt.figure(1)
-scatter = plt.scatter(costs, freqs, c = values, cmap = ListedColormap(colors))
-plt.legend(handles=scatter.legend_elements()[0], labels=legends)
-plt.figure(2)
-scatter1 = plt.scatter(costs, freqs, c = sex_values, cmap = ListedColormap(sex_colors))
-plt.legend(handles=scatter1.legend_elements()[0], labels=sex_legends)
+#
 #plt.legend(legensd)
-plt.show()
+#plt.show()
 
 ### --- plot dependent on sex --- ###
 # n_experts = 100

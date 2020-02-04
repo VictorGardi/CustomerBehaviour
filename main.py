@@ -56,9 +56,9 @@ for i in range(n_experts):
 # from tsfresh.utilities.dataframe_functions import impute
 
 # print(data)
-# TS = pd.DataFrame({'PG1': data[0, :], 'PG2': data[1, :], 'PG3': data[2, :], 'PG4': data[3, :], 'PG5': data[4, :], 'PG6': data[5, :]})
+TS = pd.DataFrame({'PG1': data[0, :], 'PG2': data[1, :], 'PG3': data[2, :], 'PG4': data[3, :], 'PG5': data[4, :], 'PG6': data[5, :]})
 # TS['id'] = 0
-# print(TS)
+print(TS)
 # extracted_features = extract_features(TS, column_id='id')
 # print(extracted_features)
 # impute(extracted_features)
