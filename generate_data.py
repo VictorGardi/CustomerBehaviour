@@ -72,7 +72,7 @@ class User:
                 state = [self.value, self.sex]
                 state.append(self.discrete_buying_events[i:self.n_historic_events+i])
                 actions.append(self.discrete_buying_events[self.n_historic_events + i])
-                states.append(tuple(state))
+                states.append(state)
             np.savez(os.getcwd() + '/expert_trajectories.npz', states=np.array(states, dtype=object),
              actions=np.array(actions, dtype=object))                
                 
