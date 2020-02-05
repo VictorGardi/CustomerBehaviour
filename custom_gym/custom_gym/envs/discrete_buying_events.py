@@ -45,7 +45,10 @@ class DiscreteBuyingEvents(gym.Env):
 
     history = self.state[2]
     new_history = [*history[1:], action]
-    self.state[2] = new_history
+
+    new_state = (self.sex, self.age, new_history)
+
+    self.state = new_state
 
     self.n_time_steps += 1
 
