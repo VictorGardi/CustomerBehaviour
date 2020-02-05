@@ -1,4 +1,0 @@
-numpy==1.16.1
-chainer==6.0.0b3
-gym==0.10.5
-chainerrl==0.6.0
