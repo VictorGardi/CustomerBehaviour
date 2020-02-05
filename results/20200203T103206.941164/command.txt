@@ -1,0 +1,1 @@
+train_gym.py gail --gpu -1 --env CartPole-v0 --arch FFSoftmax --steps 100000 --load_demo results/20200203T101458.827743/trajectories.npz --update-interval 128 --entropy-coef 0.01
