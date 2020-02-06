@@ -11,8 +11,8 @@ print('path:')
 print(sys.path)
 
 #from ..tools.generate_data import User
-from CustomerBehaviour.tools.generate_data import User
-from CustomerBehaviour.tools.timeseriesanalysis import TimeSeriesAnalysis
+from customer_behaviour.tools.generate_data import User
+from customer_behaviour.tools.time_series_analysis import TimeSeriesAnalysis
 
 usr = User(time_steps = 30)
 print(usr.time_series)
