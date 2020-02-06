@@ -3,6 +3,7 @@ certifi==2019.11.28
 chainer==6.0.0b3
 chainerrl==0.6.0
 chardet==3.0.4
+configparser==4.0.2
 cycler==0.10.0
 filelock==3.0.12
 future==0.18.2
