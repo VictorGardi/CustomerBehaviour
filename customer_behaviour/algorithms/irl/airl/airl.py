@@ -5,9 +5,9 @@ from itertools import chain
 import collections
 from chainerrl.policies import SoftmaxPolicy
 
-from irl.airl.discriminator import Discriminator
-from irl.common.utils.mean_or_nan import mean_or_nan
-from irl.common.utils import get_states_actions_next_states
+from customer_behaviour.algorithms.irl.airl.discriminator import Discriminator
+from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
+from customer_behaviour.algorithms.irl.common.utils import get_states_actions_next_states
 
 
 

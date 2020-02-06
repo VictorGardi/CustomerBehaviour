@@ -1,21 +1,26 @@
+import numpy as np
+import oss
 from customer_behaviour.tools import dgm as dgm
-import configparser as cp
+from customer_behaviour.tools.generate_data import User 
+# import configparser as cp
 
-config = cp.ConfigParser()
-config.read('config.ini')
+#config = cp.ConfigParser()
+#config.read('config.ini')
 
 print()
 
 
 def main(case = 'discrete_events_one_expert'):
 
-    n_experts = config[case]['N_EXPERTS']
+    # n_experts = config[case]['N_EXPERTS']
+
+    n_experts = 1
 
     demo_states = []
     demo_actions = []
 
     for i in range(n_experts):
-        usr = User(model = dgm, time_steps = 128)
+        usr = User(time_steps = 128)
         states, actions = usr.generate_trajectory()
         demo_states.append(states)
         demo_actions.append(actions)

@@ -1,0 +1,79 @@
+diff --git a/customer_behaviour/algorithms/irl/airl/airl.py b/customer_behaviour/algorithms/irl/airl/airl.py
+index e6712a8..9af7223 100755
+--- a/customer_behaviour/algorithms/irl/airl/airl.py
++++ b/customer_behaviour/algorithms/irl/airl/airl.py
+@@ -5,9 +5,9 @@ from itertools import chain
+ import collections
+ from chainerrl.policies import SoftmaxPolicy
+ 
+-from irl.airl.discriminator import Discriminator
+-from irl.common.utils.mean_or_nan import mean_or_nan
+-from irl.common.utils import get_states_actions_next_states
++from customer_behaviour.algorithms.irl.airl.discriminator import Discriminator
++from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
++from customer_behaviour.algorithms.irl.common.utils import get_states_actions_next_states
+ 
+ 
+ 
+diff --git a/customer_behaviour/algorithms/irl/gail/discriminator.py b/customer_behaviour/algorithms/irl/gail/discriminator.py
+index fa5aad2..8d5ff3a 100755
+--- a/customer_behaviour/algorithms/irl/gail/discriminator.py
++++ b/customer_behaviour/algorithms/irl/gail/discriminator.py
+@@ -1,6 +1,6 @@
+ import chainer
+ import chainer.functions as F
+-from irl.common.model import MLP
++from customer_behaviour.algorithms.irl.common.model import MLP
+ 
+ 
+ class Discriminator:
+diff --git a/customer_behaviour/algorithms/train_gym.py b/customer_behaviour/algorithms/train_gym.py
+index 65bc248..6a74dc0 100755
+--- a/customer_behaviour/algorithms/train_gym.py
++++ b/customer_behaviour/algorithms/train_gym.py
+@@ -7,6 +7,9 @@ To solve CartPole-v0, run:
+     python train_ppo_gym.py --env CartPole-v0
+ """
+ import argparse
++import sys
++import os
++sys.path.append(os.getcwd())
+ 
+ import chainer
+ from chainer import functions as F
+diff --git a/main.py b/main.py
+index 9abe083..d15d068 100644
+--- a/main.py
++++ b/main.py
+@@ -1,21 +1,26 @@
++import numpy as np
++import os
+ from customer_behaviour.tools import dgm as dgm
+-import configparser as cp
++from customer_behaviour.tools.generate_data import User 
++# import configparser as cp
+ 
+-config = cp.ConfigParser()
+-config.read('config.ini')
++#config = cp.ConfigParser()
++#config.read('config.ini')
+ 
+ print()
+ 
+ 
+ def main(case = 'discrete_events_one_expert'):
+ 
+-    n_experts = config[case]['N_EXPERTS']
++    # n_experts = config[case]['N_EXPERTS']
++
++    n_experts = 1
+ 
+     demo_states = []
+     demo_actions = []
+ 
+     for i in range(n_experts):
+-        usr = User(model = dgm, time_steps = 128)
++        usr = User(time_steps = 128)
+         states, actions = usr.generate_trajectory()
+         demo_states.append(states)
+         demo_actions.append(actions)

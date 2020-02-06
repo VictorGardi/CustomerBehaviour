@@ -7,6 +7,9 @@ To solve CartPole-v0, run:
     python train_ppo_gym.py --env CartPole-v0
 """
 import argparse
+import sys
+import os
+sys.path.append(os.getcwd())
 
 import chainer
 from chainer import functions as F

@@ -1,6 +1,6 @@
 import chainer
 import chainer.functions as F
-from irl.common.model import MLP
+from customer_behaviour.algorithms.irl.common.model import MLP
 
 
 class Discriminator:

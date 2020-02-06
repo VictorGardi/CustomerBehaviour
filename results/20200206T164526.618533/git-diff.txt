@@ -1,0 +1,49 @@
+diff --git a/customer_behaviour/algorithms/irl/airl/airl.py b/customer_behaviour/algorithms/irl/airl/airl.py
+index e6712a8..9af7223 100755
+--- a/customer_behaviour/algorithms/irl/airl/airl.py
++++ b/customer_behaviour/algorithms/irl/airl/airl.py
+@@ -5,9 +5,9 @@ from itertools import chain
+ import collections
+ from chainerrl.policies import SoftmaxPolicy
+ 
+-from irl.airl.discriminator import Discriminator
+-from irl.common.utils.mean_or_nan import mean_or_nan
+-from irl.common.utils import get_states_actions_next_states
++from customer_behaviour.algorithms.irl.airl.discriminator import Discriminator
++from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
++from customer_behaviour.algorithms.irl.common.utils import get_states_actions_next_states
+ 
+ 
+ 
+diff --git a/customer_behaviour/algorithms/irl/gail/discriminator.py b/customer_behaviour/algorithms/irl/gail/discriminator.py
+index fa5aad2..8d5ff3a 100755
+--- a/customer_behaviour/algorithms/irl/gail/discriminator.py
++++ b/customer_behaviour/algorithms/irl/gail/discriminator.py
+@@ -1,6 +1,6 @@
+ import chainer
+ import chainer.functions as F
+-from irl.common.model import MLP
++from customer_behaviour.algorithms.irl.common.model import MLP
+ 
+ 
+ class Discriminator:
+diff --git a/customer_behaviour/algorithms/train_gym.py b/customer_behaviour/algorithms/train_gym.py
+index 65bc248..8e30e06 100755
+--- a/customer_behaviour/algorithms/train_gym.py
++++ b/customer_behaviour/algorithms/train_gym.py
+@@ -7,11 +7,14 @@ To solve CartPole-v0, run:
+     python train_ppo_gym.py --env CartPole-v0
+ """
+ import argparse
++import sys
++import os
++sys.path.append(os.getcwd())
+ 
+ import chainer
+ from chainer import functions as F
+ import gym
+-import custom_gym
++from customer_behaviour.custom_gym import custom_gym
+ import gym.wrappers
+ 
+ import chainerrl
