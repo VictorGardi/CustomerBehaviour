@@ -1,1 +1,0 @@
-train_gym.py ppo --gpu -1 --env CartPole-v0 --arch FFSoftmax --steps 50000
