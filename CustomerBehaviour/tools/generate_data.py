@@ -1,29 +1,24 @@
 import os
-import dgm as dgm
+from CustomerBehaviour.tools import dgm as dgm
 import numpy as np
 #import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 class User:
-    def __init__(self, model, time_steps = 50, n_product_groups = 6, n_historic_events = 7, analytic_level = 'discrete_events'):
+    def __init__(self, model = dgm, time_steps = 50, n_product_groups = 6, n_historic_events = 7, max_age_cat = 5):
         self.time_steps = time_steps
         self.model = model.DGM()
         self.model.spawn_new_customer()    
         self.age = self.model.age.transpose()
         self.sex = self.model.sex
-        self.analytic_level = analytic_level
         self.n_historic_events = n_historic_events
         self.time_series = self.model.sample(time_steps) 
         self.time_series_discrete = self.get_discrete_receipt()
         self.discrete_buying_events = self.get_discrete_buying_event()
-        self.mean_freq = None
-        self.var_freq = None
-        self.mean_cost = None
-        self.var_cost = None
+        self.max_age_cat = max_age_cat
         self.n_product_groups = n_product_groups
         self.set_features()
-        self.get_features()
         
 
     def set_features(self):
@@ -31,24 +26,26 @@ class User:
             self.sex_color = 'red'
         elif self.sex == 0:
             self.sex_color = 'blue'
+
+        # Put each user in an age category and give that category a color
         if self.age < 30:
             self.age_color = 'red'
-            self.value = 0
+            self.age_cat = 0
         elif 30 <= self.age < 40:
             self.age_color = 'blue'
-            self.value = 1
+            self.age_cat = 1
         elif 40 <= self.age < 50:
             self.age_color = 'green'
-            self.value = 2
+            self.age_cat = 2
         elif 50 <= self.age < 60:
             self.age_color = 'yellow'
-            self.value = 3
+            self.age_cat = 3
         elif 60 <= self.age < 70:
             self.age_color = 'purple'
-            self.value = 4
+            self.age_cat = 4
         elif 70 <= self.age:
             self.age_color = 'black'
-            self.value = 5
+            self.age_cat = 5
 
     def get_discrete_receipt(self):
         time_series = self.time_series.copy()
@@ -66,37 +63,12 @@ class User:
     def generate_trajectory(self):
         states = list()
         actions = list()
-        if self.analytic_level == 'discrete_events':
-            for i in range(self.time_steps-self.n_historic_events):
-                state = [self.sex, self.value / 5, *self.discrete_buying_events[i:self.n_historic_events+i]]  # HÅRDKODAT
-                actions.append(self.discrete_buying_events[self.n_historic_events + i])
-                states.append(state)
+        for i in range(self.time_steps-self.n_historic_events):
+            state = [self.sex, self.age_cat / self.max_age_cat, *self.discrete_buying_events[i:self.n_historic_events+i]]
+            actions.append(self.discrete_buying_events[self.n_historic_events + i])
+            states.append(state)
         return states, actions
            
-                
-    def get_features(self):
-        self.mean_freq, self.std_freq = self.get_mean_std_freq()
-        self.mean_cost, self.std_cost = self.get_mean_std_cost()
-
-    def get_mean_std_freq(self):
-        mean_frequencies = list()
-        std_frequencies = list()
-        # Find the indices of non-zero values in the discrete time series
-        indices = np.argwhere(self.time_series)
-        for i in range(self.n_product_groups):
-            # calculate the distance between non-zero values
-            tmp = np.diff(indices[np.where(indices[:,0] == i),1])
-            mean_frequencies.append(np.mean(tmp))
-            std_frequencies.append(np.std(tmp))
-        return np.mean(mean_frequencies), np.std(std_frequencies)
-
-    def get_mean_std_cost(self):
-        costs = list()
-        indices = np.nonzero(self.time_series)
-        costs = self.time_series[indices]
-        return np.mean(costs), np.std(costs)
-
-
 def main(n_experts = 1):
 
     demo_states = []
@@ -116,41 +88,10 @@ def main(n_experts = 1):
 
 
 
-
-
-# usr = User(model = dgm, time_steps = 30)
-#print(usr.time_series)
-#print(usr.time_series_discrete)
-#print(usr.discrete_buying_events)
-#print('Sex: ' + str(usr.sex))
-#print('Age: ' + str(usr.age))
-
 if __name__ == '__main__':
     main()
 
-# usr.get_features()
-# print('mean freq: ' + str(usr.mean_freq))
-# print('std freq: ' + str(usr.std_freq))
-# print('mean cost: ' + str(usr.mean_cost))
-# print('std cost: ' + str(usr.std_cost))
 
-#
-#plt.legend(legensd)
-#plt.show()
-
-### --- plot dependent on sex --- ###
-# n_experts = 100
-# costs = list()
-# freqs = list()
-# color = list()
-# for i in range(n_experts):
-#     usr = User(model=dgm, time_steps=300)
-#     costs.append(usr.mean_cost)
-#     freqs.append(usr.mean_freq)
-#     color.append(usr.sex_color)
-
-# plt.scatter(costs, freqs, c = color)
-# plt.show()
 
 
 
