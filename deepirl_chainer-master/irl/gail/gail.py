@@ -11,8 +11,20 @@ class GAIL(PPO):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
         self.discriminator = discriminator
+
+        #print(demonstrations['states'])
+        #print(demonstrations['actions'])
+        # quit()
+
         self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
         self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
+
+        #print(self.demo_states)
+        #quit()
+
+        #print(self.demo_states)
+        #print(self.demo_actions)
+        #quit()
 
     def _update(self, dataset):
         # override func
@@ -29,11 +41,42 @@ class GAIL(PPO):
             actions = xp.array([b['action'] for b in batch])
 
             demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
+
+            print(self.demo_states)
+            #print(self.demo_actions)
+            #quit()
+
             demo_states, demo_actions = [d[demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
 
             if self.obs_normalizer:
                 states = self.obs_normalizer(states, update=False)
+
+                #print(demo_states)
+                #print('-------')
+
+                #print('tjena')
+                #print(self.obs_normalizer._mean)
+                #quit()
+
                 demo_states = self.obs_normalizer(demo_states, update=False)
+                #print('before')
+                #print(demo_states)
+                #print('---')
+                #print(demo_actions)
+
+                #print(demo_states)
+                #print('-------')
+                #quit()
+
+                # print(self.convert_data_to_feed_discriminator(demo_states, demo_actions))
+
+
+
+                #self.convert_data_to_feed_discriminator(states, actions)
+
+                # quit()
+
+
             self.discriminator.train(self.convert_data_to_feed_discriminator(demo_states, demo_actions),
                                      self.convert_data_to_feed_discriminator(states, actions))
             loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
@@ -71,6 +114,16 @@ class GAIL(PPO):
             actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
         if noise_scale:
             actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
+
+        #print('-----------------')
+        #print(states)
+        #print('---')
+        #print(actions)
+        #print('---')
+        #print(F.concat((xp.array(states), xp.array(actions))))
+        #print('---------------')
+        #quit()
+
         return F.concat((xp.array(states), xp.array(actions)))
 
 

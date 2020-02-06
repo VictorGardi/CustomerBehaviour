@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 
 class User:
-    def __init__(self, model, time_steps = 50, n_product_groups = 6, n_historic_events = 20, analytic_level = 'discrete_events'):
+    def __init__(self, model, time_steps = 50, n_product_groups = 6, n_historic_events = 7, analytic_level = 'discrete_events'):
         self.time_steps = time_steps
         self.model = model.DGM()
         self.model.spawn_new_customer()    
@@ -24,7 +24,6 @@ class User:
         self.n_product_groups = n_product_groups
         self.set_features()
         self.get_features()
-        self.save_trajectory_as_npz()
         
 
     def set_features(self):
@@ -32,7 +31,7 @@ class User:
             self.sex_color = 'red'
         elif self.sex == 0:
             self.sex_color = 'blue'
-        elif self.age < 30:
+        if self.age < 30:
             self.age_color = 'red'
             self.value = 0
         elif 30 <= self.age < 40:
@@ -64,17 +63,16 @@ class User:
                 discrete_buying_events[i] = 1
         return discrete_buying_events
 
-    def save_trajectory_as_npz(self):
+    def generate_trajectory(self):
         states = list()
         actions = list()
         if self.analytic_level == 'discrete_events':
             for i in range(self.time_steps-self.n_historic_events):
-                state = [self.value, self.sex]
-                state.append(self.discrete_buying_events[i:self.n_historic_events+i])
+                state = [self.sex, self.value / 5, *self.discrete_buying_events[i:self.n_historic_events+i]]  # HÅRDKODAT
                 actions.append(self.discrete_buying_events[self.n_historic_events + i])
                 states.append(state)
-            np.savez(os.getcwd() + '/expert_trajectories.npz', states=np.array(states, dtype=object),
-             actions=np.array(actions, dtype=object))                
+        return states, actions
+           
                 
     def get_features(self):
         self.mean_freq, self.std_freq = self.get_mean_std_freq()
@@ -99,13 +97,36 @@ class User:
         return np.mean(costs), np.std(costs)
 
 
-usr = User(model = dgm, time_steps = 30)
+def main(n_experts = 1):
+
+    demo_states = []
+    demo_actions = []
+
+    for i in range(n_experts):
+        usr = User(model = dgm, time_steps = 128)
+        states, actions = usr.generate_trajectory()
+        demo_states.append(states)
+        demo_actions.append(actions)
+
+    print(demo_states)
+    print(demo_actions)
+
+    np.savez(os.getcwd() + '/expert_trajectories.npz', states=np.array(demo_states, dtype=object),
+             actions=np.array(demo_actions, dtype=object))        
+
+
+
+
+
+# usr = User(model = dgm, time_steps = 30)
 #print(usr.time_series)
 #print(usr.time_series_discrete)
-print(usr.discrete_buying_events)
-print('Sex: ' + str(usr.sex))
-print('Age: ' + str(usr.age))
+#print(usr.discrete_buying_events)
+#print('Sex: ' + str(usr.sex))
+#print('Age: ' + str(usr.age))
 
+if __name__ == '__main__':
+    main()
 
 # usr.get_features()
 # print('mean freq: ' + str(usr.mean_freq))

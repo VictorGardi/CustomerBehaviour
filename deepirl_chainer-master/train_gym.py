@@ -166,8 +166,9 @@ def main():
     action_space = sample_env.action_space
 
     # Normalize observations based on their empirical mean and variance
-    obs_normalizer = chainerrl.links.EmpiricalNormalization(
-        obs_space.low.size, clip_threshold=5)
+
+    obs_normalizer = None                                                                # HÅÅÅÅÅÅÅÅÅÅÅRDKODAT
+    #chainerrl.links.EmpiricalNormalization(obs_space.low.size, clip_threshold=5)
 
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
