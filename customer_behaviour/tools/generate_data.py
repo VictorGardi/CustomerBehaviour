@@ -69,27 +69,7 @@ class User:
             states.append(state)
         return states, actions
            
-def main(n_experts = 1):
 
-    demo_states = []
-    demo_actions = []
-
-    for i in range(n_experts):
-        usr = User(model = dgm, time_steps = 128)
-        states, actions = usr.generate_trajectory()
-        demo_states.append(states)
-        demo_actions.append(actions)
-
-    print(demo_states)
-    print(demo_actions)
-
-    np.savez(os.getcwd() + '/expert_trajectories.npz', states=np.array(demo_states, dtype=object),
-             actions=np.array(demo_actions, dtype=object))        
-
-
-
-if __name__ == '__main__':
-    main()
 
 
 
