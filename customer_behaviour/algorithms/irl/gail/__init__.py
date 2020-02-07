@@ -1,2 +1,2 @@
-from irl.gail.discriminator import Discriminator
-from irl.gail.gail import GAIL
+from customer_behaviour.algorithms.irl.gail.discriminator import Discriminator
+from customer_behaviour.algorithms.irl.gail.gail import GAIL

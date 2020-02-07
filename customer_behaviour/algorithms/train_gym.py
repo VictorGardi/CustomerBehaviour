@@ -105,7 +105,7 @@ def main():
     import logging
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('algo', default='ppo', choices=['ppo', 'gail', 'airl'], type=str)
+    parser.add_argument('algo', default='gail', choices=['ppo', 'gail', 'airl'], type=str)
     parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--env', type=str, default='Hopper-v2')
     parser.add_argument('--arch', type=str, default='FFGaussian',

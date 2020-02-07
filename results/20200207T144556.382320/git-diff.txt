@@ -1,0 +1,76 @@
+diff --git a/customer_behaviour/algorithms/irl/airl/__init__.py b/customer_behaviour/algorithms/irl/airl/__init__.py
+index 34024bb..9c00975 100755
+--- a/customer_behaviour/algorithms/irl/airl/__init__.py
++++ b/customer_behaviour/algorithms/irl/airl/__init__.py
+@@ -1,2 +1,2 @@
+-from irl.airl.airl import AIRL
+-from irl.airl.discriminator import Discriminator
+\ No newline at end of file
++from customer_behaviour.algorithms.irl.airl.airl import AIRL
++from customer_behaviour.algorithms.irl.airl.discriminator import Discriminator
+\ No newline at end of file
+diff --git a/customer_behaviour/algorithms/irl/gail/__init__.py b/customer_behaviour/algorithms/irl/gail/__init__.py
+index 9f27973..703494b 100755
+--- a/customer_behaviour/algorithms/irl/gail/__init__.py
++++ b/customer_behaviour/algorithms/irl/gail/__init__.py
+@@ -1,2 +1,2 @@
+-from irl.gail.discriminator import Discriminator
+-from irl.gail.gail import GAIL
++from customer_behaviour.algorithms.irl.gail.discriminator import Discriminator
++from customer_behaviour.algorithms.irl.gail.gail import GAIL
+diff --git a/customer_behaviour/algorithms/train_gym.py b/customer_behaviour/algorithms/train_gym.py
+index 6a74dc0..e22853d 100755
+--- a/customer_behaviour/algorithms/train_gym.py
++++ b/customer_behaviour/algorithms/train_gym.py
+@@ -105,7 +105,7 @@ def main():
+     import logging
+ 
+     parser = argparse.ArgumentParser()
+-    parser.add_argument('algo', default='ppo', choices=['ppo', 'gail', 'airl'], type=str)
++    parser.add_argument('algo', default='gail', choices=['ppo', 'gail', 'airl'], type=str)
+     parser.add_argument('--gpu', type=int, default=0)
+     parser.add_argument('--env', type=str, default='Hopper-v2')
+     parser.add_argument('--arch', type=str, default='FFGaussian',
+diff --git a/expert_trajectories.npz b/expert_trajectories.npz
+index d44df08..4e2ca57 100644
+Binary files a/expert_trajectories.npz and b/expert_trajectories.npz differ
+diff --git a/main.py b/main.py
+index 89d8c3d..13d9986 100644
+--- a/main.py
++++ b/main.py
+@@ -1,15 +1,20 @@
+-import numpy as np
+-import os
+ from customer_behaviour.tools import dgm as dgm
+ from customer_behaviour.tools.generate_data import User 
++import os
++import argparse
++import numpy as np
++
+ # import configparser as cp
+ 
+ config = cp.ConfigParser()
+ config.read('config.ini')
+ 
+-case = 
+ 
+ def main(case = 'discrete_events'):
++    parser = argparse.ArgumentParser()
++    parser.add_argument('algo', default='ppo', choices=['gail', 'airl'], type=str)
++    parser.add_argument('--case', type=str, default=case)
++    args = parser.parse_args()
+ 
+     n_experts = config[case]['N_EXPERTS']
+ 
+@@ -28,8 +33,10 @@ def main(case = 'discrete_events'):
+     print(demo_actions)
+ 
+     np.savez(os.getcwd() + '/expert_trajectories.npz', states=np.array(demo_states, dtype=object),
+-             actions=np.array(demo_actions, dtype=object))        
++             actions=np.array(demo_actions, dtype=object)) 
+ 
++    
++    os.system()
+ 
+ 
+ if __name__ == '__main__':
