@@ -1,18 +1,17 @@
 import numpy as np
-import oss
+import os
 from customer_behaviour.tools import dgm as dgm
 from customer_behaviour.tools.generate_data import User 
 # import configparser as cp
 
-#config = cp.ConfigParser()
-#config.read('config.ini')
+config = cp.ConfigParser()
+config.read('config.ini')
 
-print()
+case = 
 
+def main(case = 'discrete_events'):
 
-def main(case = 'discrete_events_one_expert'):
-
-    # n_experts = config[case]['N_EXPERTS']
+    n_experts = config[case]['N_EXPERTS']
 
     n_experts = 1
 
