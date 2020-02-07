@@ -147,6 +147,8 @@ def main():
 
     def make_env(test):
         env = gym.make(args.env)
+        env.define_case(0, 0, 7*[0])
+
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
         env.seed(env_seed)
@@ -163,6 +165,7 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
+    sample_env.define_case(0, 0, 7*[0])
     timestep_limit = sample_env.spec.tags.get(
         'wrapper_config.TimeLimit.max_episode_steps')
     obs_space = sample_env.observation_space

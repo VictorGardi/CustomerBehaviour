@@ -14,28 +14,30 @@ class DiscreteBuyingEvents(gym.Env):
   """Custom Environment that follows gym interface"""
   # metadata = {'render.modes': ['human']}
 
-  def __init__(self, sex, age, history):
+  def __init__(self):
     super(DiscreteBuyingEvents, self).__init__()
     
-    assert sex in {0, 1}
-    assert age in {0, 1, 2, 3, 4, 5}
-    assert len(history) == N_HISTORICAL_EVENTS and min(history) >= 0 and max(history) <= 1
+    #assert sex in {0, 1}
+    #assert age in {0, 1, 2, 3, 4, 5}
+    #assert len(history) == N_HISTORICAL_EVENTS and min(history) >= 0 and max(history) <= 1
 
-    self.sex = sex
-    self.age = age
-    self.history = history
+    self.sex = None
+    self.age = None
+    self.history = None
 
     self.n_time_steps = 0
 
     self.state = None  # (self.sex, self.age, self.history)
 
     # Define action and observation space
-    self.action_space = spaces.Discrete(N_ACTIONS)
+    self.action_space = None
+    # spaces.Discrete(N_ACTIONS)
 
     high = [1, 1]  # age is number between 0 and 1 -> 0-0.2 is 18-29 etc
     high += N_HISTORICAL_EVENTS * [1]
     
-    self.observation_space = spaces.Box(low=np.array((N_FIXED_FEATURES + N_HISTORICAL_EVENTS) * [0]), high=np.array(high), dtype=np.float32)
+    self.observation_space = None
+    # spaces.Box(low=np.array((N_FIXED_FEATURES + N_HISTORICAL_EVENTS) * [0]), high=np.array(high), dtype=np.float32)
 
 
 
@@ -45,6 +47,19 @@ class DiscreteBuyingEvents(gym.Env):
       # "history": spaces.MultiBinary(N_HISTORICAL_EVENTS)})
     
     # print(self.observation_space.sample())
+
+  def define_case(self, sex, age, history):
+
+    self.sex = sex
+    self.age = age
+    self.history = history
+
+    self.action_space = spaces.Discrete(N_ACTIONS)
+    high = [1, 1]  # age is number between 0 and 1 -> 0-0.2 is 18-29 etc
+    high += N_HISTORICAL_EVENTS * [1]
+    self.observation_space = spaces.Box(low=np.array((N_FIXED_FEATURES + N_HISTORICAL_EVENTS) * [0]), high=np.array(high), dtype=np.float32)
+
+
 
   def step(self, action):
     # Execute one time step within the environment
