@@ -1,101 +1,153 @@
 import gym
+import collections
 import numpy as np
 from gym import spaces
+from customer_behaviour.tools import dgm as dgm
 
-
-N_ACTIONS = 2  # do not buy something (0) & buy something (1)
-N_AGE_DIVISIONS = 6  # 18-29 (0) & 30-39 (1) & 40-49 (2) & 50-59 (3) & 60-69 (4) & 70-80 (5) 
-N_HISTORICAL_EVENTS = 7
-N_FIXED_FEATURES = 2
 N_MAX_TIME_STEPS = 1000
 
 
+def categorize_age(age):
+    if age < 30: return 0
+    elif 30 <= self.age < 40: return 0.2
+    elif 40 <= self.age < 50: return 0.4
+    elif 50 <= self.age < 60: return 0.6
+    elif 60 <= self.age < 70: return 0.8
+    elif 70 <= self.age: return 1
+
+
 class DiscreteBuyingEvents(gym.Env):
-  """Custom Environment that follows gym interface"""
-  # metadata = {'render.modes': ['human']}
+    """Custom Environment that follows gym interface"""
+    metadata = {'render.modes': ['human']}
 
-  def __init__(self):
-    super(DiscreteBuyingEvents, self).__init__()
+    def __init__(self):
+        super(DiscreteBuyingEvents, self).__init__()
+        
+        self.model = dgm.DGM()
+
+        self.n_time_steps = 0
+
+        self.state = None
+
+
+    def initialize_environment(self, n_products, n_historical_events, agent_seed=None):
+        # The implementaiton of this function depends on the chosen state representation
+
+        self.n_products = n_products
+        self.n_historical_events = n_historical_events
+
+        self.agent_seed = agent_seed
+
+        if self.n_products == 1:
+            # There are only two discrete actions: "buy something" or "do not buy something"
+            self.action_space = spaces.Discrete(2)
+
+            # The state consists of a customer's sex, age and purchase history
+            low = [0, 0] + self.n_historical_events * [0]
+            high = [1, 1] + self.n_historical_events * [1]
+            self.observation_space = spaces.Box(low=np.array(low), high=np.array(high), dtype=np.float32)
+        else:
+            # The action corresponds to a full receipt
+            raise NotImplementedError
+
+
+    def generate_expert_trajectories(self, n_experts, n_time_steps, seed=True, out_dir):
+        states = []
+        actions = []
+
+        for i_expert in range(n_experts):
+
+            temp_states = []
+            temp_actions = []
+
+            model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
+            sample = model.sample(self.n_historical_events + n_time_steps)
+
+            history = sample[:, :self.n_historical_events]        
+            initial_state = initialize_state(history)
+            
+            self.state = initial_state
+
+            temp_states.append(np.array(initial_state))  # the function step(action) returns the state as an np.array
+
+            i = self.n_historical_events
+            while i < sample.shape[1]:
+                if isinstance(self.action_space, spaces.Discrete):
+                    # There are only two discrete actions: "buy something" or "do not buy something"
+                    action = 1 if sum(sample[:, i] > 0) else 0
+                elif isinstance(self.action_space, spaces.Box):
+                    raise NotImplementedError
+
+                temp_actions.append(action)
+
+                if i == sample.shape[1] - 1
+                    # The number of states and actions must be equal
+                    pass
+                else:
+                    state, _‚ _, _ = self.step(action)
+                    temp_states.append(state)
+
+                i += 1
+
+            states.append(temp_states)
+            actions.append(temp_actions)
+
+        np.savez(out_dir + '/expert_trajectories.npz', states=np.array(states, dtype=object),
+             actions=np.array(actions, dtype=object))
+
+        return {'states': states, 'actions': actions}
+
+
+    def initialize_state(self, history):
+        # The implementaiton of this function depends on the chosen state representation
+
+        if self.n_products == 1:
+            history = np.sum(history, axis=0)
+            history[history > 0] = 1
+
+            initial_state = [self.model.sex, categorize_age(self.model.age), *history]
+        else:
+            raise NotImplementedError
+
+        return initial_state
+
+
+    def step(self, action):
+        # The implementaiton of this function depends on the chosen state representation
+
+        if self.n_products == 1:
+            history = self.state[2:]
+            new_history = [*history[1:], action]
+
+            new_state = [self.model.sex, categorize_age(self.model.age), *new_history]
+
+            self.state = new_state
+
+            self.n_time_steps += 1
+
+            done = self.n_time_steps > N_MAX_TIME_STEPS
+
+            reward = 0
+        else:
+            raise NotImplementedError
+
+        return np.array(self.state), reward, done, {}
+
+
+    def reset(self):
+        # Reset the state of the environment to an initial state
+
+        self.model.spawn_new_customer(self.agent_seed)
+
+        sample = model.sample(self.n_historical_events)
+
+        self.state = self.initialize_state(sample)
+
+        self.n_time_steps = 0
+
+        return np.array(self.state)
     
-    #assert sex in {0, 1}
-    #assert age in {0, 1, 2, 3, 4, 5}
-    #assert len(history) == N_HISTORICAL_EVENTS and min(history) >= 0 and max(history) <= 1
 
-    self.sex = None
-    self.age = None
-    self.history = None
-
-    self.n_time_steps = 0
-
-    self.state = None  # (self.sex, self.age, self.history)
-
-    # Define action and observation space
-    self.action_space = None
-    # spaces.Discrete(N_ACTIONS)
-
-    high = [1, 1]  # age is number between 0 and 1 -> 0-0.2 is 18-29 etc
-    high += N_HISTORICAL_EVENTS * [1]
+    def render(self, mode='human', close=False):
+        pass
     
-    self.observation_space = None
-    # spaces.Box(low=np.array((N_FIXED_FEATURES + N_HISTORICAL_EVENTS) * [0]), high=np.array(high), dtype=np.float32)
-
-
-
-    # self.observation_space = spaces.Tuple((spaces.Discrete(2), spaces.Discrete(N_AGE_DIVISIONS), spaces.MultiBinary(N_HISTORICAL_EVENTS)))
-
-    # self.observation_space = spaces.Dict({"sex": spaces.Discrete(2), "age": spaces.Discrete(N_AGE_DIVISIONS),
-      # "history": spaces.MultiBinary(N_HISTORICAL_EVENTS)})
-    
-    # print(self.observation_space.sample())
-
-  def define_case(self, sex, age, history):
-
-    self.sex = sex
-    self.age = age
-    self.history = history
-
-    self.action_space = spaces.Discrete(N_ACTIONS)
-    high = [1, 1]  # age is number between 0 and 1 -> 0-0.2 is 18-29 etc
-    high += N_HISTORICAL_EVENTS * [1]
-    self.observation_space = spaces.Box(low=np.array((N_FIXED_FEATURES + N_HISTORICAL_EVENTS) * [0]), high=np.array(high), dtype=np.float32)
-
-
-
-  def step(self, action):
-    # Execute one time step within the environment
-
-    assert action == 0 or action == 1
-
-
-    history = self.state[2:]
-    new_history = [*history[1:], action]
-
-    new_state = [self.sex, self.age, *new_history]
-
-    self.state = new_state
-
-    self.n_time_steps += 1
-
-    done = self.n_time_steps > N_MAX_TIME_STEPS
-
-    reward = 0
-
-    return np.array(self.state), reward, done, {}
-
-  def reset(self):
-    # Reset the state of the environment to an initial state
-    self.state = [self.sex, self.age, *self.history]
-    return np.array(self.state)
-    
-  def render(self, mode='human', close=False):
-    pass
-    
-
-# DiscreteBuyingEvents(0, 0, N_HISTORICAL_EVENTS * [0])
-
-
-# class FullReceipt(gym.Env):
- # def __init__(self):
-  # self.observation_space = spaces.Dict({"sex": spaces.Discrete(2), "age": spaces.Discrete(3)})
-
-

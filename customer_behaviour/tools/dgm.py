@@ -2,7 +2,9 @@ import numpy as np
 
 class DGM:
     
-    def __init__(self):
+    def __init__(self, seed=None):
+        self.seed = seed
+
         self.prices = np.reshape(np.array([10,10,6,3,3,2]),(6,1))
         self.alpha0_lower = np.reshape(np.array([5,5.3,5.6,5.9,6.2,6.5]),(6,1))
         self.alpha0_upper = np.reshape(np.array([6,6.3,6.6,6.9,7.2,7.5]),(6,1))
@@ -16,7 +18,10 @@ class DGM:
         self.N = len(self.prices)
         self.prices = self.prices / np.max(self.prices)
 
-    def spawn_new_customer(self):
+    def spawn_new_customer(self, seed=None):
+
+        if self.seed is not None: np.random.seed(seed)
+
         self.age = np.floor(np.random.uniform(18,80))
         self.sex = np.round(np.random.uniform(0,1)) # Female = 1
 
@@ -72,6 +77,4 @@ class DGM:
             sample[:,[l]] = purchase
             inventory[:,[l]] = np.round(100*self.inventory)
         return sample
-            
-            
                     
