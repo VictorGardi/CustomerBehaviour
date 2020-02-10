@@ -1,0 +1,1 @@
+temp_main.py gail --gpu -1 --case discrete_events --n_experts 1 --n_categories 1 --n_historic_events 10 --steps 10 --seed_expert True --load_demo expert_trajectories.npz
