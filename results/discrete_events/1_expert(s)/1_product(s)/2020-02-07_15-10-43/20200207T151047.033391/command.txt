@@ -1,0 +1,1 @@
+customer_behaviour/algorithms/train_gym.py airl --gpu -1 --env discrete-buying-events-v0 --arch FFSoftmax --steps 10 --load_demo expert_trajectories.npz --update-interval 128 --entropy-coef 0.01 --outdir results/discrete_events/1_expert(s)/1_product(s)/2020-02-07_15-10-43
