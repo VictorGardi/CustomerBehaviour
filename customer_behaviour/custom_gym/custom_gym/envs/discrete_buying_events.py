@@ -9,11 +9,11 @@ N_MAX_TIME_STEPS = 1000
 
 def categorize_age(age):
     if age < 30: return 0
-    elif 30 <= self.age < 40: return 0.2
-    elif 40 <= self.age < 50: return 0.4
-    elif 50 <= self.age < 60: return 0.6
-    elif 60 <= self.age < 70: return 0.8
-    elif 70 <= self.age: return 1
+    elif 30 <= age < 40: return 0.2
+    elif 40 <= age < 50: return 0.4
+    elif 50 <= age < 60: return 0.6
+    elif 60 <= age < 70: return 0.8
+    elif 70 <= age: return 1
 
 
 class DiscreteBuyingEvents(gym.Env):
@@ -51,7 +51,7 @@ class DiscreteBuyingEvents(gym.Env):
             raise NotImplementedError
 
 
-    def generate_expert_trajectories(self, n_experts, n_time_steps, seed=True, out_dir):
+    def generate_expert_trajectories(self, n_experts, n_time_steps, out_dir, seed=True):
         states = []
         actions = []
 
@@ -60,11 +60,11 @@ class DiscreteBuyingEvents(gym.Env):
             temp_states = []
             temp_actions = []
 
-            model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
-            sample = model.sample(self.n_historical_events + n_time_steps)
+            self.model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
+            sample = self.model.sample(self.n_historical_events + n_time_steps)
 
             history = sample[:, :self.n_historical_events]        
-            initial_state = initialize_state(history)
+            initial_state = self.initialize_state(history)
             
             self.state = initial_state
 
@@ -80,11 +80,11 @@ class DiscreteBuyingEvents(gym.Env):
 
                 temp_actions.append(action)
 
-                if i == sample.shape[1] - 1
+                if i == sample.shape[1] - 1:
                     # The number of states and actions must be equal
                     pass
                 else:
-                    state, _‚ _, _ = self.step(action)
+                    state, _, _, _ = self.step(action)
                     temp_states.append(state)
 
                 i += 1
@@ -139,7 +139,7 @@ class DiscreteBuyingEvents(gym.Env):
 
         self.model.spawn_new_customer(self.agent_seed)
 
-        sample = model.sample(self.n_historical_events)
+        sample = self.model.sample(self.n_historical_events)
 
         self.state = self.initialize_state(sample)
 

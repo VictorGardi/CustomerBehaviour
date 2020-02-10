@@ -6,14 +6,9 @@ Both discrete and continuous action spaces are supported.
 To solve CartPole-v0, run:
     python train_ppo_gym.py --env CartPole-v0
 """
-
-import sys
 import os
-import datetime
 import argparse
-from os.path import join
-#sys.path.append(os.getcwd())
-
+from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
 
 import gym
 import custom_gym
@@ -105,46 +100,6 @@ def save_agent_demo(env, agent, out_dir, max_t=2000):
     np.savez(out_dir+'/trajectories.npz', states=np.array(agent_observations, dtype=object),
              actions=np.array(agent_actions, dtype=object))
 
-def get_outdir(algo, case, n_experts, n_categories):
-
-    if not os.path.exists('results'): os.makedirs('results')
-
-    path = join('results', str(algo))
-    if not os.path.exists(path): os.makedirs(path)
-
-    path = join(path, case)
-    if not os.path.exists(path): os.makedirs(path)
-
-    path = join(path, str(n_experts) + '_expert(s)')
-    if not os.path.exists(path): os.makedirs(path)
-
-    path = join(path, str(n_categories) + '_product(s)')
-    if not os.path.exists(path): os.makedirs(path)
-
-    time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    path = join(path, time)
-
-    return path
-
-
-def get_env(case, n_experts):
-    if case == 'discrete_events':
-        env = 'discrete-buying-events-v0'
-    elif case == 'full_receipt':
-        env = ''
-
-    return env
-
-def str2bool(v):
-    if isinstance(v, bool):
-       return v
-    if v.lower() in ('yes', 'True', 't', 'y', '1', 'true'):
-        return True
-    elif v.lower() in ('no', 'False', 'f', 'n', '0', 'false'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
-
 
 def main():
     import logging
@@ -154,11 +109,11 @@ def main():
     parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=1)
-    parser.add_argument('--n_categories', type=int, default=1)
+    parser.add_argument('--n_products', type=int, default=1)
     parser.add_argument('--seed_expert', type=str2bool, nargs='?',
                         const=True, default=False,
-                        help="Activate nice mode.")
-    parser.add_argument('--n_historic_events', type=int, default=20)
+                        help="Activate expert seed mode.")
+    parser.add_argument('--n_historic_events', type=int, default=7)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))
@@ -176,7 +131,7 @@ def main():
     parser.add_argument('--weight-decay', type=float, default=0.0)
     parser.add_argument('--demo', action='store_true', default=False)
     parser.add_argument('--load', type=str, default='')
-    parser.add_argument('--load_demo', type=str, default='')
+    #parser.add_argument('--load_demo', type=str, default='')
     parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
     parser.add_argument('--monitor', action='store_true')
     parser.add_argument('--update-interval', type=int, default=128)
@@ -184,21 +139,21 @@ def main():
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     args = parser.parse_args()
-    args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.n_categories)
-    args.env = get_env(args.case, args.n_experts)
-    print(args.seed_expert)
+    args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.n_products)
+    args.env = get_env(args.case, args.n_experts)  
 
     logging.basicConfig(level=args.logger_level)
 
     # Set a random seed used in ChainerRL
     misc.set_random_seed(args.seed, gpus=(args.gpu,))
-
     if not (args.demo and args.load):
         args.outdir = experiments.prepare_output_dir(args, args.outdir)
+    temp = args.outdir.split('/')[-1]
+    dst = args.outdir.strip(temp)
 
     def make_env(test):
         env = gym.make(args.env)
-        env.define_case(0, 0, 7*[0])
+        env.initialize_environment(args.n_products, args.n_historic_events, 0)
 
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
@@ -216,11 +171,15 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
-    sample_env.define_case(0, 0, 7*[0])
+    sample_env.initialize_environment(args.n_products, args.n_historic_events, 0)
+    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.steps, out_dir=dst, seed=args.seed_expert)
     timestep_limit = sample_env.spec.tags.get(
         'wrapper_config.TimeLimit.max_episode_steps')
     obs_space = sample_env.observation_space
     action_space = sample_env.action_space
+
+    ####-----create_expert data here and take args.seed_expert as input and save as expert_trajectories.npz 
+    # file in dst that file path is our demonstrations variable ----
 
     # Normalize observations based on their empirical mean and variance
 
@@ -253,7 +212,7 @@ def main():
         import numpy as np
         from customer_behaviour.algorithms.irl.gail import GAIL
         from customer_behaviour.algorithms.irl.gail import Discriminator
-        demonstrations = np.load(args.load_demo)
+        #demonstrations = np.load(args.load_demo)
         D = Discriminator(gpu=args.gpu)
         agent = GAIL(demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
@@ -327,6 +286,12 @@ def main():
             ],
         )
         save_agent_demo(make_env(False), agent, args.outdir)
+    
+    # Move result files to correct folder and remove empty folder
+    move_dir(args.outdir, dst)
+    os.rmdir(args.outdir)
+
+    # Visualization
 
 
 if __name__ == '__main__':

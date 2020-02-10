@@ -1,0 +1,90 @@
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+	deleted:    customer_behaviour/tools/read_npz_file.py
+	modified:   main.py
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/10_finish/model.npz
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/10_finish/optimizer.npz
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/args.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/command.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/environ.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/git-diff.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/git-head.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/git-log.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/git-status.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/scores.txt
+	deleted:    results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-21/20200210T091921.884752/trajectories.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/10_finish/model.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/10_finish/optimizer.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/args.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/command.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/environ.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/git-diff.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/git-head.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/git-log.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/git-status.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/scores.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-19-39/20200210T091939.549958/trajectories.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/10_finish/model.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/10_finish/optimizer.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/args.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/command.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/environ.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/git-diff.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/git-head.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/git-log.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/git-status.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/scores.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-25-16/20200210T092516.961007/trajectories.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-51-00/20200210T095100.846498/args.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-51-00/20200210T095100.846498/command.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-51-00/20200210T095100.846498/environ.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-51-00/20200210T095100.846498/git-diff.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-51-00/20200210T095100.846498/git-head.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-51-00/20200210T095100.846498/git-log.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-51-00/20200210T095100.846498/git-status.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-09/20200210T095209.962178/args.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-09/20200210T095209.962178/command.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-09/20200210T095209.962178/environ.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-09/20200210T095209.962178/git-diff.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-09/20200210T095209.962178/git-head.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-09/20200210T095209.962178/git-log.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-09/20200210T095209.962178/git-status.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/10_finish/model.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/10_finish/optimizer.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/args.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/command.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/environ.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/git-diff.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/git-head.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/git-log.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/git-status.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/scores.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_09-52-24/20200210T095224.021905/trajectories.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/10_finish/model.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/10_finish/optimizer.npz
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/args.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/command.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/environ.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/git-diff.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/git-head.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/git-log.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/git-status.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/scores.txt
+	deleted:    results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_10-21-58/20200210T102158.167908/trajectories.npz
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	customer_behaviour/tools/tools.py
+	results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_11-19-23/
+	results/airl/discrete_events/1_expert(s)/1_product(s)/2020-02-10_11-20-25/
+	results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_14-19-58/
+	results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_14-20-22/
+
+no changes added to commit (use "git add" and/or "git commit -a")

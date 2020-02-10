@@ -1,0 +1,1 @@
+main.py gail --gpu -1 --case discrete_events --n_experts 1 --n_products 1 --n_historic_events 10 --steps 1 --seed_expert True

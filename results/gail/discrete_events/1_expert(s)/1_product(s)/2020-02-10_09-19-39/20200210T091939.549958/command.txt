@@ -1,1 +1,0 @@
-temp_main.py gail --gpu -1 --case discrete_events --n_experts 1 --n_categories 1 --arch FFSoftmax --steps 10 --load_demo expert_trajectories.npz --update-interval 128 --entropy-coef 0.01
