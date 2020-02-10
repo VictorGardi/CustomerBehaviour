@@ -77,7 +77,7 @@ class Result():
 					temp.append(action)
 			
 			if i == 0: n_expert_steps = len(temp)
-
+			print(temp)
 			ax1.plot(temp)
 
 		for i, trajectory in enumerate(self.agent_trajectories):
@@ -94,7 +94,7 @@ class Result():
 
 					if len(temp) == n_expert_steps:
 						break
-
+				print(temp)
 				ax2.plot(temp)
 
 

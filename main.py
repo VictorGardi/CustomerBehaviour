@@ -110,6 +110,7 @@ def main():
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=1)
     parser.add_argument('--n_products', type=int, default=1)
+    parser.add_argument('--n_buys', type=int, default=100)
     parser.add_argument('--seed_expert', type=str2bool, nargs='?',
                         const=True, default=False,
                         help="Activate expert seed mode.")
@@ -172,7 +173,7 @@ def main():
 
     sample_env = gym.make(args.env)
     sample_env.initialize_environment(args.n_products, args.n_historic_events, 0)
-    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.steps, out_dir=dst, seed=args.seed_expert)
+    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.n_buys, out_dir=dst, seed=args.seed_expert)
     timestep_limit = sample_env.spec.tags.get(
         'wrapper_config.TimeLimit.max_episode_steps')
     obs_space = sample_env.observation_space
