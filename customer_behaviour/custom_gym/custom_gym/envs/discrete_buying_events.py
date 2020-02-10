@@ -4,7 +4,9 @@ import numpy as np
 from gym import spaces
 from customer_behaviour.tools import dgm as dgm
 
-N_MAX_TIME_STEPS = 1000
+N_MAX_TIME_STEPS = 500
+
+State = collections.namedtuple()
 
 
 def categorize_age(age):
@@ -30,8 +32,10 @@ class DiscreteBuyingEvents(gym.Env):
         self.state = None
 
 
-    def initialize_environment(self, n_products, n_historical_events, agent_seed=None):
+    def initialize_environment(self, n_products, n_historical_events, agent_seed=None, episode_length):
         # The implementaiton of this function depends on the chosen state representation
+
+        self.episode_length = episode_length
 
         self.n_products = n_products
         self.n_historical_events = n_historical_events
@@ -112,6 +116,10 @@ class DiscreteBuyingEvents(gym.Env):
         return initial_state
 
 
+    def seed(self, seed=None):
+        pass
+
+
     def step(self, action):
         # The implementaiton of this function depends on the chosen state representation
 
@@ -125,7 +133,7 @@ class DiscreteBuyingEvents(gym.Env):
 
             self.n_time_steps += 1
 
-            done = self.n_time_steps > N_MAX_TIME_STEPS
+            done = self.n_time_steps >= self.episode_length
 
             reward = 0
         else:
