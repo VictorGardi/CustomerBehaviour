@@ -1,0 +1,49 @@
+diff --git a/analyse_results.py b/analyse_results.py
+index f19ea05..32f784b 100644
+--- a/analyse_results.py
++++ b/analyse_results.py
+@@ -1,8 +1,8 @@
+ from customer_behaviour.tools.visualization import Result
+ import os
+ 
+-expert_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-11_11-22-31/expert_trajectories.npz'
+-agent_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-11_11-22-31/trajectories.npz'
++expert_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-11_11-50-02/expert_trajectories.npz'
++agent_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-11_11-50-02/trajectories.npz'
+ 
+ result = Result(expert_data, agent_data)
+ 
+diff --git a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+index c9c81d7..bbc537e 100644
+--- a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
++++ b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+@@ -61,7 +61,15 @@ class DiscreteBuyingEvents(gym.Env):
+             temp_actions = []
+ 
+             self.model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
+-            sample = self.model.sample(self.n_historical_events + n_time_steps)
++            # sample = self.model.sample(self.n_historical_events + n_time_steps)
++
++            sample = np.zeros((6, self.n_historical_events + n_time_steps))
++
++            ones = [1, 1, 1, 1, 1, 1]
++
++            for i in np.arange(0.1, 1.0, 0.1):
++                j = int(i * (self.n_historical_events + n_time_steps))
++                sample[:, j] = ones
+ 
+             history = sample[:, :self.n_historical_events]        
+             initial_state = self.initialize_state(history)
+@@ -74,7 +82,7 @@ class DiscreteBuyingEvents(gym.Env):
+             while i < sample.shape[1]:
+                 if isinstance(self.action_space, spaces.Discrete):
+                     # There are only two discrete actions: "buy something" or "do not buy something"
+-                    action = 1 if sample[0, i] > 0 else 0
++                    action = 1 if sample[0, i] > 0 else 0  # We only consider one item
+                 elif isinstance(self.action_space, spaces.Box):
+                     raise NotImplementedError
+ 
+diff --git a/expert_trajectories.npz b/expert_trajectories.npz
+deleted file mode 100644
+index 04a5abf..0000000
+Binary files a/expert_trajectories.npz and /dev/null differ

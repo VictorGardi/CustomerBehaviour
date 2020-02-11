@@ -61,7 +61,15 @@ class DiscreteBuyingEvents(gym.Env):
             temp_actions = []
 
             self.model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
-            sample = self.model.sample(self.n_historical_events + n_time_steps)
+            # sample = self.model.sample(self.n_historical_events + n_time_steps)
+
+            sample = np.zeros((6, self.n_historical_events + n_time_steps))
+
+            ones = [1, 1, 1, 1, 1, 1]
+
+            for i in np.arange(0.1, 1.0, 0.1):
+                j = int(i * (self.n_historical_events + n_time_steps))
+                sample[:, j] = ones
 
             history = sample[:, :self.n_historical_events]        
             initial_state = self.initialize_state(history)
@@ -74,7 +82,7 @@ class DiscreteBuyingEvents(gym.Env):
             while i < sample.shape[1]:
                 if isinstance(self.action_space, spaces.Discrete):
                     # There are only two discrete actions: "buy something" or "do not buy something"
-                    action = 1 if sample[0, i] > 0 else 0
+                    action = 1 if sample[0, i] > 0 else 0  # We only consider one item
                 elif isinstance(self.action_space, spaces.Box):
                     raise NotImplementedError
 

@@ -1,0 +1,92 @@
+diff --git a/customer_behaviour/algorithms/irl/gail/discriminator.py b/customer_behaviour/algorithms/irl/gail/discriminator.py
+index 8d5ff3a..fbddb75 100755
+--- a/customer_behaviour/algorithms/irl/gail/discriminator.py
++++ b/customer_behaviour/algorithms/irl/gail/discriminator.py
+@@ -27,6 +27,14 @@ class Discriminator:
+             # discriminator is trained to predict a p(expert|x)
+             self.loss = F.mean(F.softplus(-d_expert))
+             self.loss += F.mean(F.softplus(d_fake))
++
++            print('-----------------------------')
++            print(expert_data)
++            print('----')
++            print(fake_data)
++            print('-----------------------------')
++
++
+         elif self.loss_type == 'wgangp':
+             # sampling along straight lines
+             xp = chainer.cuda.get_array_module(expert_data)
+diff --git a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+index b4f161c..f93f76a 100644
+--- a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
++++ b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+@@ -4,7 +4,7 @@ import numpy as np
+ from gym import spaces
+ from customer_behaviour.tools import dgm as dgm
+ 
+-N_MAX_TIME_STEPS = 1000
++N_MAX_TIME_STEPS = 500
+ 
+ 
+ def categorize_age(age):
+@@ -112,6 +112,10 @@ class DiscreteBuyingEvents(gym.Env):
+         return initial_state
+ 
+ 
++    def seed(self, seed=None):
++        pass
++
++
+     def step(self, action):
+         # The implementaiton of this function depends on the chosen state representation
+ 
+diff --git a/main.py b/main.py
+index 9665d18..749887b 100644
+--- a/main.py
++++ b/main.py
+@@ -154,7 +154,7 @@ def main():
+ 
+     def make_env(test):
+         env = gym.make(args.env)
+-        env.initialize_environment(args.n_products, args.n_historic_events, 0)
++        env.initialize_environment(args.n_products, args.n_historic_events, agent_seed=0)
+ 
+         # Use different random seeds for train and test envs
+         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
+@@ -172,7 +172,7 @@ def main():
+         return env
+ 
+     sample_env = gym.make(args.env)
+-    sample_env.initialize_environment(args.n_products, args.n_historic_events, 0)
++    sample_env.initialize_environment(args.n_products, args.n_historic_events, agent_seed=0)
+     demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.n_buys, out_dir=dst, seed=args.seed_expert)
+     timestep_limit = sample_env.spec.tags.get(
+         'wrapper_config.TimeLimit.max_episode_steps')
+@@ -184,7 +184,7 @@ def main():
+ 
+     # Normalize observations based on their empirical mean and variance
+ 
+-    obs_normalizer = None                                                                # HarDKODAT
++    obs_normalizer = None                                                                # OBS!!!
+     #chainerrl.links.EmpiricalNormalization(obs_space.low.size, clip_threshold=5)
+ 
+     # Switch policy types accordingly to action space types
+@@ -213,7 +213,7 @@ def main():
+         import numpy as np
+         from customer_behaviour.algorithms.irl.gail import GAIL
+         from customer_behaviour.algorithms.irl.gail import Discriminator
+-        #demonstrations = np.load(args.load_demo)
++        # demonstrations = np.load(args.load_demo)
+         D = Discriminator(gpu=args.gpu)
+         agent = GAIL(demonstrations=demonstrations, discriminator=D,
+                      model=model, optimizer=opt,
+@@ -228,7 +228,7 @@ def main():
+         from customer_behaviour.algorithms.irl.airl import AIRL as Agent
+         from customer_behaviour.algorithms.irl.airl import Discriminator
+         # obs_normalizer = None
+-        demonstrations = np.load(args.load_demo)
++        demonstrations = np.load(dst + '/expert_trajectories.npz')
+         D = Discriminator(gpu=args.gpu)
+         agent = Agent(demonstrations=demonstrations, discriminator=D,
+                       model=model, optimizer=opt,
