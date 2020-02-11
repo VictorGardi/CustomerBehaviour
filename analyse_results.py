@@ -1,8 +1,8 @@
 from customer_behaviour.tools.visualization import Result
 import os
 
-expert_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-11_12-46-53/expert_trajectories.npz'
-agent_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-11_12-46-53/trajectories.npz'
+expert_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/case_1/2020-02-11_15-58-18/expert_trajectories.npz'
+agent_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/case_1/2020-02-11_15-58-18/trajectories.npz'
 
 result = Result(expert_data, agent_data)
 

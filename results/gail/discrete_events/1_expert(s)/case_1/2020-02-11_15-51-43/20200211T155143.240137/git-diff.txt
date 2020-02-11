@@ -1,0 +1,53 @@
+diff --git a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+index 7cf6b0d..a4eb432 100644
+--- a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
++++ b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+@@ -33,7 +33,7 @@ class SpaceSwitcher():
+         return observation_space, action_space
+ 
+ 
+-class ActionSwitcher(self):
++class ActionSwitcher():
+     def __init__(self):
+         pass
+ 
+@@ -47,7 +47,7 @@ class ActionSwitcher(self):
+         return action
+ 
+ 
+-class InitStateSwitcher(self):
++class InitStateSwitcher():
+     def __init__(self, model, history):
+         self.model = model
+         self.history = history
+@@ -66,7 +66,7 @@ class InitStateSwitcher(self):
+         return initial_state
+ 
+ 
+-class StepSwitcher(self):
++class StepSwitcher():
+     def __init__(self, model):
+         self.model = model
+ 
+@@ -130,21 +130,11 @@ class DiscreteBuyingEvents(gym.Env):
+             self.model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
+             sample = self.model.sample(self.n_historical_events + n_time_steps)
+ 
+-<<<<<<< HEAD
+             # sample = np.zeros((6, self.n_historical_events + n_time_steps))
+             # ones = 6 * [1]
+             # indices = [int(i * (self.n_historical_events + n_time_steps)) for i in np.arange(0.1, 1.0, 0.1)]
+             # sample[:, indices] = ones
+-=======
+             #ones = [1, 1, 1, 1, 1, 1]
+-            ones = np.ones((6,int(0.05*(self.n_historical_events + n_time_steps))))
+-            print(int(0.05*(self.n_historical_events + n_time_steps)))
+-
+-            for i in np.arange(0.2, 1.0, 0.2):
+-                j = int(i * (self.n_historical_events + n_time_steps))
+-                sample[:, j:j+int(0.05 * (self.n_historical_events + n_time_steps))] = ones
+-                
+->>>>>>> 0361000869450317cff7387b46333602b49dea05
+ 
+             history = sample[:, :self.n_historical_events]        
+             initial_state = self.initialize_state(history)

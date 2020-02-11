@@ -1,0 +1,34 @@
+On branch master
+Your branch is up to date with 'origin/master'.
+
+Changes to be committed:
+  (use "git reset HEAD <file>..." to unstage)
+
+	modified:   automated_runs.py
+	modified:   customer_behaviour/tools/tools.py
+	modified:   main.py
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/400000_finish/model.npz
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/400000_finish/optimizer.npz
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/args.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/command.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/environ.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/expert_trajectories.npz
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/git-diff.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/git-head.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/git-log.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/git-status.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/scores.txt
+	new file:   results/gail/discrete_events/1_expert(s)/1_product(s)/first_successful_result/trajectories.npz
+	new file:   test.py
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+	modified:   customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+	results/gail/discrete_events/1_expert(s)/case_1/
+

@@ -110,7 +110,7 @@ def main():
     parser.add_argument('algo', default='gail', choices=['gail', 'airl'], type=str)
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=1)
-    parser.add_argument('--n_products', type=int, default=1)
+    parser.add_argument('--state_rep', type=int, default=1)
     parser.add_argument('--length_expert_TS', type=int, default=100)
     parser.add_argument('--episode_length', type=int, default=100)
     parser.add_argument('--n_training_episodes', type=int, default=1000)
@@ -146,7 +146,7 @@ def main():
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     args = parser.parse_args()
-    args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.n_products)
+    args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
     args.env = get_env(args.case, args.n_experts)  
     args.steps = args.n_training_episodes*args.episode_length
 
@@ -161,7 +161,7 @@ def main():
 
     def make_env(test):
         env = gym.make(args.env)
-        env.initialize_environment(args.n_products, args.n_historical_events, args.episode_length, args.agent_seed)
+        env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.agent_seed)
 
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
@@ -179,7 +179,7 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
-    sample_env.initialize_environment(args.n_products, args.n_historical_events, args.episode_length, args.agent_seed)
+    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.agent_seed)
     demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.length_expert_TS, out_dir=dst, seed=args.seed_expert)
     timestep_limit = sample_env.spec.tags.get(
         'wrapper_config.TimeLimit.max_episode_steps')

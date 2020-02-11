@@ -3,7 +3,7 @@ import fnmatch
 import shutil
 import datetime
 
-def get_outdir(algo, case, n_experts, n_categories):
+def get_outdir(algo, case, n_experts, state_rep):
 
     if not os.path.exists('results'): os.makedirs('results')
 
@@ -16,7 +16,7 @@ def get_outdir(algo, case, n_experts, n_categories):
     path = os.path.join(path, str(n_experts) + '_expert(s)')
     if not os.path.exists(path): os.makedirs(path)
 
-    path = os.path.join(path, str(n_categories) + '_product(s)')
+    path = os.path.join(path, 'case_' + str(state_rep))
     if not os.path.exists(path): os.makedirs(path)
 
     time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
