@@ -235,7 +235,7 @@ def main():
         from customer_behaviour.algorithms.irl.airl import AIRL as Agent
         from customer_behaviour.algorithms.irl.airl import Discriminator
         # obs_normalizer = None
-        #demonstrations = np.load(args.load_demo)
+        demonstrations = np.load(dst + '/expert_trajectories.npz')
         D = Discriminator(gpu=args.gpu)
         agent = Agent(demonstrations=demonstrations, discriminator=D,
                       model=model, optimizer=opt,
