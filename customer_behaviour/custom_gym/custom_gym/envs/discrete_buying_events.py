@@ -4,10 +4,6 @@ import numpy as np
 from gym import spaces
 from customer_behaviour.tools import dgm as dgm
 
-N_MAX_TIME_STEPS = 500
-
-State = collections.namedtuple()
-
 
 def categorize_age(age):
     if age < 30: return 0
@@ -32,7 +28,7 @@ class DiscreteBuyingEvents(gym.Env):
         self.state = None
 
 
-    def initialize_environment(self, n_products, n_historical_events, agent_seed=None, episode_length):
+    def initialize_environment(self, n_products, n_historical_events, episode_length, agent_seed=None):
         # The implementaiton of this function depends on the chosen state representation
 
         self.episode_length = episode_length

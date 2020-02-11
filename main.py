@@ -106,15 +106,19 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('algo', default='gail', choices=['gail', 'airl'], type=str)
-    parser.add_argument('--gpu', type=int, default=0)
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=1)
     parser.add_argument('--n_products', type=int, default=1)
-    parser.add_argument('--n_buys', type=int, default=100)
+    parser.add_argument('--length_expert_TS', type=int, default=100)
+    parser.add_argument('--episode_length', type=int, default=100)
+    parser.add_argument('--n_training_episodes', type=int, default=1000)
     parser.add_argument('--seed_expert', type=str2bool, nargs='?',
                         const=True, default=False,
                         help="Activate expert seed mode.")
-    parser.add_argument('--n_historic_events', type=int, default=7)
+    parser.add_argument('--agent_seed', type=int, default=None)
+    
+    parser.add_argument('--n_historical_events', type=int, default=20)
+    parser.add_argument('--gpu', type=int, default=-1)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))
@@ -122,7 +126,7 @@ def main():
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed [0, 2 ** 32)')
     #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
-    parser.add_argument('--steps', type=int, default=10 ** 6)
+    
     parser.add_argument('--eval-interval', type=int, default=10000)
     parser.add_argument('--eval-n-runs', type=int, default=10)
     parser.add_argument('--reward-scale-factor', type=float, default=1e-2)
@@ -142,6 +146,7 @@ def main():
     args = parser.parse_args()
     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.n_products)
     args.env = get_env(args.case, args.n_experts)  
+    args.steps = args.n_training_episodes*args.episode_length
 
     logging.basicConfig(level=args.logger_level)
 
@@ -154,7 +159,7 @@ def main():
 
     def make_env(test):
         env = gym.make(args.env)
-        env.initialize_environment(args.n_products, args.n_historic_events, 0)
+        env.initialize_environment(args.n_products, args.n_historical_events, args.episode_length, args.agent_seed)
 
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
@@ -172,8 +177,8 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
-    sample_env.initialize_environment(args.n_products, args.n_historic_events, 0)
-    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.n_buys, out_dir=dst, seed=args.seed_expert)
+    sample_env.initialize_environment(args.n_products, args.n_historical_events, args.episode_length, args.agent_seed)
+    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.length_expert_TS, out_dir=dst, seed=args.seed_expert)
     timestep_limit = sample_env.spec.tags.get(
         'wrapper_config.TimeLimit.max_episode_steps')
     obs_space = sample_env.observation_space
@@ -228,7 +233,7 @@ def main():
         from customer_behaviour.algorithms.irl.airl import AIRL as Agent
         from customer_behaviour.algorithms.irl.airl import Discriminator
         # obs_normalizer = None
-        demonstrations = np.load(args.load_demo)
+        #demonstrations = np.load(args.load_demo)
         D = Discriminator(gpu=args.gpu)
         agent = Agent(demonstrations=demonstrations, discriminator=D,
                       model=model, optimizer=opt,

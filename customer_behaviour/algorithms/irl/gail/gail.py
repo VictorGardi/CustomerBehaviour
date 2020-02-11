@@ -42,7 +42,7 @@ class GAIL(PPO):
 
             demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
 
-            print(self.demo_states)
+            #print(self.demo_states)
             #print(self.demo_actions)
             #quit()
 

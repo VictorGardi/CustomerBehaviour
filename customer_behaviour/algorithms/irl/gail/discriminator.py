@@ -32,12 +32,6 @@ class Discriminator:
             xp = chainer.cuda.get_array_module(expert_data)
             e = xp.random.uniform(0., 1., len(expert_data))[:, None].astype(xp.float32)
 
-            print('-----------------------------')
-            print(expert_data)
-            print('----')
-            print(fake_data)
-            print('-----------------------------')
-
             x_hat = chainer.Variable((e * expert_data + (1 - e) * fake_data).array, requires_grad=True)
             grad, = chainer.grad([self.model(x_hat)], [x_hat], enable_double_backprop=True)
             grad = F.sqrt(F.batch_l2_norm_squared(grad))

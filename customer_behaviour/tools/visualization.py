@@ -10,11 +10,10 @@ class Result():
 		self.expert_trajectories = self.load_trajectories(expert_data)
 		self.agent_trajectories = self.load_trajectories(agent_data)
 
-		self.expert_states, self.expert_actions = self.load_trajecory(expert_data)
-		self.agent_states, self.agent_actions = self.load_trajecory(agent_data)
+		self.expert_states, self.expert_actions = self.load_trajectory(expert_data)
+		self.agent_states, self.agent_actions = self.load_trajectory(agent_data)
 
-		self.load_trajectories(expert_data)
-
+		print(self.expert_actions)
 
 	def load_data(self, file):
 		pass
@@ -41,8 +40,7 @@ class Result():
 		#expert_sex = self.expert_trajectories[0][]
 
 
-
-	def load_trajecory(self, file):
+	def load_trajectory(self, file):
 		trajectory = np.load(file, allow_pickle=True)
 
 		assert sorted(trajectory.files) == sorted(['states', 'actions'])
@@ -52,11 +50,18 @@ class Result():
 
 		n_episodes = len(states)
 
-
-
 		# print(len(states))
 
 		return states, actions
+
+	def plot_uni_time_series(self):
+		t = np.linspace(0,self.expert_actions.shape[1], self.expert_actions.shape[1])
+		fig, (ax1, ax2) = plt.subplots(2, 1)
+		t1 = np.linspace(0, len(self.agent_actions[0]))
+
+		ax1.plot(t, self.expert_actions.reshape((-1,)))
+		ax2.plot(t, self.agent_actions[0][0:len(t)])
+		plt.show()
 
 	def plot_univariate_time_series(self):
 		expert_sex = None
@@ -79,10 +84,9 @@ class Result():
 			if i == 0: n_expert_steps = len(temp)
 			print(temp)
 			ax1.plot(temp)
-
 		for i, trajectory in enumerate(self.agent_trajectories):
-
-			if i == 100:
+			print(i)
+			if i == 0:
 
 				temp = []
 				for j, (state, action) in enumerate(trajectory):
@@ -109,7 +113,7 @@ def main():
 
 	result = Result(expert_data, agent_data)
 
-	result.plot_univariate_time_series()
+	#result.plot_univariate_time_series()
 
 
 if __name__ == '__main__':

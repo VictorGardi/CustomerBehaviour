@@ -1,0 +1,100 @@
+diff --git a/analyse_results.py b/analyse_results.py
+index 38d6c4a..99b80a1 100644
+--- a/analyse_results.py
++++ b/analyse_results.py
+@@ -6,4 +6,5 @@ agent_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(
+ 
+ result = Result(expert_data, agent_data)
+ 
+-result.plot_univariate_time_series()
+\ No newline at end of file
++result.plot_uni_time_series()
++#result.plot_univariate_time_series()
+\ No newline at end of file
+diff --git a/customer_behaviour/tools/visualization.py b/customer_behaviour/tools/visualization.py
+index dcd1317..e638b21 100644
+--- a/customer_behaviour/tools/visualization.py
++++ b/customer_behaviour/tools/visualization.py
+@@ -10,11 +10,10 @@ class Result():
+ 		self.expert_trajectories = self.load_trajectories(expert_data)
+ 		self.agent_trajectories = self.load_trajectories(agent_data)
+ 
+-		self.expert_states, self.expert_actions = self.load_trajecory(expert_data)
+-		self.agent_states, self.agent_actions = self.load_trajecory(agent_data)
+-
+-		self.load_trajectories(expert_data)
++		self.expert_states, self.expert_actions = self.load_trajectory(expert_data)
++		self.agent_states, self.agent_actions = self.load_trajectory(agent_data)
+ 
++		print(self.expert_actions)
+ 
+ 	def load_data(self, file):
+ 		pass
+@@ -42,7 +41,7 @@ class Result():
+ 
+ 
+ 
+-	def load_trajecory(self, file):
++	def load_trajectory(self, file):
+ 		trajectory = np.load(file, allow_pickle=True)
+ 
+ 		assert sorted(trajectory.files) == sorted(['states', 'actions'])
+@@ -58,6 +57,15 @@ class Result():
+ 
+ 		return states, actions
+ 
++	def plot_uni_time_series(self):
++		t = np.linspace(0,self.expert_actions.shape[1], self.expert_actions.shape[1])
++
++		fig, (ax1, ax2) = plt.subplots(2, 1)
++		print(len(self.agent_actions[0]))
++
++		#ax1.plot(t, self.expert_actions.reshape((-1,)))
++		#ax2.plot(t, self.agent_actions.reshape((-1,)))
++
+ 	def plot_univariate_time_series(self):
+ 		expert_sex = None
+ 		expert_age = None
+@@ -79,10 +87,9 @@ class Result():
+ 			if i == 0: n_expert_steps = len(temp)
+ 			print(temp)
+ 			ax1.plot(temp)
+-
+ 		for i, trajectory in enumerate(self.agent_trajectories):
+-
+-			if i == 100:
++			print(i)
++			if i == 0:
+ 
+ 				temp = []
+ 				for j, (state, action) in enumerate(trajectory):
+@@ -109,7 +116,7 @@ def main():
+ 
+ 	result = Result(expert_data, agent_data)
+ 
+-	result.plot_univariate_time_series()
++	#result.plot_univariate_time_series()
+ 
+ 
+ if __name__ == '__main__':
+diff --git a/main.py b/main.py
+index 9665d18..81d2b0b 100644
+--- a/main.py
++++ b/main.py
+@@ -110,7 +110,6 @@ def main():
+     parser.add_argument('--case', type=str, default='discrete_events')
+     parser.add_argument('--n_experts', type=int, default=1)
+     parser.add_argument('--n_products', type=int, default=1)
+-    parser.add_argument('--n_buys', type=int, default=100)
+     parser.add_argument('--seed_expert', type=str2bool, nargs='?',
+                         const=True, default=False,
+                         help="Activate expert seed mode.")
+@@ -173,7 +172,7 @@ def main():
+ 
+     sample_env = gym.make(args.env)
+     sample_env.initialize_environment(args.n_products, args.n_historic_events, 0)
+-    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.n_buys, out_dir=dst, seed=args.seed_expert)
++    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.steps, out_dir=dst, seed=args.seed_expert)
+     timestep_limit = sample_env.spec.tags.get(
+         'wrapper_config.TimeLimit.max_episode_steps')
+     obs_space = sample_env.observation_space

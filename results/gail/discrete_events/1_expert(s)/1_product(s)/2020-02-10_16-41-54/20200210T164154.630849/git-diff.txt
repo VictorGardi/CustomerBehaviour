@@ -1,0 +1,208 @@
+diff --git a/analyse_results.py b/analyse_results.py
+index 38d6c4a..a163f19 100644
+--- a/analyse_results.py
++++ b/analyse_results.py
+@@ -1,9 +1,10 @@
+ from customer_behaviour.tools.visualization import Result
+ import os
+ 
+-expert_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_14-49-53/expert_trajectories.npz'
+-agent_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_14-49-53/trajectories.npz'
++expert_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_16-10-44/expert_trajectories.npz'
++agent_data = os.getcwd() + '/results/gail/discrete_events/1_expert(s)/1_product(s)/2020-02-10_16-10-44/trajectories.npz'
+ 
+ result = Result(expert_data, agent_data)
+ 
+-result.plot_univariate_time_series()
+\ No newline at end of file
++result.plot_uni_time_series()
++#result.plot_univariate_time_series()
+\ No newline at end of file
+diff --git a/customer_behaviour/algorithms/irl/gail/discriminator.py b/customer_behaviour/algorithms/irl/gail/discriminator.py
+index 8d5ff3a..7dd8848 100755
+--- a/customer_behaviour/algorithms/irl/gail/discriminator.py
++++ b/customer_behaviour/algorithms/irl/gail/discriminator.py
+@@ -32,12 +32,6 @@ class Discriminator:
+             xp = chainer.cuda.get_array_module(expert_data)
+             e = xp.random.uniform(0., 1., len(expert_data))[:, None].astype(xp.float32)
+ 
+-            print('-----------------------------')
+-            print(expert_data)
+-            print('----')
+-            print(fake_data)
+-            print('-----------------------------')
+-
+             x_hat = chainer.Variable((e * expert_data + (1 - e) * fake_data).array, requires_grad=True)
+             grad, = chainer.grad([self.model(x_hat)], [x_hat], enable_double_backprop=True)
+             grad = F.sqrt(F.batch_l2_norm_squared(grad))
+diff --git a/customer_behaviour/algorithms/irl/gail/gail.py b/customer_behaviour/algorithms/irl/gail/gail.py
+index 5b65fd2..fb4dd83 100755
+--- a/customer_behaviour/algorithms/irl/gail/gail.py
++++ b/customer_behaviour/algorithms/irl/gail/gail.py
+@@ -42,7 +42,7 @@ class GAIL(PPO):
+ 
+             demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
+ 
+-            print(self.demo_states)
++            #print(self.demo_states)
+             #print(self.demo_actions)
+             #quit()
+ 
+diff --git a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+index ee01348..72f09b4 100644
+--- a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
++++ b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+@@ -32,7 +32,7 @@ class DiscreteBuyingEvents(gym.Env):
+         self.state = None
+ 
+ 
+-    def initialize_environment(self, n_products, n_historical_events, agent_seed=None, episode_length):
++    def initialize_environment(self, n_products, n_historical_events, episode_length, agent_seed=None):
+         # The implementaiton of this function depends on the chosen state representation
+ 
+         self.episode_length = episode_length
+diff --git a/customer_behaviour/tools/visualization.py b/customer_behaviour/tools/visualization.py
+index dcd1317..7097e93 100644
+--- a/customer_behaviour/tools/visualization.py
++++ b/customer_behaviour/tools/visualization.py
+@@ -10,11 +10,10 @@ class Result():
+ 		self.expert_trajectories = self.load_trajectories(expert_data)
+ 		self.agent_trajectories = self.load_trajectories(agent_data)
+ 
+-		self.expert_states, self.expert_actions = self.load_trajecory(expert_data)
+-		self.agent_states, self.agent_actions = self.load_trajecory(agent_data)
+-
+-		self.load_trajectories(expert_data)
++		self.expert_states, self.expert_actions = self.load_trajectory(expert_data)
++		self.agent_states, self.agent_actions = self.load_trajectory(agent_data)
+ 
++		print(self.expert_actions)
+ 
+ 	def load_data(self, file):
+ 		pass
+@@ -42,7 +41,7 @@ class Result():
+ 
+ 
+ 
+-	def load_trajecory(self, file):
++	def load_trajectory(self, file):
+ 		trajectory = np.load(file, allow_pickle=True)
+ 
+ 		assert sorted(trajectory.files) == sorted(['states', 'actions'])
+@@ -52,12 +51,19 @@ class Result():
+ 
+ 		n_episodes = len(states)
+ 
+-
+-
+ 		# print(len(states))
+ 
+ 		return states, actions
+ 
++	def plot_uni_time_series(self):
++		t = np.linspace(0,self.expert_actions.shape[1], self.expert_actions.shape[1])
++		fig, (ax1, ax2) = plt.subplots(2, 1)
++		t1 = np.linspace(0, len(self.agent_actions[0]))
++
++		ax1.plot(t, self.expert_actions.reshape((-1,)))
++		ax2.plot(t, self.agent_actions[0][0:len(t)])
++		plt.show()
++
+ 	def plot_univariate_time_series(self):
+ 		expert_sex = None
+ 		expert_age = None
+@@ -79,10 +85,9 @@ class Result():
+ 			if i == 0: n_expert_steps = len(temp)
+ 			print(temp)
+ 			ax1.plot(temp)
+-
+ 		for i, trajectory in enumerate(self.agent_trajectories):
+-
+-			if i == 100:
++			print(i)
++			if i == 0:
+ 
+ 				temp = []
+ 				for j, (state, action) in enumerate(trajectory):
+@@ -109,7 +114,7 @@ def main():
+ 
+ 	result = Result(expert_data, agent_data)
+ 
+-	result.plot_univariate_time_series()
++	#result.plot_univariate_time_series()
+ 
+ 
+ if __name__ == '__main__':
+diff --git a/main.py b/main.py
+index 9665d18..2c4277e 100644
+--- a/main.py
++++ b/main.py
+@@ -106,15 +106,19 @@ def main():
+ 
+     parser = argparse.ArgumentParser()
+     parser.add_argument('algo', default='gail', choices=['gail', 'airl'], type=str)
+-    parser.add_argument('--gpu', type=int, default=0)
+     parser.add_argument('--case', type=str, default='discrete_events')
+     parser.add_argument('--n_experts', type=int, default=1)
+     parser.add_argument('--n_products', type=int, default=1)
+-    parser.add_argument('--n_buys', type=int, default=100)
++    parser.add_argument('--length_expert_TS', type=int, default=100)
++    parser.add_argument('--episode_length', type=int, default=100)
++    parser.add_argument('--n_training_episodes', type=int, default=1000)
+     parser.add_argument('--seed_expert', type=str2bool, nargs='?',
+                         const=True, default=False,
+                         help="Activate expert seed mode.")
+-    parser.add_argument('--n_historic_events', type=int, default=7)
++    parser.add_argument('--agent_seed', type=int, default=None)
++    
++    parser.add_argument('--n_historical_events', type=int, default=20)
++    parser.add_argument('--gpu', type=int, default=-1)
+     parser.add_argument('--arch', type=str, default='FFSoftmax',
+                         choices=('FFSoftmax', 'FFMellowmax',
+                                  'FFGaussian'))
+@@ -122,7 +126,7 @@ def main():
+     parser.add_argument('--seed', type=int, default=0,
+                         help='Random seed [0, 2 ** 32)')
+     #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
+-    parser.add_argument('--steps', type=int, default=10 ** 6)
++    
+     parser.add_argument('--eval-interval', type=int, default=10000)
+     parser.add_argument('--eval-n-runs', type=int, default=10)
+     parser.add_argument('--reward-scale-factor', type=float, default=1e-2)
+@@ -142,6 +146,7 @@ def main():
+     args = parser.parse_args()
+     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.n_products)
+     args.env = get_env(args.case, args.n_experts)  
++    args.steps = args.n_training_episodes*args.episode_length
+ 
+     logging.basicConfig(level=args.logger_level)
+ 
+@@ -154,7 +159,7 @@ def main():
+ 
+     def make_env(test):
+         env = gym.make(args.env)
+-        env.initialize_environment(args.n_products, args.n_historic_events, 0)
++        env.initialize_environment(args.n_products, args.n_historical_events, args.episode_length, args.agent_seed)
+ 
+         # Use different random seeds for train and test envs
+         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
+@@ -172,8 +177,8 @@ def main():
+         return env
+ 
+     sample_env = gym.make(args.env)
+-    sample_env.initialize_environment(args.n_products, args.n_historic_events, 0)
+-    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.n_buys, out_dir=dst, seed=args.seed_expert)
++    sample_env.initialize_environment(args.n_products, args.n_historical_events, args.episode_length, args.agent_seed)
++    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.expert_TS_length, out_dir=dst, seed=args.seed_expert)
+     timestep_limit = sample_env.spec.tags.get(
+         'wrapper_config.TimeLimit.max_episode_steps')
+     obs_space = sample_env.observation_space
+@@ -228,7 +233,7 @@ def main():
+         from customer_behaviour.algorithms.irl.airl import AIRL as Agent
+         from customer_behaviour.algorithms.irl.airl import Discriminator
+         # obs_normalizer = None
+-        demonstrations = np.load(args.load_demo)
++        #demonstrations = np.load(args.load_demo)
+         D = Discriminator(gpu=args.gpu)
+         agent = Agent(demonstrations=demonstrations, discriminator=D,
+                       model=model, optimizer=opt,

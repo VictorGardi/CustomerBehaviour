@@ -1,0 +1,2 @@
+steps	episodes	elapsed	mean	median	stdev	max	min	average_value	average_entropy	average_value_loss	average_policy_loss
+10000	10	69.31926107406616	0.0	0.0	0.0	0.0	0.0	4.238180941060185	0.007989193842702661	1.13256609082222	-1.056345226764679
