@@ -1,0 +1,20 @@
+diff --git a/automated_runs.py b/automated_runs.py
+index 834b293..a04effa 100644
+--- a/automated_runs.py
++++ b/automated_runs.py
+@@ -11,13 +11,12 @@ def terminate_instance():
+     call = ['sudo', 'poweroff']
+     a = subprocess.Popen(call)
+     
+-
+-
+ def main():
+     for call in calls:
+         s = subprocess.Popen(call, stdout=subprocess.PIPE)
+         output = s.stdout.readline()
+-        
++    terminate_instance()
++
+         
+ 
+ 
