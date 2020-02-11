@@ -74,7 +74,7 @@ class DiscreteBuyingEvents(gym.Env):
             while i < sample.shape[1]:
                 if isinstance(self.action_space, spaces.Discrete):
                     # There are only two discrete actions: "buy something" or "do not buy something"
-                    action = 1 if sum(sample[:, i] > 0) else 0
+                    action = 1 if sample[0, i] > 0 else 0
                 elif isinstance(self.action_space, spaces.Box):
                     raise NotImplementedError
 
