@@ -65,11 +65,14 @@ class DiscreteBuyingEvents(gym.Env):
 
             sample = np.zeros((6, self.n_historical_events + n_time_steps))
 
-            ones = [1, 1, 1, 1, 1, 1]
+            #ones = [1, 1, 1, 1, 1, 1]
+            ones = np.ones((6,int(0.05*(self.n_historical_events + n_time_steps))))
+            print(int(0.05*(self.n_historical_events + n_time_steps)))
 
-            for i in np.arange(0.1, 1.0, 0.1):
+            for i in np.arange(0.2, 1.0, 0.2):
                 j = int(i * (self.n_historical_events + n_time_steps))
-                sample[:, j] = ones
+                sample[:, j:j+int(0.05 * (self.n_historical_events + n_time_steps))] = ones
+                
 
             history = sample[:, :self.n_historical_events]        
             initial_state = self.initialize_state(history)

@@ -95,6 +95,8 @@ def save_agent_demo(env, agent, out_dir, max_t=2000):
             if done or t >= max_t:
                 print(t)
                 break
+                print('exiting...')
+                exit()
 
     # save numpy array consists of lists
     np.savez(out_dir+'/trajectories.npz', states=np.array(agent_observations, dtype=object),

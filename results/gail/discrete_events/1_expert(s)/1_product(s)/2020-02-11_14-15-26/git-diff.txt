@@ -1,0 +1,22 @@
+diff --git a/automated_runs.py b/automated_runs.py
+index 122da8b..1634c23 100644
+--- a/automated_runs.py
++++ b/automated_runs.py
+@@ -24,12 +24,14 @@ def terminate_instance():
+ 
+ def main():
+     for call in calls:
+-        s = subprocess.Popen(call)
++        s = subprocess.Popen(call, stdout=subprocess.PIPE)
++        output = p.stdout.readline()
++        print(output)
+         #time.sleep(30)
+         #s.terminate()
+         #s.kill()
+-        print('entering git commit mode')
+-        git_commit()
++        #print('entering git commit mode')
++        #git_commit()
+ 
+ 
+ if __name__ == "__main__":
