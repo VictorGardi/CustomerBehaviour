@@ -77,4 +77,10 @@ class DGM:
             sample[:,[l]] = purchase
             inventory[:,[l]] = np.round(100*self.inventory)
         return sample
+
+    def sample_deterministcally(self, L):
+        sample = np.zeros((self.N, L))
+        for l in range(L):
+            sample[:, l] = 1 if (l+1) % 10 == 0 else 0
+        return sample
                     
