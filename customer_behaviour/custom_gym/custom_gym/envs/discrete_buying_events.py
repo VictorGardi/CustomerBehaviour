@@ -52,8 +52,31 @@ class Case1():
 
 
 class Case2():
-    def __init__(self):
-        raise NotImplementedError
+    def __init__(self, model):
+        self.model = model
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(n_historical_events)
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_action(self, receipt):
+        action = 1 if receipt[0] > 0 else 0  # We only consider the first item
+        return action
+
+    def get_initial_state(self, history):
+        temp = history[0, :].copy()  # We only consider the first item
+        temp[temp > 0] = 1
+
+        initial_state = temp
+
+        return initial_state
+
+    def get_step(self, state, action):
+        new_state = [*state[1:], action]
+        return new_state
 
 
 def define_case(case):

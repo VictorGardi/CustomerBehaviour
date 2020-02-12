@@ -76,7 +76,7 @@ class A3CFFGaussian(chainer.Chain, a3c.A3CModel):
         return self.pi(state), self.v(state)
 
 
-def save_agent_demo(env, agent, out_dir, max_t=2000):
+def save_agent_demo(env, agent, out_dir, max_t=1000):
     import numpy as np
     r, t = 0, 0
     agent_observations = []
@@ -194,7 +194,12 @@ def main():
 
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
-        model = A3CFFSoftmax(obs_space.low.size, action_space.n)
+        if args.state_rep == 1:
+            model = A3CFFSoftmax(obs_space.low.size, action_space.n)
+        elif args.state_rep == 2:
+            model = A3CFFSoftmax(obs_space.n, action_space.n)
+        else:
+            raise NotImplementedError
     elif args.arch == 'FFMellowmax':
         model = A3CFFMellowmax(obs_space.low.size, action_space.n)
     elif args.arch == 'FFGaussian':
