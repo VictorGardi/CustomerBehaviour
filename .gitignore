@@ -131,3 +131,7 @@ dmypy.json
 # Visual studio 
 .vscode/
 .DS_Store
+results/
+analyse_results.py
+test.py
+

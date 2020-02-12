@@ -49,10 +49,14 @@ def move_dir(src: str, dst: str, pattern: str = '*'):
     for f in fnmatch.filter(os.listdir(src), pattern):
         shutil.move(os.path.join(src, f), os.path.join(dst, f))
 
-def read_npz_file(path):
+def read_npz_file(path, get_npz_as_list = False):
     from numpy import load
-
+    ls = [] if get_npz_as_list else None
     data = load(path, allow_pickle=True)
     lst = data.files
     for item in lst:
         print(data[item])
+        ls.append(data[item])
+    return ls
+
+    
