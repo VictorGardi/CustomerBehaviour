@@ -130,8 +130,10 @@ dmypy.json
 
 # Visual studio 
 .vscode/
+
+# Other
 .DS_Store
 results/
 analyse_results.py
 test.py
-
+analyze_results.ipynb

@@ -5,6 +5,9 @@ from gym import spaces
 from customer_behaviour.tools import dgm as dgm
 
 
+DETERMINISTIC_SAMPLE = True
+
+
 def categorize_age(age):
     if age < 30: return 0
     elif 30 <= age < 40: return 0.2
@@ -97,13 +100,12 @@ class DiscreteBuyingEvents(gym.Env):
             temp_actions = []
 
             self.model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
-            sample = self.model.sample(self.n_historical_events + n_time_steps)
-
-            # sample = np.zeros((6, self.n_historical_events + n_time_steps))
-            # ones = 6 * [1]
-            # indices = [int(i * (self.n_historical_events + n_time_steps)) for i in np.arange(0.1, 1.0, 0.1)]
-            # sample[:, indices] = ones
-            #ones = [1, 1, 1, 1, 1, 1]
+            
+            if DETERMINISTIC_SAMPLE:
+                print('Warning: deterministic sampling of expert trajectories')
+                sample = self.model.sample_deterministically(self.n_historical_events + n_time_steps)
+            else:
+                sample = self.model.sample(self.n_historical_events + n_time_steps)
 
             history = sample[:, :self.n_historical_events]        
             initial_state = self.case.get_initial_state(history)
@@ -152,7 +154,10 @@ class DiscreteBuyingEvents(gym.Env):
     def reset(self):
         # Reset the state of the environment to an initial state
         self.model.spawn_new_customer(self.agent_seed)
-        sample = self.model.sample(self.n_historical_events)
+        if DETERMINISTIC_SAMPLE:
+            sample = self.model.sample_deterministically(self.n_historical_events)
+        else:
+            sample = self.model.sample(self.n_historical_events)
         self.state = self.case.get_initial_state(sample)
         self.n_time_steps = 0
         return np.array(self.state)
