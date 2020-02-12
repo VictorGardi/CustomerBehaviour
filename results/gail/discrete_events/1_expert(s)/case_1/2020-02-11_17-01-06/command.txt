@@ -1,1 +1,0 @@
-main.py gail --gpu -1 --case discrete_events --n_experts 1 --state_rep 1 --n_historical_events 150 --episode_length 365 --n_training_episodes 30 --length_expert_TS 365 --seed_expert True --agent_seed 0
