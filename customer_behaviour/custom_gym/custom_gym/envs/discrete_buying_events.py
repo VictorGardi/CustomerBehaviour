@@ -5,7 +5,7 @@ from gym import spaces
 from customer_behaviour.tools import dgm as dgm
 
 
-DETERMINISTIC_SAMPLE = True
+DETERMINISTIC_SAMPLE = False
 
 
 def categorize_age(age):

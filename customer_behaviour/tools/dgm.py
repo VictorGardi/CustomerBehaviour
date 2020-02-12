@@ -2,9 +2,7 @@ import numpy as np
 
 class DGM:
     
-    def __init__(self, seed=None):
-        self.seed = seed
-
+    def __init__(self):
         self.prices = np.reshape(np.array([10,10,6,3,3,2]),(6,1))
         self.alpha0_lower = np.reshape(np.array([5,5.3,5.6,5.9,6.2,6.5]),(6,1))
         self.alpha0_upper = np.reshape(np.array([6,6.3,6.6,6.9,7.2,7.5]),(6,1))
@@ -20,7 +18,7 @@ class DGM:
 
     def spawn_new_customer(self, seed=None):
 
-        if self.seed is not None: np.random.seed(seed)
+        if seed is not None: np.random.seed(seed)
 
         self.age = np.floor(np.random.uniform(18,80))
         self.sex = np.round(np.random.uniform(0,1)) # Female = 1
@@ -81,6 +79,10 @@ class DGM:
     def sample_deterministically(self, L):
         sample = np.zeros((self.N, L))
         for l in range(L):
-            sample[:, l] = 1 if (l+1) % 10 == 0 else 0
+            if (l+1) % 10 == 0:
+                r = np.random.rand()
+                sample[:, l] = 1 if r < 0.7 else 0
+            else:
+                sample[:, l] = 0
         return sample
                     
