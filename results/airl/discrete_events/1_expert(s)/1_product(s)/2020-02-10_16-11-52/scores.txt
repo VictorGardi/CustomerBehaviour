@@ -1,2 +1,0 @@
-steps	episodes	elapsed	mean	median	stdev	max	min	average_discriminator_loss	average_rewards	average_value	average_entropy	average_value_loss	average_policy_loss
-10000	20	75.19183206558228	0.0	0.0	0.0	0.0	0.0	0.029000166158836622	-0.7684100826438038	-61.9369612121582	0.01301504144934006	90.2635765337944	3.3716943311691283
