@@ -1,30 +1,25 @@
 import chainer
 import numpy as np
+import collections
 import chainer.functions as F
 from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
+from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
 
 
 class GAIL(PPO):
-    def __init__(self, discriminator, demonstrations, **kwargs):
+    def __init__(self, discriminator, demonstrations, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
         self.discriminator = discriminator
 
-        #print(demonstrations['states'])
-        #print(demonstrations['actions'])
-        # quit()
-
         self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
         self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
 
-        #print(self.demo_states)
-        #quit()
+        self.discriminator_loss_record = collections.deque(maxlen=discriminator_loss_stats_window)
+        self.reward_mean_record = collections.deque(maxlen=discriminator_loss_stats_window)
 
-        #print(self.demo_states)
-        #print(self.demo_actions)
-        #quit()
 
     def _update(self, dataset):
         # override func
@@ -42,44 +37,18 @@ class GAIL(PPO):
 
             demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
 
-            #print(self.demo_states)
-            #print(self.demo_actions)
-            #quit()
-
             demo_states, demo_actions = [d[demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
 
             if self.obs_normalizer:
                 states = self.obs_normalizer(states, update=False)
-
-                #print(demo_states)
-                #print('-------')
-
-                #print('tjena')
-                #print(self.obs_normalizer._mean)
-                #quit()
-
                 demo_states = self.obs_normalizer(demo_states, update=False)
-                #print('before')
-                #print(demo_states)
-                #print('---')
-                #print(demo_actions)
-
-                #print(demo_states)
-                #print('-------')
-                #quit()
-
-                # print(self.convert_data_to_feed_discriminator(demo_states, demo_actions))
-
-
-
-                #self.convert_data_to_feed_discriminator(states, actions)
-
-                # quit()
 
 
             self.discriminator.train(self.convert_data_to_feed_discriminator(demo_states, demo_actions),
                                      self.convert_data_to_feed_discriminator(states, actions))
             loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+
+            self.discriminator_loss_record.append(float(loss_mean.array))
         super(self.__class__, self)._update(dataset)
 
     def _update_if_dataset_is_ready(self):
@@ -97,6 +66,8 @@ class GAIL(PPO):
             actions = self.xp.asarray(np.concatenate([transition['action'][None] for transition in transitions]))
             with chainer.configuration.using_config('train', False), chainer.no_backprop_mode():
                 rewards = self.discriminator.get_rewards(self.convert_data_to_feed_discriminator(states, actions)).array
+            
+            self.reward_mean_record.append(float(np.mean(rewards)))
             i = 0
             for episode in self.memory:
                 for transition in episode:
@@ -125,6 +96,10 @@ class GAIL(PPO):
         #quit()
 
         return F.concat((xp.array(states), xp.array(actions)))
+    
+    def get_statistics(self):
+        return [('average_discriminator_loss', mean_or_nan(self.discriminator_loss_record)),
+                ('average_rewards', mean_or_nan(self.reward_mean_record))] + super().get_statistics()
 
 
 def gailtype_constructor(rl_algo=TRPO):
