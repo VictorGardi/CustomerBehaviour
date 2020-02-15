@@ -108,6 +108,7 @@ def main():
     parser.add_argument('algo', default='gail', choices=['gail', 'airl'], type=str)
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=1)
+    parser.add_argument('--n_demos_per_expert', type=int, default=10)
     parser.add_argument('--state_rep', type=int, default=1)
     parser.add_argument('--length_expert_TS', type=int, default=100)
     parser.add_argument('--episode_length', type=int, default=100)
@@ -159,7 +160,7 @@ def main():
 
     def make_env(test):
         env = gym.make(args.env)
-        env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.agent_seed)
+        env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.agent_seed)
 
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
@@ -177,7 +178,7 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
-    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.agent_seed)
+    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.agent_seed)
     demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.length_expert_TS, out_dir=dst, seed=args.seed_expert)
     timestep_limit = sample_env.spec.tags.get(
         'wrapper_config.TimeLimit.max_episode_steps')
@@ -189,7 +190,7 @@ def main():
 
     # Normalize observations based on their empirical mean and variance
 
-    obs_normalizer = None                                                                # HarDKODAT
+    obs_normalizer = None                                             # HarDKODAT
     #chainerrl.links.EmpiricalNormalization(obs_space.low.size, clip_threshold=5)
 
     # Switch policy types accordingly to action space types
@@ -198,6 +199,8 @@ def main():
             model = A3CFFSoftmax(obs_space.low.size, action_space.n)
         elif args.state_rep == 2:
             model = A3CFFSoftmax(obs_space.n, action_space.n)
+        elif args.state_rep == 3:
+            model = A3CFFSoftmax(obs_space.nvec.size, action_space.n)
         else:
             raise NotImplementedError
     elif args.arch == 'FFMellowmax':

@@ -7,6 +7,8 @@ from customer_behaviour.tools import dgm as dgm
 
 DETERMINISTIC_SAMPLE = False
 
+N_DEMOS_PER_EXPERT = 20
+
 
 def categorize_age(age):
     if age < 30: return 0
@@ -29,6 +31,15 @@ class Case1():
         action_space = spaces.Discrete(2)
 
         return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
 
     def get_action(self, receipt):
         action = 1 if receipt[0] > 0 else 0  # We only consider the first item
@@ -62,6 +73,15 @@ class Case2():
 
         return observation_space, action_space
 
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.wsample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
     def get_action(self, receipt):
         action = 1 if receipt[0] > 0 else 0  # We only consider the first item
         return action
@@ -79,10 +99,58 @@ class Case2():
         return new_state
 
 
+class Case3():
+    def __init__(self, model):
+        self.model = model
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        sample = self.model.sample2(n_demos_per_expert, n_historical_events, n_time_steps, n_product_groups=1)
+        return sample
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiDiscrete(n_historical_events * [50])  # Assume that there is always less than 50 days between two consecutive purchases
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_action(self, receipt):
+        action = 1 if receipt[0] > 0 else 0  # We only consider the first item
+        return action
+
+    def get_initial_state(self, history):
+        # decode days between purchases
+        temp = history[0, :]  # We only consider the first item
+        assert temp[-1] > 0
+
+        initial_state = []
+        i = 0
+        for h in reversed(temp):
+            if h > 0:
+                initial_state.append(i)
+                i = 1
+            else:
+                i += 1
+
+        return initial_state
+
+    def get_step(self, state, action):
+        if action == 0:
+            # no purchase
+            new_state = state.copy()
+            new_state[0] += 1          
+        else:
+            # purchase
+            new_state = [0, *state[:-1]]
+            new_state[1] += 1
+        return new_state
+
+
 def define_case(case):
     switcher = {
         1: Case1,
-        2: Case2
+        2: Case2,
+        3: Case3
     }
     return switcher.get(case)
 
@@ -103,12 +171,13 @@ class DiscreteBuyingEvents(gym.Env):
         self.state = None
 
 
-    def initialize_environment(self, case, n_historical_events, episode_length, agent_seed=None):
+    def initialize_environment(self, case, n_historical_events, episode_length, n_demos_per_expert, agent_seed=None):
         temp = define_case(case)
         self.case = temp(self.model)
 
         self.n_historical_events = n_historical_events
         self.episode_length = episode_length
+        self.n_demos_per_expert = n_demos_per_expert
         self.agent_seed = agent_seed
 
         self.observation_space, self.action_space = self.case.get_spaces(n_historical_events)
@@ -119,41 +188,36 @@ class DiscreteBuyingEvents(gym.Env):
         actions = []
 
         for i_expert in range(n_experts):
-            temp_states = []
-            temp_actions = []
-
             self.model.spawn_new_customer(i_expert) if seed else model.spawn_new_customer()
-            
-            if DETERMINISTIC_SAMPLE:
-                print('Warning: deterministic sampling of expert trajectories')
-                sample = self.model.sample_deterministically(self.n_historical_events + n_time_steps)
-            else:
-                sample = self.model.sample(self.n_historical_events + n_time_steps)
 
-            history = sample[:, :self.n_historical_events]        
-            initial_state = self.case.get_initial_state(history)
-            
-            self.state = initial_state
+            sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, n_time_steps)
 
-            temp_states.append(np.array(initial_state))  # the function step(action) returns the state as an np.array
+            for subsample in sample:
+                temp_states = []
+                temp_actions = []
 
-            i = self.n_historical_events
-            while i < sample.shape[1]:
-                receipt = sample[:, i]
-                action = self.case.get_action(receipt)
-                temp_actions.append(action)
+                history = subsample[0]
+                data = subsample[1]
 
-                if i == sample.shape[1] - 1:
-                    # The number of states and actions must be equal
-                    pass
-                else:
-                    state, _, _, _ = self.step(action)
-                    temp_states.append(state)
+                initial_state = self.case.get_initial_state(history)
 
-                i += 1
+                self.state = initial_state
 
-            states.append(temp_states)
-            actions.append(temp_actions)
+                temp_states.append(np.array(initial_state))  # the function step(action) returns the state as an np.array
+
+                for i, receipt in enumerate(data.T, start=1):  # transpose since the receipts are columns in data
+                    action = self.case.get_action(receipt)
+                    temp_actions.append(action)
+
+                    if i == data.shape[1]:
+                        # The number of states and actions must be equal
+                        pass
+                    else:
+                        state, _, _, _ = self.step(action)
+                        temp_states.append(state)
+
+                states.append(temp_states)
+                actions.append(temp_actions)
 
         np.savez(out_dir + '/expert_trajectories.npz', states=np.array(states, dtype=object),
              actions=np.array(actions, dtype=object))
@@ -177,11 +241,14 @@ class DiscreteBuyingEvents(gym.Env):
     def reset(self):
         # Reset the state of the environment to an initial state
         self.model.spawn_new_customer(self.agent_seed)
-        if DETERMINISTIC_SAMPLE:
-            sample = self.model.sample_deterministically(self.n_historical_events)
-        else:
-            sample = self.model.sample(self.n_historical_events)
-        self.state = self.case.get_initial_state(sample)
+
+        sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, 0)
+        # sample is an array of tuples (history, data) of length n_demos_per_expert
+        # choose a random history
+        i = np.random.randint(0, self.n_demos_per_expert)
+        history, _ = sample[i]
+        
+        self.state = self.case.get_initial_state(history)
         self.n_time_steps = 0
         return np.array(self.state)
     
@@ -194,6 +261,39 @@ class DiscreteBuyingEvents(gym.Env):
 ########## Trash ##########
 ###########################
 
+
+'''
+sample = self.model.sample(n_demos_per_expert * (self.n_historical_events + n_time_steps))
+
+for subsample in np.split(sample, n_demos_per_expert, axis=1):
+    temp_states = []
+    temp_actions = []
+
+    history = subsample[:, :self.n_historical_events]
+    initial_state = self.case.get_initial_state(history)
+
+    self.state = initial_state
+
+    temp_states.append(np.array(initial_state))  # the function step(action) returns the state as an np.array
+
+    i = self.n_historical_events
+    while i < subsample.shape[1]:
+        receipt = subsample[:, i]
+        action = self.case.get_action(receipt)
+        temp_actions.append(action)
+
+        if i == subsample.shape[1] - 1:
+            # The number of states and actions must be equal
+            pass
+        else:
+            state, _, _, _ = self.step(action)
+            temp_states.append(state)
+
+        i += 1
+
+    states.append(temp_states)
+    actions.append(temp_actions)
+'''
 
 '''
 class SpaceSwitcher():

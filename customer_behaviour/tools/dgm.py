@@ -62,8 +62,55 @@ class DGM:
             self.inventory = np.maximum(0,self.inventory - np.random.uniform(0,self.gamma))
             purchase = np.zeros((self.N,1))
         return purchase
-                    
-    def sample(self,L):
+
+    def sample2(self, n_demos, n_historical_events, n_time_steps, n_product_groups=6):
+        self.inventory = np.divide(np.random.gamma(self.lambd),self.lambd)
+
+        all_sample = np.zeros((self.N, 0))
+
+        sample = []
+
+        l = 0
+
+        for _ in range(n_demos):
+            # Sample history for initial state
+            history = np.zeros((self.N, 0))
+            n_buys = np.array(n_product_groups * [0])
+            while min(n_buys) < n_historical_events:
+                # print(n_buys)
+                purchase = self._update(day = np.mod(l,7))
+                all_sample = np.column_stack((all_sample, purchase))
+                history = np.column_stack((history, purchase))
+                temp = [int(x) for x in purchase > 0]
+                n_buys += temp[:n_product_groups]
+                l += 1
+            # Sample data
+            data = np.zeros((self.N, n_time_steps))
+            for j in range(n_time_steps):
+                purchase = self._update(day = np.mod(l,7))
+                all_sample = np.column_stack((all_sample, purchase))
+                data[:, [j]] = purchase
+                l += 1
+            sample.append((history, data))
+        
+        np.random.seed(None)
+
+        '''
+        import matplotlib.pyplot as plt
+        _, (ax1, ax2) = plt.subplots(2, 1)
+        ax1.plot(all_sample[0, :])
+        temp = []
+        for s in sample:
+            temp.extend(s[0][0, :])
+            temp.extend(s[1][0, :])
+        ax2.plot(temp)
+        plt.show()
+        '''
+        
+        return sample
+
+
+    def sample(self, L):
         self.inventory = np.divide(np.random.gamma(self.lambd),self.lambd)
         #print("Inventory: ", np.round(100*self.inventory.transpose()))
         sample = np.zeros((self.N,L))   
@@ -74,6 +121,7 @@ class DGM:
             #print("Inventory: ", np.round(100*self.inventory.transpose()))
             sample[:,[l]] = purchase
             inventory[:,[l]] = np.round(100*self.inventory)
+        np.random.seed(None)  # We do not want the following random values to be affected by the seed used for spawning a new customer
         return sample
 
     def sample_deterministically(self, L):
