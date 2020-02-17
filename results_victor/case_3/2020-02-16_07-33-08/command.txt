@@ -1,0 +1,1 @@
+main.py airl --gpu 0 --n_demos_per_expert 20 --n_training_episodes 10000 --n_historical_events 35 --case discrete_events --n_experts 1 --state_rep 3 --episode_length 100 --length_expert_TS 100 --seed_expert True --agent_seed 0
