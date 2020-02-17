@@ -3,25 +3,41 @@ import numpy as np
 class TimeSeriesAnalysis:
     def __init__(self, x, y = None):
         """Both x and y are time series"""
-        self.x = x
+        if x.ndim > 1:
+            self.x = x
+        else:
+            self.x = np.reshape(x, (1, x.size))
         self.y = y
         self.n_product_groups = self.x.shape[0]
 
     def get_features(self):
         self.mean_freq, self.std_freq = self.get_mean_std_freq()
         self.mean_cost, self.std_cost = self.get_mean_std_cost()
+        return [self.mean_freq, self.std_freq]
+
+    def get_min_max_elapsed_days(self):
+        min_elapsed_days = list()
+        max_elapsed_days = list()
+        for i in range(self.n_product_groups):
+            indices = np.argwhere(self.x[i, :])
+            tmp = list(np.diff([x[0] for x in indices]))
+            tmp.append(indices[0][0] + 1)  # the last entry in the history was a purchase
+            min_elapsed_days.append(min(tmp))
+            max_elapsed_days.append(max(tmp))
+        return min_elapsed_days, max_elapsed_days
+
 
     def get_mean_std_freq(self):
         mean_frequencies = list()
         std_frequencies = list()
         # Find the indices of non-zero values in the time series
-        indices = np.argwhere(self.x)
+        indices = np.argwhere(self.x)  # indices is a list of lists where each sublist is the index of a non-zero element (e.g. [i, j] if self.x is a matrix)
         for i in range(self.n_product_groups):
-            # calculate the distance between non-zero values
-            tmp = np.diff(indices[np.where(indices[:,0] == i),1])
+            # Calculate the distance between non-zero values
+            tmp = np.diff(indices[np.where(indices[:,0] == i), 1])
             mean_frequencies.append(np.mean(tmp))
             std_frequencies.append(np.std(tmp))
-        return np.mean(mean_frequencies), np.std(std_frequencies)
+        return mean_frequencies, std_frequencies
 
     def get_mean_std_cost(self):
         costs = list()
@@ -48,9 +64,9 @@ class TimeSeriesAnalysis:
         # return result
         #result = np.correlate(x, x, mode='full')
         #return result[result.size/2:]
-        return np.array([1]+[np.corrcoef(self.x[:-i], self.x[i:])[0,1]  \
-            for i in range(1, shift)])
+        tmp = [1] + [np.corrcoef(self.x[:-i], self.x[i:])[0,1] for i in range(1, shift)]
+        return np.array(tmp)
 
     def get_crosscorr(self):
-        return np.correlate(self.x, self.y,"full")
+        return np.correlate(self.x, self.y, "full")
         
