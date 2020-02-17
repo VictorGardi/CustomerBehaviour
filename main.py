@@ -9,7 +9,7 @@ To solve CartPole-v0, run:
 import os
 import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
-
+import numpy as np
 import gym
 import custom_gym
 import gym.wrappers
@@ -75,20 +75,31 @@ class A3CFFGaussian(chainer.Chain, a3c.A3CModel):
     def pi_and_v(self, state):
         return self.pi(state), self.v(state)
 
+def convert_logits_to_probs(logits):
+    odds = np.exp(logits)
+    probs = odds/(np.sum(odds))
+    return probs
 
-def save_agent_demo(env, agent, out_dir, max_t=1000):
+
+def save_agent_demo(env, agent, out_dir, max_t=100):
     import numpy as np
     r, t = 0, 0
     agent_observations = []
     agent_actions = []
+    action_probs = []
     while t < max_t:
         agent_observations.append([])
         agent_actions.append([])
+        action_probs.append([])
         obs = env.reset()
         while True:
+            b_state = agent.batch_states([obs], agent.xp, agent.phi)
+            logits = agent.model(b_state)[0].logits._data[0]
+            probs = convert_logits_to_probs(logits[0,:])
             act = agent.act(obs)
             agent_observations[-1].append(obs)
             agent_actions[-1].append(act)
+            action_probs[-1].append(probs)
             obs, reward, done, _ = env.step(act)
             t += 1
             r += reward
@@ -99,6 +110,7 @@ def save_agent_demo(env, agent, out_dir, max_t=1000):
     # save numpy array consists of lists
     np.savez(out_dir+'/trajectories.npz', states=np.array(agent_observations, dtype=object),
              actions=np.array(agent_actions, dtype=object))
+    np.savez(out_dir+'/action_probs.npz', action_probs = np.array(action_probs, dtype=object))
 
 
 def main():
