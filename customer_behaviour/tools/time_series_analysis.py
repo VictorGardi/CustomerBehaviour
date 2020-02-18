@@ -16,10 +16,25 @@ class TimeSeriesAnalysis:
         return [self.mean_freq, self.std_freq]
 
     def get_min_max_elapsed_days(self):
+        # Days between purchases
         min_elapsed_days = list()
         max_elapsed_days = list()
         for i in range(self.n_product_groups):
-            indices = np.argwhere(self.x[i, :])
+            tmp_list = list(self.x[i, :])
+            if tmp_list.count(tmp_list[0]) == len(tmp_list):
+                # All elements are the same
+                if tmp_list[0] == 0:
+                    # The customer never buys
+                    min_elapsed_days.append(len(tmp_list))
+                    max_elapsed_days.append(len(tmp_list))
+                elif tmp_list[0] == 1:
+                    # The customer always buys
+                    min_elapsed_days.append(1)
+                    max_elapsed_days.append(1)
+                else:
+                    raise NotImplementedError
+                continue
+            indices = np.argwhere(tmp_list)
             tmp = list(np.diff([x[0] for x in indices]))
             tmp.append(indices[0][0] + 1)  # the last entry in the history was a purchase
             min_elapsed_days.append(min(tmp))
