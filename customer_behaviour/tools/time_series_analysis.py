@@ -50,8 +50,12 @@ class TimeSeriesAnalysis:
         for i in range(self.n_product_groups):
             # Calculate the distance between non-zero values
             tmp = np.diff(indices[np.where(indices[:,0] == i), 1])
-            mean_frequencies.append(np.mean(tmp))
-            std_frequencies.append(np.std(tmp))
+            if tmp.size != 0:
+                mean_frequencies.append(np.mean(tmp))
+                std_frequencies.append(np.std(tmp))
+            else:
+                mean_frequencies.append(0)
+                std_frequencies.append(0)
         return mean_frequencies, std_frequencies
 
     def get_mean_std_cost(self):
