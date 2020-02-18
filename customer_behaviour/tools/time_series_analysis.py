@@ -1,13 +1,12 @@
 import numpy as np
 
-class TimeSeriesAnalysis:
-    def __init__(self, x, y = None):
+class FeatureExtraction:
+    def __init__(self, x, case = 'discrete_case'):
         """Both x and y are time series"""
         if x.ndim > 1:
             self.x = x
         else:
             self.x = np.reshape(x, (1, x.size))
-        self.y = y
         self.n_product_groups = self.x.shape[0]
 
     def get_features(self):
@@ -85,7 +84,4 @@ class TimeSeriesAnalysis:
         #return result[result.size/2:]
         tmp = [1] + [np.corrcoef(self.x[:-i], self.x[i:])[0,1] for i in range(1, shift)]
         return np.array(tmp)
-
-    def get_crosscorr(self):
-        return np.correlate(self.x, self.y, "full")
         
