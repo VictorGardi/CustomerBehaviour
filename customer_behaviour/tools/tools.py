@@ -59,4 +59,10 @@ def read_npz_file(path, get_npz_as_list = False, print_npz = True):
         ls.append(data[item])
     return ls
 
+def convert_imports(dir):
+    for filename in os.listdir(dir):
+        if filename.endswith(".py"): 
+            text = open(filename, 'r+')
+            for line in text.readlines():    
+                if keyword in line:
     
