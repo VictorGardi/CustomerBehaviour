@@ -74,7 +74,7 @@ class Case2():
         return observation_space, action_space
 
     def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
-        temp_sample = self.model.wsample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
         sample = []
         for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
             history = subsample[:, :n_historical_events]

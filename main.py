@@ -9,7 +9,7 @@ To solve CartPole-v0, run:
 import os
 import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
-
+import numpy as np
 import gym
 import custom_gym
 import gym.wrappers
@@ -75,20 +75,31 @@ class A3CFFGaussian(chainer.Chain, a3c.A3CModel):
     def pi_and_v(self, state):
         return self.pi(state), self.v(state)
 
+def convert_logits_to_probs(logits):
+    odds = np.exp(logits)
+    probs = odds/(np.sum(odds))
+    return probs
 
-def save_agent_demo(env, agent, out_dir, max_t=1000):
+
+def save_agent_demo(env, agent, out_dir, max_t=100):
     import numpy as np
     r, t = 0, 0
     agent_observations = []
     agent_actions = []
+    action_probs = []
     while t < max_t:
         agent_observations.append([])
         agent_actions.append([])
+        action_probs.append([])
         obs = env.reset()
         while True:
+            b_state = agent.batch_states([obs], agent.xp, agent.phi)
+            logits = agent.model(b_state)[0].logits._data[0]
+            probs = convert_logits_to_probs(logits[0,:])
             act = agent.act(obs)
             agent_observations[-1].append(obs)
             agent_actions[-1].append(act)
+            action_probs[-1].append(probs)
             obs, reward, done, _ = env.step(act)
             t += 1
             r += reward
@@ -99,6 +110,7 @@ def save_agent_demo(env, agent, out_dir, max_t=1000):
     # save numpy array consists of lists
     np.savez(out_dir+'/trajectories.npz', states=np.array(agent_observations, dtype=object),
              actions=np.array(agent_actions, dtype=object))
+    np.savez(out_dir+'/action_probs.npz', action_probs = np.array(action_probs, dtype=object))
 
 
 def main():
@@ -180,17 +192,21 @@ def main():
     sample_env = gym.make(args.env)
     sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.agent_seed)
     demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.length_expert_TS, out_dir=dst, seed=args.seed_expert)
-    timestep_limit = sample_env.spec.tags.get(
-        'wrapper_config.TimeLimit.max_episode_steps')
+    timestep_limit = sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
     obs_space = sample_env.observation_space
     action_space = sample_env.action_space
 
-    ####-----create_expert data here and take args.seed_expert as input and save as expert_trajectories.npz 
-    # file in dst that file path is our demonstrations variable ----
-
     # Normalize observations based on their empirical mean and variance
-
-    obs_normalizer = None                                             # HarDKODAT
+    # obs_normalizer = None
+    if args.state_rep == 1:
+        shape = obs_space.low.size
+    elif args.state_rep == 2:
+        shape = obs_space.n
+    elif args.state_rep == 3:
+        shape = obs_space.nvec.size
+    else:
+        raise NotImplementedError
+    obs_normalizer = chainerrl.links.EmpiricalNormalization(shape, clip_threshold=5)
     #chainerrl.links.EmpiricalNormalization(obs_space.low.size, clip_threshold=5)
 
     # Switch policy types accordingly to action space types
@@ -253,9 +269,11 @@ def main():
                       standardize_advantages=args.standardize_advantages,)
 
     if args.load:
+        # By default, not in here
         agent.load(args.load)
 
     if args.demo:
+        # By default, not in here
         env = make_env(True)
         eval_stats = experiments.eval_performance(
             env=env,
@@ -285,14 +303,14 @@ def main():
 
         experiments.train_agent_with_evaluation(
             agent=agent,
-            env=make_env(False),
-            eval_env=make_env(True),
+            env=make_env(False),                    # Environment train the agent against (False -> scaled rewards)
+            eval_env=make_env(True),                # Environment used for evaluation
             outdir=args.outdir,
-            steps=args.steps,
-            eval_n_steps=None,
-            eval_n_episodes=args.eval_n_runs,
-            eval_interval=args.eval_interval,
-            train_max_episode_len=timestep_limit,
+            steps=args.steps,                       # Total number of timesteps for training (args.n_training_episodes*args.episode_length)
+            eval_n_steps=None,                      # Number of timesteps at each evaluation phase
+            eval_n_episodes=args.eval_n_runs,       # Number of episodes at each evaluation phase.
+            eval_interval=args.eval_interval,       # Interval of evaluation
+            train_max_episode_len=timestep_limit,   # Maximum episode length during training 
             save_best_so_far_agent=False,
             step_hooks=[
                 lr_decay_hook,
@@ -304,8 +322,6 @@ def main():
     # Move result files to correct folder and remove empty folder
     move_dir(args.outdir, dst)
     os.rmdir(args.outdir)
-
-    # Visualization
 
 
 if __name__ == '__main__':
