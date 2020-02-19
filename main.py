@@ -154,7 +154,7 @@ def main():
     parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
     parser.add_argument('--monitor', action='store_true')
     parser.add_argument('--update-interval', type=int, default=128)
-    parser.add_argument('--batchsize', type=int, default=64)
+    parser.add_argument('--batchsize', type=int, default=64)  # mini-batch size
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     args = parser.parse_args()
@@ -310,7 +310,7 @@ def main():
             steps=args.steps,                       # Total number of timesteps for training (args.n_training_episodes*args.episode_length)
             eval_n_steps=None,                      # Number of timesteps at each evaluation phase
             eval_n_episodes=args.eval_n_runs,       # Number of episodes at each evaluation phase (default: 10)
-            eval_interval=args.eval_interval,       # Interval of evaluation
+            eval_interval=args.eval_interval,       # Interval of evaluation (defualt: 10000 steps (?))
             train_max_episode_len=timestep_limit,   # Maximum episode length during training (is None)
             save_best_so_far_agent=False,
             step_hooks=[

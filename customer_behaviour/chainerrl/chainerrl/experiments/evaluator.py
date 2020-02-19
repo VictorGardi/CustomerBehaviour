@@ -3,10 +3,14 @@ import multiprocessing as mp
 import os
 import statistics
 import time
+import os.path
 
 import numpy as np
 
 import chainerrl
+
+from customer_behaviour.tools.time_series_analysis import FeatureExtraction
+from customer_behaviour.tools.cluster import Cluster
 
 
 """Columns that describe information about an experiment.
@@ -24,7 +28,7 @@ _basic_columns = ('steps', 'episodes', 'elapsed', 'mean',
                   'median', 'stdev', 'max', 'min')
 
 
-def run_evaluation_episodes(env, agent, n_steps, n_episodes,
+def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
                             max_episode_len=None, logger=None):
     """Run multiple evaluation episodes and return returns.
 
@@ -51,12 +55,14 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes,
     reset = True
     while not terminate:
         if reset:
+            actions = []
             obs = env.reset()
             done = False
             test_r = 0
             episode_len = 0
             info = {}
         a = agent.act(obs)
+        actions.append(a)
         obs, r, done, info = env.step(a)
         test_r += r
         episode_len += 1
@@ -66,6 +72,27 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes,
         if reset:
             logger.info('evaluation episode %s length:%s R:%s',
                         len(scores), episode_len, test_r)
+            
+            # Extract features from the time-series (i.e. "actions") and
+            # compare this feature vector against the cluster of expert features
+            features = [FeatureExtraction(np.array(actions), case='discrete_events').get_features()]  # how do we get around the fact that case need to be passed?
+
+            # Get expert features
+            file = os.path.abspath(os.path.join(outdir, os.pardir)) + '/expert_trajectories.npz'
+            data = np.load(file, allow_pickle=True)
+            assert sorted(data.files) == sorted(['states', 'actions'])
+            
+            expert_actions = data['actions']
+            expert_features = []
+            for x in expert_actions:
+                temp = FeatureExtraction(np.array(x), case='discrete_events').get_features()
+                expert_features.append(temp)
+
+            cluster = Cluster(features, expert_features)
+
+            mean_dist, min_dist, max_dist = cluster.get_dist_between_clusters()
+            logger.info('mean_dist: %.1f, min_dist: %.1f, max_dist: %.1f' % (mean_dist, min_dist, max_dist))
+
             # As mixing float and numpy float causes errors in statistics
             # functions, here every score is cast to float.
             scores.append(float(test_r))
@@ -215,7 +242,7 @@ def batch_run_evaluation_episodes(
     return [float(r) for r in eval_episode_returns]
 
 
-def eval_performance(env, agent, n_steps, n_episodes, max_episode_len=None,
+def eval_performance(env, agent, n_steps, n_episodes, outdir, max_episode_len=None,
                      logger=None):
     """Run multiple evaluation episodes and return statistics.
 
@@ -242,7 +269,7 @@ def eval_performance(env, agent, n_steps, n_episodes, max_episode_len=None,
             logger=logger)
     else:
         scores = run_evaluation_episodes(
-            env, agent, n_steps, n_episodes,
+            env, agent, n_steps, n_episodes, outdir,
             max_episode_len=max_episode_len,
             logger=logger)
     stats = dict(
@@ -322,7 +349,7 @@ class Evaluator(object):
 
     def evaluate_and_update_max_score(self, t, episodes):
         eval_stats = eval_performance(
-            self.env, self.agent, self.n_steps, self.n_episodes,
+            self.env, self.agent, self.n_steps, self.n_episodes, self.outdir,
             max_episode_len=self.max_episode_len,
             logger=self.logger)
         elapsed = time.time() - self.start_time

@@ -51,9 +51,15 @@ class FeatureExtraction():
                 continue
             indices = np.argwhere(tmp_list)
             tmp = list(np.diff([x[0] for x in indices]))
+            if not tmp:
+                # only one peak...
+                # TODO: make better solution 
+                min_elapsed_days.append(len(tmp_list))
+                max_elapsed_days.append(len(tmp_list))
             # tmp.append(indices[0][0] + 1)  # the last entry in the history was a purchase
-            min_elapsed_days.append(min(tmp))
-            max_elapsed_days.append(max(tmp))
+            else:
+                min_elapsed_days.append(min(tmp))
+                max_elapsed_days.append(max(tmp))
         return min_elapsed_days, max_elapsed_days
 
     def get_mean_std_purchase_frequency(self):
