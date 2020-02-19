@@ -2,6 +2,7 @@ import os
 import re
 import json
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Result():
     def __init__(self, dir_path):

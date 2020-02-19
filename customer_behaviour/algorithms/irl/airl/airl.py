@@ -1,5 +1,6 @@
 import chainer
 import numpy as np
+from chainerrl.agents.ppo import _make_dataset
 from chainerrl.agents import PPO
 from itertools import chain
 import collections
@@ -88,7 +89,15 @@ class AIRL(PPO):
                     i += 1
             assert self.memory[0][0]['reward'] == float(rewards[0]), 'rewards is not replaced.'
 
-            dataset = self._make_dataset()
+            dataset = _make_dataset(
+                    episodes=self.memory,
+                    model=self.model,
+                    phi=self.phi,
+                    batch_states=self.batch_states,
+                    obs_normalizer=self.obs_normalizer,
+                    gamma=self.gamma,
+                    lambd=self.lambd,
+                )
             assert len(dataset) == dataset_size
             self._update(dataset)
             self.memory = []
