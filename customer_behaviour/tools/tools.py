@@ -60,9 +60,13 @@ def read_npz_file(path, get_npz_as_list = False, print_npz = True):
     return ls
 
 def convert_imports(dir):
+    keyword = 'chainerrl'
+    replacement = 'customer_behaviour.chainerrl'
     for filename in os.listdir(dir):
         if filename.endswith(".py"): 
-            text = open(filename, 'r+')
-            for line in text.readlines():    
-                if keyword in line:
+            with open(dir + '/' + filename) as f:
+                newText=f.read().replace(keyword, replacement)
+
+            with open(dir + '/' + filename, "w") as f:
+                f.write(newText)
     
