@@ -17,6 +17,7 @@ import gym.wrappers
 import chainer
 from chainer import functions as F
 import chainerrl
+# from customer_behaviour import chainerrl
 
 from chainerrl.agents import a3c
 from chainerrl.agents import PPO
@@ -308,9 +309,9 @@ def main():
             outdir=args.outdir,
             steps=args.steps,                       # Total number of timesteps for training (args.n_training_episodes*args.episode_length)
             eval_n_steps=None,                      # Number of timesteps at each evaluation phase
-            eval_n_episodes=args.eval_n_runs,       # Number of episodes at each evaluation phase.
+            eval_n_episodes=args.eval_n_runs,       # Number of episodes at each evaluation phase (default: 10)
             eval_interval=args.eval_interval,       # Interval of evaluation
-            train_max_episode_len=timestep_limit,   # Maximum episode length during training 
+            train_max_episode_len=timestep_limit,   # Maximum episode length during training (is None)
             save_best_so_far_agent=False,
             step_hooks=[
                 lr_decay_hook,

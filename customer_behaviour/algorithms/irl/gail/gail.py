@@ -2,6 +2,7 @@ import chainer
 import numpy as np
 import collections
 import chainer.functions as F
+from chainerrl.agents.ppo import _make_dataset
 from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
@@ -12,6 +13,7 @@ class GAIL(PPO):
     def __init__(self, discriminator, demonstrations, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
+
         self.discriminator = discriminator
 
         self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
@@ -73,7 +75,16 @@ class GAIL(PPO):
                 for transition in episode:
                     transition['reward'] = float(rewards[i])
                     i += 1
-            dataset = self._make_dataset()
+            dataset = _make_dataset(
+                    episodes=self.memory,
+                    model=self.model,
+                    phi=self.phi,
+                    batch_states=self.batch_states,
+                    obs_normalizer=self.obs_normalizer,
+                    gamma=self.gamma,
+                    lambd=self.lambd,
+                )
+            #dataset = self._make_dataset()
             assert len(dataset) == dataset_size
             self._update(dataset)
             self.memory = []

@@ -1,0 +1,6 @@
+cached-property
+chainer>=4.0.0
+gym>=0.9.7
+numpy>=1.10.4
+pillow
+scipy

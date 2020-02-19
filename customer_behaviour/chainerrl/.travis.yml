@@ -1,0 +1,48 @@
+language: python
+dist: xenial
+cache: pip
+python:
+  - "3.6"
+env:
+  - CHAINER_VERSION=4
+  - CHAINER_VERSION=stable
+services:
+  - xvfb
+before_install:
+  - sudo add-apt-repository -y ppa:cran/ffmpeg-4
+  - sudo apt-get update
+  - sudo apt install -y freeglut3-dev ffmpeg
+# command to install dependencies
+install:
+  - pip install --upgrade pip setuptools wheel
+  - |
+    if [[ $CHAINER_VERSION == 4 ]]; then
+      pip install "chainer==4.0.0"
+    else
+      pip install chainer
+    fi
+  - pip install pytest-cov
+  - pip install gym[atari]==0.16.0
+  - pip install -r requirements.txt --only-binary=numpy,scipy
+  - pip install jupyter
+  - pip install autopep8
+  - pip install flake8
+  - pip install coveralls
+  - pip install opencv-python
+  - pip install pybullet
+  - python setup.py develop
+  - python -c "import numpy; numpy.show_config()"
+# command to run tests
+script:
+  - flake8 chainerrl
+  - flake8 tests
+  - flake8 examples
+  - autopep8 -r chainerrl tests examples --diff | tee check_autopep8
+  - test ! -s check_autopep8
+  - pytest -m "not gpu and not slow" -x tests --cov=chainerrl --ignore tests/misc_tests/test_pretrained_models.py
+  - ./test_examples.sh -1
+  - if [[ $TRAVIS_PYTHON_VERSION == 3.6 && $CHAINER_VERSION == stable ]]; then
+      jupyter nbconvert --to notebook --execute examples/quickstart/quickstart.ipynb --ExecutePreprocessor.timeout=600;
+    fi
+after_success:
+  - coveralls
