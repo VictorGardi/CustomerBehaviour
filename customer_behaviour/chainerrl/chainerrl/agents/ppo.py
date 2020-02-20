@@ -614,7 +614,6 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
         self._update_if_dataset_is_ready()
 
         xp = self.xp
-        print(xp)
         b_state = self.batch_states([obs], xp, self.phi)
 
         if self.obs_normalizer:
