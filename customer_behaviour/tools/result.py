@@ -12,7 +12,7 @@ class Result():
         self.scores_path = os.getcwd() + dir_path + '/scores.txt'
         self.args_path = os.getcwd() + dir_path + '/args.txt'
         
-        self.action_probs = self.load_action_probs(self.action_probs_path) if os.path.exists(self.action_probs_path) else None
+        # self.action_probs = self.load_action_probs(self.action_probs_path) if os.path.exists(self.action_probs_path) else None
         self.expert_states, self.expert_actions = self.load_data(self.expert_data)
         self.learner_states, self.learner_actions = self.load_data(self.learner_data)
     

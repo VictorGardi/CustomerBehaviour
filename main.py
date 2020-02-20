@@ -82,7 +82,7 @@ def convert_logits_to_probs(logits):
     return probs
 
 
-def save_agent_demo(env, agent, out_dir, max_t=100):
+def save_agent_demo(env, agent, out_dir, max_t=10000):
     import numpy as np
     r, t = 0, 0
     agent_observations = []
@@ -136,15 +136,15 @@ def main():
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))
-    parser.add_argument('--bound-mean', action='store_true')
+    parser.add_argument('--bound-mean', action='store_true', default=False)  # only for FFGaussian
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed [0, 2 ** 32)')
     #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
     
     parser.add_argument('--eval-interval', type=int, default=10000)
     parser.add_argument('--eval-n-runs', type=int, default=10)
-    parser.add_argument('--reward-scale-factor', type=float, default=1e-2)
-    parser.add_argument('--standardize-advantages', action='store_true')
+    parser.add_argument('--reward-scale-factor', type=float, default=1e-2)  # does not make sense since we do not have any reward signal
+    parser.add_argument('--standardize-advantages', action='store_true', default=True)  # True is default in PPO
     parser.add_argument('--render', action='store_true', default=False)
     parser.add_argument('--lr', type=float, default=3e-4)
     parser.add_argument('--weight-decay', type=float, default=0.0)
@@ -152,7 +152,7 @@ def main():
     parser.add_argument('--load', type=str, default='')
     #parser.add_argument('--load_demo', type=str, default='')
     parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
-    parser.add_argument('--monitor', action='store_true')
+    parser.add_argument('--monitor', action='store_true', default=False)
     parser.add_argument('--update-interval', type=int, default=128)
     parser.add_argument('--batchsize', type=int, default=64)  # mini-batch size
     parser.add_argument('--epochs', type=int, default=10)
@@ -161,6 +161,7 @@ def main():
     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
     args.env = get_env(args.case, args.n_experts)  
     args.steps = args.n_training_episodes*args.episode_length
+
 
     logging.basicConfig(level=args.logger_level)
 
@@ -194,6 +195,8 @@ def main():
     sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.agent_seed)
     demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.length_expert_TS, out_dir=dst, seed=args.seed_expert)
     timestep_limit = sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
+    
+
     obs_space = sample_env.observation_space
     action_space = sample_env.action_space
 
@@ -318,7 +321,7 @@ def main():
                 clip_eps_decay_hook,
             ],
         )
-        save_agent_demo(make_env(False), agent, args.outdir)
+        save_agent_demo(make_env(False), agent, args.outdir, 10 * args.episode_length)
     
     # Move result files to correct folder and remove empty folder
     move_dir(args.outdir, dst)
