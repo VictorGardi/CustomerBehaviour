@@ -4,6 +4,7 @@ import os
 import statistics
 import time
 import os.path
+import custom_gym
 
 import numpy as np
 
@@ -75,7 +76,11 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
             
             # Extract features from the time-series (i.e. "actions") and
             # compare this feature vector against the cluster of expert features
-            features = [FeatureExtraction(np.array(actions), case='discrete_events').get_features()]  # how do we get around the fact that case need to be passed?
+
+            if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
+                features = [FeatureExtraction(np.array(actions), case='discrete_events').get_features()]  # how do we get around the fact that case need to be passed?
+            else:
+                raise NotImplementedError
 
             # Get expert features
             file = os.path.abspath(os.path.join(outdir, os.pardir)) + '/expert_trajectories.npz'
