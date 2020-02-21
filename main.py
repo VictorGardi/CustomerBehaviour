@@ -31,7 +31,7 @@ from chainerrl import policies
 class A3CFFSoftmax(chainer.ChainList, a3c.A3CModel):
     """An example of A3C feedforward softmax policy."""
 
-    def __init__(self, ndim_obs, n_actions, hidden_sizes=(200, 200)):
+    def __init__(self, ndim_obs, n_actions, hidden_sizes=(64,64)):
         self.pi = policies.SoftmaxPolicy(
             model=links.MLP(ndim_obs, n_actions, hidden_sizes))
         self.v = links.MLP(ndim_obs, 1, hidden_sizes=hidden_sizes)
@@ -44,7 +44,7 @@ class A3CFFSoftmax(chainer.ChainList, a3c.A3CModel):
 class A3CFFMellowmax(chainer.ChainList, a3c.A3CModel):
     """An example of A3C feedforward mellowmax policy."""
 
-    def __init__(self, ndim_obs, n_actions, hidden_sizes=(200, 200)):
+    def __init__(self, ndim_obs, n_actions, hidden_sizes=(64,64)):
         self.pi = policies.MellowmaxPolicy(
             model=links.MLP(ndim_obs, n_actions, hidden_sizes))
         self.v = links.MLP(ndim_obs, 1, hidden_sizes=hidden_sizes)
@@ -216,9 +216,9 @@ def main():
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
         if args.state_rep == 1:
-            model = A3CFFSoftmax(obs_space.low.size, action_space.n)
+            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(args.batchsize))
         elif args.state_rep == 2:
-            model = A3CFFSoftmax(obs_space.n, action_space.n)
+            model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(args.batchsize))
         elif args.state_rep == 3:
             model = A3CFFSoftmax(obs_space.nvec.size, action_space.n)
         else:
