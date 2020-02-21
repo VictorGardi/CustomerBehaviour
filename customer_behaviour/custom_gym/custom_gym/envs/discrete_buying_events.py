@@ -171,12 +171,13 @@ class DiscreteBuyingEvents(gym.Env):
         self.state = None
 
 
-    def initialize_environment(self, case, n_historical_events, episode_length, n_demos_per_expert, agent_seed=None):
+    def initialize_environment(self, case, n_historical_events, episode_length, n_demos_per_expert, n_expert_time_steps, agent_seed=None):
         temp = define_case(case)
         self.case = temp(self.model)
 
         self.n_historical_events = n_historical_events
         self.episode_length = episode_length
+        self.n_expert_time_steps = n_expert_time_steps
         self.n_demos_per_expert = n_demos_per_expert
         self.agent_seed = agent_seed
 
@@ -242,10 +243,12 @@ class DiscreteBuyingEvents(gym.Env):
         # Reset the state of the environment to an initial state
         self.model.spawn_new_customer(self.agent_seed)
 
-        sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, 0)
+        temp = int((self.n_historical_events + self.n_expert_time_steps) / self.n_historical_events)
+
+        sample = self.case.get_sample(temp, self.n_historical_events, 0)
         # sample is an array of tuples (history, data) of length n_demos_per_expert
         # choose a random history
-        i = np.random.randint(0, self.n_demos_per_expert)
+        i = np.random.randint(0, temp)
         history, _ = sample[i]
         
         self.state = self.case.get_initial_state(history)

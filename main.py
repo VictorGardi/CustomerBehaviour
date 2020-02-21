@@ -174,7 +174,7 @@ def main():
 
     def make_env(test):
         env = gym.make(args.env)
-        env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.agent_seed)
+        env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.length_expert_TS, args.agent_seed)
 
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
@@ -192,7 +192,7 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
-    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.agent_seed)
+    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.length_expert_TS, args.agent_seed)
     demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.length_expert_TS, out_dir=dst, seed=args.seed_expert)
     timestep_limit = sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
     
@@ -216,9 +216,9 @@ def main():
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
         if args.state_rep == 1:
-            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(args.batchsize))
+            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(args.batchsize, args.batchsize))
         elif args.state_rep == 2:
-            model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(args.batchsize))
+            model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(args.batchsize, args.batchsize))
         elif args.state_rep == 3:
             model = A3CFFSoftmax(obs_space.nvec.size, action_space.n)
         else:
@@ -262,7 +262,7 @@ def main():
         from customer_behaviour.algorithms.irl.airl import Discriminator
         # obs_normalizer = None
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu)
+        D = Discriminator(gpu=args.gpu, n_units=args.batchsize)
         agent = Agent(demonstrations=demonstrations, discriminator=D,
                       model=model, optimizer=opt,
                       obs_normalizer=obs_normalizer,
