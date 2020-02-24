@@ -813,5 +813,5 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
             ('average_value_loss', _mean_or_nan(self.value_loss_record)),
             ('average_policy_loss', _mean_or_nan(self.policy_loss_record)),
             ('n_updates', self.optimizer.t),
-            ('explained_variance', self.explained_variance),
+            # ('explained_variance', self.explained_variance),
         ]

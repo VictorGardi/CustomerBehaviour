@@ -25,8 +25,10 @@ stdev: stdev of returns of evaluation runs
 max: maximum value of returns of evaluation runs
 min: minimum value of returns of evaluation runs
 """
-_basic_columns = ('steps', 'episodes', 'elapsed', 'mean',
-                  'median', 'stdev', 'max', 'min')
+
+_basic_columns = ('steps', 'episodes')
+
+# _basic_columns = ('steps', 'episodes', 'elapsed', 'mean', 'median', 'stdev', 'max', 'min')
 
 
 def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
@@ -53,6 +55,25 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     terminate = False
     timestep = 0
 
+    # Get expert features
+    file = os.path.abspath(os.path.join(outdir, os.pardir)) + '/eval_expert_trajectories.npz'
+    data = np.load(file, allow_pickle=True)
+    assert sorted(data.files) == sorted(['states', 'actions'])
+    
+    expert_actions = data['actions']
+    expert_features = []
+    print(len(expert_actions))
+    for x in expert_actions:
+        if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
+            temp = FeatureExtraction(np.array(x), case='discrete_events').get_features()
+        else:
+            raise NotImplementedError
+        expert_features.append(temp)
+
+    agent_features = []
+
+    print('----- ----- ----- ----- ----- ----- ----- ----- ----- -----')
+
     reset = True
     while not terminate:
         if reset:
@@ -78,25 +99,18 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
             # compare this feature vector against the cluster of expert features
 
             if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
-                features = [FeatureExtraction(np.array(actions), case='discrete_events').get_features()]  # how do we get around the fact that case need to be passed?
+                temp_features = [FeatureExtraction(np.array(actions), case='discrete_events').get_features()] 
             else:
                 raise NotImplementedError
 
-            # Get expert features
-            file = os.path.abspath(os.path.join(outdir, os.pardir)) + '/expert_trajectories.npz'
-            data = np.load(file, allow_pickle=True)
-            assert sorted(data.files) == sorted(['states', 'actions'])
-            
-            expert_actions = data['actions']
-            expert_features = []
-            for x in expert_actions:
-                temp = FeatureExtraction(np.array(x), case='discrete_events').get_features()
-                expert_features.append(temp)
+            agent_features.append(temp_features[0])
 
-            cluster = Cluster(features, expert_features)
+            cluster = Cluster(temp_features, expert_features)
 
             mean_dist, min_dist, max_dist = cluster.get_dist_between_clusters()
-            logger.info('mean_dist: %.1f, min_dist: %.1f, max_dist: %.1f' % (mean_dist, min_dist, max_dist))
+            # logger.info('mean_dist: %.1f, min_dist: %.1f, max_dist: %.1f' % (mean_dist, min_dist, max_dist))
+
+            # print('----- ----- ----- ----- ----- ----- ----- ----- ----- -----')
 
             # As mixing float and numpy float causes errors in statistics
             # functions, here every score is cast to float.
@@ -107,6 +121,23 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
             terminate = timestep >= n_steps
         if reset or terminate:
             agent.stop_episode()
+
+    # Compare entire clustersc
+    cluster = Cluster(agent_features, expert_features)
+    mean_dist, min_dist, max_dist = cluster.get_dist_between_clusters()
+    agent_within_SS = cluster.agent_within_SS
+    expert_within_SS = cluster.expert_within_SS
+
+    print('----- ----- ----- ----- ----- ----- ----- ----- ----- -----')
+    print('Comparing entire clusters')
+    logger.info('mean_dist: %.1f, min_dist: %.1f, max_dist: %.1f' % (mean_dist, min_dist, max_dist))
+    print('----- ----- ----- ----- ----- ----- ----- ----- ----- -----')
+
+    # Print cluster comparison to file
+    with open(os.path.join(outdir, 'cluster.txt'), 'a+') as f:
+        values = [mean_dist, min_dist, max_dist, agent_within_SS, expert_within_SS]
+        print('\t'.join(str(x) for x in values), file=f)
+
     # If all steps were used for a single unfinished episode
     if len(scores) == 0:
         scores.append(float(test_r))
@@ -352,6 +383,13 @@ class Evaluator(object):
             column_names = _basic_columns + custom_columns
             print('\t'.join(column_names), file=f)
 
+        # Create a file for saving cluster data
+        with open(os.path.join(self.outdir, 'cluster.txt'), 'w') as f:
+            # custom_columns = tuple(t[0] for t in self.agent.get_statistics())    # FIXA!!!
+            custom_columns = ('mean_dist', 'min_dist', 'max_dist', 'agent_within_SS', 'expert_within_SS')
+            # column_names = _basic_columns + custom_columns
+            print('\t'.join(custom_columns), file=f)
+
     def evaluate_and_update_max_score(self, t, episodes):
         eval_stats = eval_performance(
             self.env, self.agent, self.n_steps, self.n_episodes, self.outdir,
@@ -360,6 +398,7 @@ class Evaluator(object):
         elapsed = time.time() - self.start_time
         custom_values = tuple(tup[1] for tup in self.agent.get_statistics())
         mean = eval_stats['mean']
+        '''
         values = (t,
                   episodes,
                   elapsed,
@@ -368,6 +407,8 @@ class Evaluator(object):
                   eval_stats['stdev'],
                   eval_stats['max'],
                   eval_stats['min']) + custom_values
+        '''
+        values = (t, episodes) + custom_values
         record_stats(self.outdir, values)
         if mean > self.max_score:
             self.logger.info('The best score is updated %s -> %s',

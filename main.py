@@ -141,6 +141,7 @@ def main():
                         help='Random seed [0, 2 ** 32)')
     #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
     
+    parser.add_argument('--eval_episode_length', type=int, default=100)
     parser.add_argument('--eval-interval', type=int, default=10000)
     parser.add_argument('--eval-n-runs', type=int, default=10)
     parser.add_argument('--reward-scale-factor', type=float, default=1e-2)  # does not make sense since we do not have any reward signal
@@ -153,7 +154,7 @@ def main():
     #parser.add_argument('--load_demo', type=str, default='')
     parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
     parser.add_argument('--monitor', action='store_true', default=False)
-    parser.add_argument('--update-interval', type=int, default=128)
+    parser.add_argument('--update-interval', type=int, default=1024)
     parser.add_argument('--batchsize', type=int, default=64)  # mini-batch size
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--entropy-coef', type=float, default=0.01)
@@ -174,7 +175,12 @@ def main():
 
     def make_env(test):
         env = gym.make(args.env)
-        env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.length_expert_TS, args.agent_seed)
+        if test:
+            episode_length = args.eval_episode_length
+        else:
+            episode_length = args.episode_length
+
+        env.initialize_environment(args.state_rep, args.n_historical_events, episode_length, 1, args.length_expert_TS, args.agent_seed)
 
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
@@ -192,11 +198,24 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
-    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, args.n_demos_per_expert, args.length_expert_TS, args.agent_seed)
-    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, args.length_expert_TS, out_dir=dst, seed=args.seed_expert)
+    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, 1, args.length_expert_TS, args.agent_seed)
+    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, out_dir=dst, seed=args.seed_expert, eval=False)
     timestep_limit = sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
-    
 
+
+    # Generate expert data for evaluation
+    temp_env = gym.make(args.env)
+    temp_env.initialize_environment(
+        args.state_rep, 
+        args.n_historical_events, 
+        args.episode_length,  # This parameter does not really matter since we create this env only for generating samples 
+        args.n_demos_per_expert,  # How large should the expert cluster be?
+        args.eval_episode_length, 
+        args.agent_seed
+    )
+    temp_env.generate_expert_trajectories(args.n_experts, out_dir=dst, seed=args.seed_expert, eval=True)
+
+    
     obs_space = sample_env.observation_space
     action_space = sample_env.action_space
 
@@ -321,7 +340,7 @@ def main():
                 clip_eps_decay_hook,
             ],
         )
-        save_agent_demo(make_env(False), agent, args.outdir, 10 * args.episode_length)
+        save_agent_demo(make_env(True), agent, args.outdir, 10 * args.episode_length)  # originally it was make_env(test=False) which seems strange
     
     # Move result files to correct folder and remove empty folder
     move_dir(args.outdir, dst)

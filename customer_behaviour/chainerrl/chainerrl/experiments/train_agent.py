@@ -55,9 +55,11 @@ def train_agent(agent, env, steps, outdir, checkpoint_freq=None,
                      or info.get('needs_reset', False))
             if done or reset or t == steps:
                 agent.stop_episode_and_train(obs, r, done=done)
-                logger.info('outdir:%s step:%s episode:%s R:%s',
+                if episode_idx % 10 == 0:
+                    # print every 10th episode
+                    logger.info('outdir:%s step:%s episode:%s R:%s',
                             outdir, t, episode_idx, episode_r)
-                logger.info('statistics:%s', agent.get_statistics())
+                    logger.info('statistics:%s', agent.get_statistics())
                 if evaluator is not None:
                     evaluator.evaluate_if_necessary(
                         t=t, episodes=episode_idx + 1)

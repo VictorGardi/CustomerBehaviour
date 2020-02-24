@@ -5,11 +5,6 @@ from gym import spaces
 from customer_behaviour.tools import dgm as dgm
 
 
-DETERMINISTIC_SAMPLE = False
-
-N_DEMOS_PER_EXPERT = 20
-
-
 def categorize_age(age):
     if age < 30: return 0
     elif 30 <= age < 40: return 0.2
@@ -184,14 +179,14 @@ class DiscreteBuyingEvents(gym.Env):
         self.observation_space, self.action_space = self.case.get_spaces(n_historical_events)
 
 
-    def generate_expert_trajectories(self, n_experts, n_time_steps, out_dir, seed=True):
+    def generate_expert_trajectories(self, n_experts, out_dir, seed=True, eval=False):
         states = []
         actions = []
 
         for i_expert in range(n_experts):
             self.model.spawn_new_customer(i_expert) if seed else self.model.spawn_new_customer()
 
-            sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, n_time_steps)
+            sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, self.n_expert_time_steps)
 
             for subsample in sample:
                 temp_states = []
@@ -220,8 +215,16 @@ class DiscreteBuyingEvents(gym.Env):
                 states.append(temp_states)
                 actions.append(temp_actions)
 
-        np.savez(out_dir + '/expert_trajectories.npz', states=np.array(states, dtype=object),
-             actions=np.array(actions, dtype=object))
+        if eval:
+            np.savez(out_dir + '/eval_expert_trajectories.npz', 
+                states=np.array(states, dtype=object),
+                actions=np.array(actions, dtype=object)
+            )
+        else:
+            np.savez(out_dir + '/expert_trajectories.npz', 
+                states=np.array(states, dtype=object), 
+                actions=np.array(actions, dtype=object)
+            )
 
         return {'states': states, 'actions': actions}
 
