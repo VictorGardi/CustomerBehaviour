@@ -40,20 +40,23 @@ class Result():
         return np.linalg.norm(expert_centroid-agent_centroid)
 
     def plot_loss(self):
-        discriminator_loss, policy_loss, average_rewards = self.read_scores_txt()
-        args = self.read_args_txt()
-        n_episodes = args["n_training_episodes"]
-        episode_length = args["episode_length"]
+        discriminator_loss, policy_loss, average_rewards, episodes = self.read_scores_txt()
+        #args = self.read_args_txt()
+        #n_episodes = args["n_training_episodes"]
+        #episode_length = args["episode_length"]
+        #print(len(discriminator_loss))
         
         # logs info every 10 000th step
-        delta_episode = int(10000/episode_length)
-        x = range(delta_episode, n_episodes + delta_episode, delta_episode)
+        #delta_episode = int(10000/episode_length)
+        #x = range(delta_episode, n_episodes + delta_episode, delta_episode)
+
+
         plt.subplot(1,3,1)
-        plt.plot(x, discriminator_loss, label='discriminator loss')
+        plt.plot(episodes, discriminator_loss, label='discriminator loss')
         plt.subplot(1,3,2)
-        plt.plot(x, policy_loss, label='policy loss')
+        plt.plot(episodes, policy_loss, label='policy loss')
         plt.subplot(1,3,3)
-        plt.plot(x, average_rewards)
+        plt.plot(episodes, average_rewards, label='reward')
         plt.xlabel('Episode')
         #plt.legend()
         plt.show()
@@ -64,6 +67,7 @@ class Result():
         discriminator_loss = []
         policy_loss = []
         average_rewards = []
+        episodes = []
         for idx, line in enumerate(lines):
             if idx > 0: # We do not want the column names
                 line1 = line.split(" ")[0]
@@ -71,8 +75,9 @@ class Result():
                 discriminator_loss.append(float(line2[8]))
                 policy_loss.append(float(line2[-4].rstrip("\n\r")))
                 average_rewards.append(float(line2[9].rstrip("\n\r")))
+                episodes.append(float(line2[1].rstrip("\n\r")))
 
-        return discriminator_loss, policy_loss, average_rewards
+        return discriminator_loss, policy_loss, average_rewards, episodes
 
     def read_args_txt(self):
         return json.loads(open(self.args_path,"r").read())
