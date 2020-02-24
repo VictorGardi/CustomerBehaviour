@@ -6,9 +6,10 @@ class Cluster():
     def __init__(self, agent_features, expert_features):
         self.agent_features = np.array(agent_features)
         self.expert_features = np.array(expert_features)
-        self.agent_centroid = self.get_centroid(self.agent_features)
+        #self.agent_centroid = self.get_centroid(self.agent_features)
         self.expert_centroid = self.get_centroid(self.expert_features)
-        self.agent_within_SS = self.get_within_cluster_SS(self.agent_features, self.agent_centroid)
+        #if len(self.agent_features.shape) > 1:
+        #   self.agent_within_SS = self.get_within_cluster_SS(self.agent_features, self.agent_centroid)
         self.expert_within_SS = self.get_within_cluster_SS(self.expert_features, self.expert_centroid)
         #self.mean_dist, self.min_dist, self.max_dist = self.get_dist_between_clusters(self.agent_features, self.expert_features)
         
@@ -18,9 +19,9 @@ class Cluster():
         # plt.scatter(self.expert_centroid[0], self.expert_centroid[1])
         # plt.show()
 
-    def get_centroid(self, features):
-        features = np.array(features)
+    def get_centroid(self, features, expert=False):
         return np.mean(features, axis=0)
+
 
     def get_within_cluster_SS(self, cluster, centroid):
         cluster = np.array(cluster)
@@ -30,17 +31,12 @@ class Cluster():
         return SS
 
     def get_dist_between_clusters(self):
-        current_min_dist = 100000
-        current_max_dist = 0
-        for i in range(self.agent_features.shape[0]):
-            dist = distance.cdist(self.agent_features[i,:].reshape((1,-1)), self.expert_features, 'euclidean')
+        dist = distance.cdist(self.expert_features, self.agent_features.reshape((1,-1)), 'euclidean')
 
-            if np.min(dist) < current_min_dist:
-                current_min_dist = np.min(dist)
-            if np.max(dist) > current_max_dist:
-                current_max_dist = np.max(dist)
-        mean_dist = np.linalg.norm(self.expert_centroid-self.agent_centroid)
-        return mean_dist, current_min_dist, current_max_dist
+        min_dist = np.min(dist)
+        max_dist = np.max(dist)
+        mean_dist = np.linalg.norm(self.expert_centroid-self.agent_features)
+        return mean_dist, min_dist, max_dist
 
 
 # ls = [1,5] 

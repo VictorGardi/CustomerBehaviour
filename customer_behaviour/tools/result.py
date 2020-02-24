@@ -1,20 +1,38 @@
 import os
 import re
 import json
+from customer_behaviour.tools.time_series_analysis import FeatureExtraction
 import numpy as np
 import matplotlib.pyplot as plt
 
 class Result():
     def __init__(self, dir_path):
-        self.expert_data = os.getcwd() + dir_path + '/expert_trajectories.npz'
+        self.expert_data = os.getcwd() + dir_path + '/expert_trajectories.npz' # change to eval_expert_trajectories.npz
         self.learner_data = os.getcwd() + dir_path + '/trajectories.npz'
         self.action_probs_path = os.getcwd() + dir_path + '/action_probs.npz'
         self.scores_path = os.getcwd() + dir_path + '/scores.txt'
         self.args_path = os.getcwd() + dir_path + '/args.txt'
+
+        args = self.read_json_txt(self.args_path)
         
         # self.action_probs = self.load_action_probs(self.action_probs_path) if os.path.exists(self.action_probs_path) else None
         self.expert_states, self.expert_actions = self.load_data(self.expert_data)
-        self.learner_states, self.learner_actions = self.load_data(self.learner_data)
+        self.learner_states, self.learner_actions = self.load_data(self.learner_data) 
+        self.n_expert_trajectories = self.expert_states.shape[0]
+        self.n_learner_trajectories, self.episode_length, _ = self.learner_states.shape
+        self.n_historical_events = self.learner_states.shape[2]
+
+        self.expert_features = []
+        self.demo_features = []
+        for i in range(self.n_expert_trajectories):
+            self.expert_features.append(self.get_features(self.expert_actions[i]))
+
+        for j in range(self.n_learner_trajectories):
+            self.demo_features.append(self.get_features(self.learner_actions[j]))
+
+    def get_features(self, trajectory):
+            tsa = FeatureExtraction(trajectory, case='discrete_events')
+            return tsa.get_features()
     
     def load_data(self, file):
         data = np.load(file, allow_pickle=True)
@@ -29,28 +47,10 @@ class Result():
         data = np.load(path, allow_pickle=True)
         assert sorted(data.files) == sorted(['action_probs'])
         return data['action_probs']
-    
-    def get_centroid(self, features):
-        features = np.array(features)
-        return np.mean(features, axis=0)
-                
-    def get_dist_between_clusters(self, expert_features, agent_features):
-        expert_centroid = self.get_centroid(expert_features)
-        agent_centroid = self.get_centroid(agent_features)
-        return np.linalg.norm(expert_centroid-agent_centroid)
+
 
     def plot_loss(self):
         discriminator_loss, policy_loss, average_rewards, episodes = self.read_scores_txt()
-        #args = self.read_args_txt()
-        #n_episodes = args["n_training_episodes"]
-        #episode_length = args["episode_length"]
-        #print(len(discriminator_loss))
-        
-        # logs info every 10 000th step
-        #delta_episode = int(10000/episode_length)
-        #x = range(delta_episode, n_episodes + delta_episode, delta_episode)
-
-
         plt.subplot(1,3,1)
         plt.plot(episodes, discriminator_loss, label='discriminator loss')
         plt.subplot(1,3,2)
@@ -79,8 +79,8 @@ class Result():
 
         return discriminator_loss, policy_loss, average_rewards, episodes
 
-    def read_args_txt(self):
-        return json.loads(open(self.args_path,"r").read())
+    def read_json_txt(self, path):
+        return json.loads(open(path,"r").read())
     
     def plot(self, expert_history, expert_actions, learner_history, learner_actions):        
         fig, axes = plt.subplots(2, 2, sharex='col', sharey='row')
