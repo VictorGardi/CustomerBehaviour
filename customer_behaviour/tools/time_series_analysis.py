@@ -82,7 +82,7 @@ class FeatureExtraction():
                 std_frequencies.append(self.x.shape[1])
         return mean_frequencies, std_frequencies
     
-    def get_autocorr(self, x):
+    def get_autocorr(self, x, t = 20):
         """ Get autocorrelation of time series x. 
         The autocorrelation quantifies the average similarity between 
         the signal and a shifted version of the same signal, as a 
@@ -91,9 +91,10 @@ class FeatureExtraction():
         as well as the timescale of the signal's fluctuations. The faster 
         the autocorrelation decays to zero, the faster the signal varies.
         """
-        result = np.correlate(x, x, mode='full')
-        #return result[floor(result.size/2):].tolist()
-        return result[floor(result.size/2):floor(result.size/2) + 32]
+        result = np.correlate(x - np.mean(x), x - np.mean(x), mode='full')
+        return result[floor(result.size/2):]
+        #return np.corrcoef(np.array([x[:-t], x[t:]]))
+        #return result[floor(result.size/2):floor(result.size/2) + 32]
         
 
         
