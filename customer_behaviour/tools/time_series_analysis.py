@@ -25,7 +25,7 @@ class FeatureExtraction():
                 feature_vector.extend(autocorr)
         else:
             raise NotImplementedError
-
+        print(feature_vector)
         return feature_vector
 
     def extract_general_features():
@@ -92,7 +92,8 @@ class FeatureExtraction():
         the autocorrelation decays to zero, the faster the signal varies.
         """
         result = np.correlate(x, x, mode='full')
-        return result[floor(result.size/2):].tolist()
+        #return result[floor(result.size/2):].tolist()
+        return result[floor(result.size/2):floor(result.size/2) + 32]
         
 
         
