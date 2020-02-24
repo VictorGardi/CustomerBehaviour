@@ -30,8 +30,8 @@ call_9 = ['python3', 'main.py', 'gail', '--update-interval', '2048', '--gpu', '0
  '--n_historical_events', '96', '--case', 'discrete_events', '--n_experts', '1', '--state_rep', '2', \
   '--episode_length', '128', '--length_expert_TS', '512', '--seed_expert', 'True', '--agent_seed', '0', '--eval_episode_length', '512', '--eval_interval', '12800']
 
-calls.append(call_1)
-calls.append(call_2)
+calls.append(call_5)
+calls.append(call_6)
 #calls.append(call_3)
 #calls.append(call_4)
 #calls.append(call_5)

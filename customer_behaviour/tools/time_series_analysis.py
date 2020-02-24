@@ -21,11 +21,11 @@ class FeatureExtraction():
                 feature_vector.append(std_purchase_freqs[i])
                 feature_vector.append(min_elapsed_days[i])
                 feature_vector.append(max_elapsed_days[i])
-                autocorr = self.get_autocorr(self.x[i,:])
-                feature_vector.extend(autocorr)
+                #autocorr = self.get_autocorr(self.x[i,:])
+                #feature_vector.extend(autocorr)
         else:
             raise NotImplementedError
-        print(feature_vector)
+        # print(feature_vector)
         return feature_vector
 
     def extract_general_features():
