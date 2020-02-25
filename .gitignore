@@ -134,7 +134,7 @@ dmypy.json
 # Other
 .DS_Store
 results/
-analyse_results.py
+analyze_results.ipynb
 test.py
 test2.py
 results_anton
