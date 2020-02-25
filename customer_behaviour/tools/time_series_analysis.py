@@ -15,12 +15,18 @@ class FeatureExtraction():
         if self.case == 'discrete_events':
             mean_purchase_freqs, std_purchase_freqs = self.get_mean_std_purchase_frequency()
             min_elapsed_days, max_elapsed_days = self.get_min_max_elapsed_days_between_purchases()
+            max_purchases_per_week = self.get_max_purchases_per_window(7)
+            max_purchases_per_two_weeks = self.get_max_purchases_per_window(14)
+            max_purchases_per_month = self.get_max_purchases_per_window(28)
 
             for i in range(self.n_product_groups):
                 feature_vector.append(mean_purchase_freqs[i])
                 feature_vector.append(std_purchase_freqs[i])
                 feature_vector.append(min_elapsed_days[i])
                 feature_vector.append(max_elapsed_days[i])
+                feature_vector.append(max_purchases_per_week[i])
+                feature_vector.append(max_purchases_per_two_weeks[i])
+                feature_vector.append(max_purchases_per_month[i])
                 #autocorr = self.get_autocorr(self.x[i,:])
                 #feature_vector.extend(autocorr)
         else:
@@ -28,8 +34,22 @@ class FeatureExtraction():
         # print(feature_vector)
         return feature_vector
 
-    def extract_general_features():
-        pass
+
+    def get_max_purchases_per_window(self, window_width):
+        max_n_purchases_ls = []
+        
+        for i in range(self.n_product_groups):
+            max_n_purchases = 0
+            x = self.x[i,:]
+            for j in range(len(x) - window_width):
+                temp = x[j:j + window_width]
+                temp[temp > 0] = 1
+                n_purchases = np.sum(temp)
+                if n_purchases > max_n_purchases:
+                    max_n_purchases = n_purchases
+            max_n_purchases_ls.append(max_n_purchases**2)
+        return max_n_purchases_ls
+                
 
     def get_min_max_elapsed_days_between_purchases(self):
         '''

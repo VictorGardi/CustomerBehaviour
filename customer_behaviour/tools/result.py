@@ -3,7 +3,10 @@ import re
 import json
 from customer_behaviour.tools.time_series_analysis import FeatureExtraction
 import numpy as np
+from matplotlib import pyplot
 import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+from mpl_toolkits.mplot3d import Axes3D
 
 class Result():
     def __init__(self, dir_path):
@@ -24,12 +27,12 @@ class Result():
         self.n_learner_trajectories, self.episode_length, _ = self.learner_states.shape
 
         self.expert_features = []
-        self.demo_features = []
+        self.learner_features = []
         for i in range(self.n_expert_trajectories):
             self.expert_features.append(self.get_features(self.expert_actions[i]))
 
         for j in range(self.n_learner_trajectories):
-            self.demo_features.append(self.get_features(self.learner_actions[j]))
+            self.learner_features.append(self.get_features(self.learner_actions[j]))
 
     def get_features(self, trajectory):
             tsa = FeatureExtraction(trajectory, case='discrete_events')
@@ -48,6 +51,26 @@ class Result():
         data = np.load(path, allow_pickle=True)
         assert sorted(data.files) == sorted(['action_probs'])
         return data['action_probs']
+
+    def plot_clusters(self, n_dim = 2):
+        features = self.expert_features.copy()
+        features.extend(self.learner_features)
+        features = np.array(features)
+        X_embedded = TSNE(n_components=n_dim).fit_transform(features)
+        expert_cluster = X_embedded[:self.n_expert_trajectories,:]
+        agent_cluster = X_embedded[self.n_expert_trajectories:,:]
+
+        if n_dim == 2:
+            plt.scatter(expert_cluster[:,0], expert_cluster[:,1])
+            plt.scatter(agent_cluster[:,0], agent_cluster[:,1])
+            plt.show()
+        elif n_dim == 3:
+            fig = pyplot.figure()
+            ax = Axes3D(fig)
+            ax.scatter(expert_cluster[:,0], expert_cluster[:,1], expert_cluster[:,2])
+            ax.scatter(agent_cluster[:,0], agent_cluster[:,1], agent_cluster[:,2])
+            pyplot.show()
+
 
     def plot_cluster_data(self):
         episodes, mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert = self.read_cluster_data()

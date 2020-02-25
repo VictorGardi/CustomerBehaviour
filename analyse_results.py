@@ -12,15 +12,18 @@ from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
 
 
-run = 'hist64_exp256'
-dir_path = '/results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/' + run
+datetime = '2020-02-25_08-46-38'
+dir_path = '/results/gail/discrete_events/1_expert(s)/case_2/' + datetime
 
 
 def main():
-	result = Case2(dir_path)
-	result.plot_statistics()
-	result.plot_cluster_data()
-	result.plot_trajectories(n_trajectories = None)
+    result = Case2(dir_path)
+    #result.plot_trajectories(n_trajectories = 3)
+    result.plot_clusters(n_dim = 3)
+	#result.plot_statistics()
+	#result.plot_cluster_data()
+    
+	
 
 
 ############################
@@ -93,7 +96,7 @@ class Case2(Result):
             states = self.learner_states[i]
             actions = self.learner_actions[i]
             history = states[0][:]
-            cluster = Cluster(self.demo_features[i], self.expert_features)
+            cluster = Cluster(self.learner_features[i], self.expert_features)
             self.mean_dist, self.min_dist, self.max_dist = cluster.get_dist_between_clusters()
                 
             fig = self.plot(expert_history, expert_actions, history, actions)  
