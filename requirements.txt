@@ -22,3 +22,4 @@ six==1.14.0
 typing==3.7.4.1
 typing-extensions==3.7.4.1
 urllib3==1.25.8
+#cupy-cuda100==6.0.0b3
