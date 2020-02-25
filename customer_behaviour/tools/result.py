@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 
 class Result():
     def __init__(self, dir_path):
-        self.expert_data = os.getcwd() + dir_path + '/expert_trajectories.npz' # change to eval_expert_trajectories.npz
+        self.expert_data = os.getcwd() + dir_path + '/eval_expert_trajectories.npz' # change to eval_expert_trajectories.npz
         self.learner_data = os.getcwd() + dir_path + '/trajectories.npz'
         self.action_probs_path = os.getcwd() + dir_path + '/action_probs.npz'
         self.scores_path = os.getcwd() + dir_path + '/scores.txt'
+        self.cluster_data_path = os.getcwd() + dir_path + '/cluster.txt'
         self.args_path = os.getcwd() + dir_path + '/args.txt'
 
         args = self.read_json_txt(self.args_path)
@@ -18,9 +19,9 @@ class Result():
         # self.action_probs = self.load_action_probs(self.action_probs_path) if os.path.exists(self.action_probs_path) else None
         self.expert_states, self.expert_actions = self.load_data(self.expert_data)
         self.learner_states, self.learner_actions = self.load_data(self.learner_data) 
+
         self.n_expert_trajectories = self.expert_states.shape[0]
         self.n_learner_trajectories, self.episode_length, _ = self.learner_states.shape
-        self.n_historical_events = self.learner_states.shape[2]
 
         self.expert_features = []
         self.demo_features = []
@@ -48,36 +49,162 @@ class Result():
         assert sorted(data.files) == sorted(['action_probs'])
         return data['action_probs']
 
+    def plot_cluster_data(self):
+        episodes, mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert = self.read_cluster_data()
 
-    def plot_loss(self):
-        discriminator_loss, policy_loss, average_rewards, episodes = self.read_scores_txt()
-        plt.subplot(1,3,1)
-        plt.plot(episodes, discriminator_loss, label='discriminator loss')
-        plt.subplot(1,3,2)
-        plt.plot(episodes, policy_loss, label='policy loss')
-        plt.subplot(1,3,3)
-        plt.plot(episodes, average_rewards, label='reward')
+        plt.subplot(2,3,1)
+        plt.plot(episodes, mean_dist)
+        plt.xticks(rotation=90)
         plt.xlabel('Episode')
-        #plt.legend()
+        plt.ylabel('Mean dist. between clusters')
+
+        plt.subplot(2,3,2)
+        plt.plot(episodes, min_dist)
+        plt.xticks(rotation=90)
+        plt.xlabel('Episode')
+        plt.ylabel('Min dist. between clusters')
+
+        plt.subplot(2,3,3)
+        plt.plot(episodes, max_dist)
+        plt.xticks(rotation=90)
+        plt.xlabel('Episode')
+        plt.ylabel('Max dist. between clusters')
+
+        plt.subplot(2,3,4)
+        plt.plot(episodes, avg_dist_from_centroid_agent)
+        plt.xticks(rotation=90)
+        plt.xlabel('Episode')
+        plt.ylabel("Mean dist. to centroid in agent cluster")
+
+        plt.subplot(2,3,5)
+        plt.xticks(rotation=90)
+        plt.plot(episodes, avg_dist_from_centroid_expert)
+        plt.xlabel('Episode')
+        plt.ylabel("Mean dist. to centroid in expert cluster")
+
+        plt.tight_layout()
         plt.show()
 
+    def plot_statistics(self):
+        discriminator_loss, policy_loss, average_rewards, episodes, value, value_loss, n_updates, average_entropy = self.read_scores_txt()
+
+        plt.subplot(2,3,1)
+        plt.plot(episodes, discriminator_loss)
+        plt.xlabel('Episode')
+        plt.ylabel('Average discriminator loss')
+
+        plt.subplot(2,3,2)
+        plt.plot(episodes, policy_loss)
+        plt.xlabel('Episode')
+        plt.ylabel('Average policy loss')
+
+        plt.subplot(2,3,3)
+        plt.plot(episodes, average_rewards)
+        plt.xlabel('Episode')
+        plt.ylabel('Average reward')
+
+        plt.subplot(2,3,4)
+        plt.plot(episodes, value)
+        plt.xlabel('Episode')
+        plt.ylabel('Average value')
+
+        plt.subplot(2,3,5)
+        plt.plot(episodes, value_loss)
+        plt.xlabel('Episode')
+        plt.ylabel('Average value loss')
+
+        plt.subplot(2,3,6)
+        plt.plot(episodes, average_entropy)
+        plt.xlabel('Episode')
+        plt.ylabel('Average entropy')
+        
+        plt.tight_layout()
+        plt.show()
+
+    def read_cluster_data(self):
+        episodes = []
+        with open(self.scores_path, 'r') as file:
+            lines = file.readlines()
+            for idx, line in enumerate(lines):
+                if idx > 0:
+                    line1 = line.split(" ")[0]
+                    line2 = re.split(r'\t+', line1)
+                    episode = float(line2[0])
+                    episodes.append(episode)
+
+
+        with open(self.cluster_data_path, 'r') as file: 
+            lines = file.readlines()
+
+        columns = []
+
+        mean_dist = []
+        min_dist = []
+        max_dist = []
+        avg_dist_from_centroid_agent = []
+        avg_dist_from_centroid_expert = []
+
+        for idx, line in enumerate(lines):
+            if idx > 0:
+                line1 = line.split(" ")[0]
+                line2 = re.split(r'\t+', line1)
+                line3 = [float(x.rstrip("\n\r")) for x in line2]
+
+                mean_dist.append(line3[0])
+                min_dist.append(line3[1])
+                max_dist.append(line3[2])
+                avg_dist_from_centroid_agent.append(line3[3])
+                avg_dist_from_centroid_expert.append(line3[4])
+
+        return episodes, mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert
+
     def read_scores_txt(self):
-        file_obj = open(self.scores_path,"r") 
+        file_obj = open(self.scores_path, "r") 
         lines = file_obj.readlines()
+        
+        columns = []
+        
         discriminator_loss = []
         policy_loss = []
         average_rewards = []
+        average_entropy = []
+        value_loss = []
+        value = []
+        average_value = []
+        n_updates = []
         episodes = []
+
         for idx, line in enumerate(lines):
+            if idx == 0:
+                line1 = line.split(" ")[0]
+                columns = re.split(r'\t+', line1)
+                columns = [x.rstrip("\n\r") for x in columns]
+
+                i_dl = columns.index('average_discriminator_loss')
+                i_pl = columns.index('average_policy_loss')
+                i_r = columns.index('average_rewards')
+                i_v = columns.index('average_value')
+                i_vl = columns.index('average_value_loss')
+                i_u = columns.index('n_updates')
+                i_e = columns.index('episodes')
+                i_ae = columns.index('average_entropy')
+
             if idx > 0: # We do not want the column names
                 line1 = line.split(" ")[0]
                 line2 = re.split(r'\t+', line1)
-                discriminator_loss.append(float(line2[8]))
-                policy_loss.append(float(line2[-4].rstrip("\n\r")))
-                average_rewards.append(float(line2[9].rstrip("\n\r")))
-                episodes.append(float(line2[1].rstrip("\n\r")))
+                
+                discriminator_loss.append(float(line2[i_dl]))
+                policy_loss.append(float(line2[i_pl].rstrip("\n\r")))     
+                average_rewards.append(float(line2[i_r].rstrip("\n\r")))
+                value_loss.append(float(line2[i_vl]))
+                value.append(float(line2[i_v]))
+                n_updates.append(float(line2[i_u].rstrip("\n\r")))
+                episodes.append(float(line2[i_e].rstrip("\n\r")))
+                average_entropy.append(float(line2[i_ae]))
 
-        return discriminator_loss, policy_loss, average_rewards, episodes
+        file_obj.close()
+
+        return discriminator_loss, policy_loss, average_rewards, episodes, value, value_loss, n_updates, average_entropy
 
     def read_json_txt(self, path):
         return json.loads(open(path,"r").read())
