@@ -122,14 +122,14 @@ class Result():
         plt.ylabel('Average policy loss')
 
         plt.subplot(2,3,3)
-        plt.plot(episodes, average_rewards)
-        plt.xlabel('Episode')
-        plt.ylabel('Average reward')
-
-        plt.subplot(2,3,4)
         plt.plot(episodes, value)
         plt.xlabel('Episode')
         plt.ylabel('Average value')
+
+        plt.subplot(2,3,4)
+        plt.plot(episodes, average_rewards)
+        plt.xlabel('Episode')
+        plt.ylabel('Average reward')
 
         plt.subplot(2,3,5)
         plt.plot(episodes, value_loss)
