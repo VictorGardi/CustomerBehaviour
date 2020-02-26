@@ -1,0 +1,1 @@
+main.py gail --gpu -1 --case discrete_events --n_experts 1 --state_rep 2 --n_historical_events 96 --episode_length 128 --n_training_episodes 100000 --length_expert_TS 256 --seed_expert True --agent_seed 0 --n_demos_per_expert 100 --eval_episode_length 128 --update-interval 1024 --eval_interval 12800
