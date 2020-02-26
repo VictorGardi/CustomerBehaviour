@@ -235,7 +235,7 @@ def main():
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
         if args.state_rep == 1:
-            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(args.batchsize, args.batchsize))
+            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(args.batchsize, args.batchsize))      # Should it really be batchsize here???
         elif args.state_rep == 2:
             model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(args.batchsize, args.batchsize))
         elif args.state_rep == 3:
