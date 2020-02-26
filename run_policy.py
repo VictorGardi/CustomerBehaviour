@@ -12,8 +12,8 @@ from os.path import join
 from main import A3CFFSoftmax
 from chainerrl.misc.batch_states import batch_states
 
-directory = 'results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/hist64_exp256'
-sample_length = 20000
+directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-59-42'
+sample_length = 10000
 n_experts = 1
 n_last_days = 7
 
@@ -112,6 +112,9 @@ while not done:
 agent_val_states = get_val_states([agent_states], [agent_actions], n_last_days)
 agent_counts = get_counts(agent_val_states, possible_val_states)
 
+print("Agent's validation states")
+print_val_states(agent_counts, possible_val_states, n=9)
+
 ##################################
 ##### Sample from true model #####
 ##################################
@@ -132,7 +135,8 @@ expert_actions = trajectories['actions']
 expert_val_states = get_val_states(expert_states, expert_actions, n_last_days)
 expert_counts = get_counts(expert_val_states, possible_val_states)
 
-# print_val_states(expert_counts, possible_val_states, n=9)
+print("Expert's validation states")
+print_val_states(expert_counts, possible_val_states, n=9)
 
 ##########################
 ##### Compare result #####
@@ -141,8 +145,6 @@ expert_counts = get_counts(expert_val_states, possible_val_states)
 _, ax = plt.subplots()
 ax.plot(agent_actions)
 plt.show()
-
-quit()
 
 x = range(len(possible_val_states))
 

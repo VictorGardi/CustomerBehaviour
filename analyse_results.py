@@ -11,15 +11,16 @@ from customer_behaviour.tools.cluster import Cluster
 from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
 
-dir_path = '/results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/hist64_exp256'
+dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-59-42'
 
 def main():
     result = Case2(dir_path)
     result.plot_trajectories(n_trajectories = 3)
-    #result.plot_clusters(n_dim = 3)
-	#result.plot_statistics()
-	#result.plot_cluster_data()
+    result.plot_clusters(n_dim = 3)
+    result.plot_statistics()
+    result.plot_cluster_data()
     
+
 ############################
 ########## Case 3 ##########
 ############################
@@ -75,7 +76,7 @@ class Case2(Result):
             fig = self.plot(expert_history, expert_actions, history, actions)  
             
             fig.suptitle('mean_dist: %.1f, min_dist: %.1f, max_dist: %.1f, var_expert_cluster: %.1f' 
-            	% (self.mean_dist, self.min_dist, self.max_dist, cluster.expert_within_SS))
+                % (self.mean_dist, self.min_dist, self.max_dist, cluster.expert_within_SS))
                          
         fig.tight_layout()
         plt.show()
@@ -96,7 +97,7 @@ class Case1(Result):
         raise NotImplementedError
 
 if __name__ == '__main__':
-	main()
+    main()
 
 ###########################
 ########## Trash ##########

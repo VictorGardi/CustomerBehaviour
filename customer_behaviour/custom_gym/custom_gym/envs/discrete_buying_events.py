@@ -246,13 +246,18 @@ class DiscreteBuyingEvents(gym.Env):
         # Reset the state of the environment to an initial state
         self.model.spawn_new_customer(self.agent_seed)
 
-        temp = int((self.n_historical_events + self.n_expert_time_steps) / self.n_historical_events)
+        # Sample expert trajectory
+        sample = self.case.get_sample(1, self.n_historical_events, self.n_expert_time_steps)
 
-        sample = self.case.get_sample(temp, self.n_historical_events, 0)
-        # sample is an array of tuples (history, data) of length n_demos_per_expert
-        # choose a random history
-        i = np.random.randint(0, temp)
-        history, _ = sample[i]
+        history, data = sample[0]
+
+        all_data = np.hstack((history, data))
+
+        _, n = all_data.shape
+
+        i = np.random.randint(0, n-self.n_historical_events)
+
+        history = all_data[:, i:i+self.n_historical_events]
         
         self.state = self.case.get_initial_state(history)
         self.n_time_steps = 0
@@ -267,8 +272,15 @@ class DiscreteBuyingEvents(gym.Env):
 ########## Trash ##########
 ###########################
 
-
 '''
+temp = int((self.n_historical_events + self.n_expert_time_steps) / self.n_historical_events)
+
+        sample = self.case.get_sample(temp, self.n_historical_events, 0)
+        # sample is an array of tuples (history, data) of length n_demos_per_expert
+        # choose a random history
+        i = np.random.randint(0, temp)
+        history, _ = sample[i]
+
 sample = self.model.sample(n_demos_per_expert * (self.n_historical_events + n_time_steps))
 
 for subsample in np.split(sample, n_demos_per_expert, axis=1):
