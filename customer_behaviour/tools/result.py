@@ -21,9 +21,13 @@ class Result():
         
         # self.action_probs = self.load_action_probs(self.action_probs_path) if os.path.exists(self.action_probs_path) else None
         self.expert_states, self.expert_actions = self.load_data(self.expert_data)
-        self.learner_states, self.learner_actions = self.load_data(self.learner_data) 
+        self.learner_states, self.learner_actions = self.load_data(self.learner_data)
 
         self.n_expert_trajectories = self.expert_states.shape[0]
+        #print(self.expert_states)
+        #print(self.learner_states)
+        #print(self.learner_states.shape)
+
         self.n_learner_trajectories, self.episode_length, _ = self.learner_states.shape
 
         self.expert_features = []

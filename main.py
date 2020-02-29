@@ -340,7 +340,7 @@ def main():
                 clip_eps_decay_hook,
             ],
         )
-        save_agent_demo(make_env(True), agent, args.outdir, 10 * args.episode_length)  # originally it was make_env(test=False) which seems strange
+        save_agent_demo(make_env(True), agent, args.outdir, 10 * args.eval_episode_length)  # originally it was make_env(test=False) which seems strange
     
     # Move result files to correct folder and remove empty folder
     move_dir(args.outdir, dst)

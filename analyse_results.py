@@ -11,7 +11,8 @@ from customer_behaviour.tools.cluster import Cluster
 from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
 
-dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-59-42'
+#dir_path = '/results/gail/discrete_events/1_expert(s)/case_2/2020-02-28_12-38-12'
+dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_2/friday_0228/2020-02-28_12-38-12'
 
 def main():
     result = Case2(dir_path)
