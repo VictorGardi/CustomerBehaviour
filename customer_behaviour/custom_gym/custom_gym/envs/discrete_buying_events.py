@@ -82,7 +82,12 @@ class Case2():
         return action
 
     def get_initial_state(self, history):
-        temp = history[0, :].copy()  # We only consider the first item
+        # temp = history[0, :].copy()  # We only consider the first item
+        # temp[temp > 0] = 1
+
+        temp = history.copy()
+        temp = np.sum(temp, axis=0)
+
         temp[temp > 0] = 1
 
         initial_state = temp
@@ -94,7 +99,7 @@ class Case2():
         return new_state
 
 
-class Case3():
+class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT ENDAST [1, 1, ..., 1, 1]
     def __init__(self, model):
         self.model = model
 

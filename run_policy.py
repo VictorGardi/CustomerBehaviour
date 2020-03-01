@@ -10,9 +10,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from os.path import join
 from main import A3CFFSoftmax
+from math import floor
 from chainerrl.misc.batch_states import batch_states
 
-directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-59-42'
+# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-59-42'  # anton
+# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-54-25'  # victor
+ 
+directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/wednesday_0226/2020-02-26_12-13-17' # anton (new)
+
 sample_length = 10000
 n_experts = 1
 n_last_days = 7
@@ -54,6 +59,11 @@ def print_val_states(counts, possible_val_states, n):
         print('Validation state:')
         print(np.array(possible_val_states)[i])
 
+def autocorr(x, t = 20):
+    result = np.correlate(x - np.mean(x), x - np.mean(x), mode='full')
+    temp = result[floor(result.size/2):floor(result.size/2)+t]
+    return temp / np.amax(temp)
+
 ##############################
 ##### Sample from policy #####
 ##############################
@@ -91,16 +101,12 @@ obs = env.reset().astype('float32')  # Initial state
 agent_states.append(obs)
 done = False
 while not done:
-    # print(obs)
-
     b_state = batch_states([obs], xp, phi)
     b_state = obs_normalizer(b_state, update=False)
 
     with chainer.using_config('train', False), chainer.no_backprop_mode():
         action_distrib, value = model(b_state)
         action = chainer.cuda.to_cpu(action_distrib.sample().array)[0]
-
-    # print(action)
 
     agent_actions.append(action)
 
@@ -146,6 +152,13 @@ _, ax = plt.subplots()
 ax.plot(agent_actions)
 plt.show()
 
+# Autocorrelation
+_, (ax1, ax2) = plt.subplots(1, 2)
+ax1.plot(autocorr(expert_actions[0]))
+ax2.plot(autocorr(agent_actions))
+plt.show()
+
+# Validation states
 x = range(len(possible_val_states))
 
 _, (ax1, ax2) = plt.subplots(1, 2)

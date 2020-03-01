@@ -112,7 +112,7 @@ class FeatureExtraction():
         the autocorrelation decays to zero, the faster the signal varies.
         """
         result = np.correlate(x - np.mean(x), x - np.mean(x), mode='full')
-        return result[floor(result.size/2):]
+        return result[floor(result.size/2):floor(result.size/2)+t]
         #return np.corrcoef(np.array([x[:-t], x[t:]]))
         #return result[floor(result.size/2):floor(result.size/2) + 32]
         
