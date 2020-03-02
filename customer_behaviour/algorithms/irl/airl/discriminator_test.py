@@ -72,17 +72,17 @@ class Discriminator():
         discrim_output = F.exp(log_p_tau-log_pq)
 
         # Calculate cross entropy loss
-        value_loss = np.matmul(targets, (log_p_tau - log_pq).T ) + np.matmul(1-targets, (log_q_tau - log_pq).T )
-        value_loss = -F.mean(value_loss)
+        loss = np.matmul(targets, (log_p_tau - log_pq).T ) + np.matmul(1-targets, (log_q_tau - log_pq).T )
+        #value_loss = -F.mean(value_loss)
 
-        reward_loss = F.log(discrim_output) - F.log(1 - discrim_output)
+        #reward_loss = F.mean(F.log(discrim_output) - F.log(1 - discrim_output))
 
         self.reward_net.cleargrads()
         self.value_net.cleargrads()
         
-        self.reward_optimizer.update(reward_loss.backward())
-        self.value_optimizer.update(value_loss.backward())
-        return reward_loss       
+        self.reward_optimizer.update(loss.backward())
+        self.value_optimizer.update(loss.backward())
+        return loss       
 
     def get_rewards(self, state_action_pair):
         return self.reward_net(state_action_pair) #should the reward be the output from sigmoid or raw output?
