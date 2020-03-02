@@ -265,16 +265,28 @@ def main():
         import numpy as np
         from customer_behaviour.algorithms.irl.gail import GAIL
         from customer_behaviour.algorithms.irl.gail import Discriminator
+        from customer_behaviour.algorithms.irl.gail import GAIL2
+        from customer_behaviour.algorithms.irl.gail import Discriminator2
         #demonstrations = np.load(args.load_demo)
-        D = Discriminator(gpu=args.gpu)
-        agent = GAIL(demonstrations=demonstrations, discriminator=D,
-                     model=model, optimizer=opt,
-                     obs_normalizer=obs_normalizer,
-                     gpu=args.gpu,
-                     update_interval=args.update_interval,
-                     minibatch_size=args.batchsize, epochs=args.epochs,
-                     clip_eps_vf=None, entropy_coef=args.entropy_coef,
-                     standardize_advantages=args.standardize_advantages,)
+        # D = Discriminator(gpu=args.gpu)
+        D = Discriminator2(obs_space.n, action_space.n, hidden_sizes=(32, 32), loss_type='gan', gpu=args.gpu)
+
+        #agent = GAIL(demonstrations=demonstrations, discriminator=D,
+        #             model=model, optimizer=opt,
+        #             obs_normalizer=obs_normalizer,
+        #             gpu=args.gpu,
+        #             update_interval=args.update_interval,
+        #             minibatch_size=args.batchsize, epochs=args.epochs,
+        #             clip_eps_vf=None, entropy_coef=args.entropy_coef,
+        #             standardize_advantages=args.standardize_advantages,)
+        agent = GAIL2(demonstrations=demonstrations, discriminator=D,
+                    model=model, optimizer=opt,
+                    obs_normalizer=obs_normalizer,
+                    gpu=args.gpu,
+                    update_interval=args.update_interval,
+                    minibatch_size=args.batchsize, epochs=args.epochs,
+                    clip_eps_vf=None, entropy_coef=args.entropy_coef,
+                    standardize_advantages=args.standardize_advantages,)
     elif args.algo == 'airl':
         import numpy as np
         from customer_behaviour.algorithms.irl.airl import AIRL as Agent
