@@ -226,7 +226,6 @@ class DiscreteBuyingEvents(gym.Env):
         actions = []
 
         for i_expert in range(n_experts):
-            print(seed)
             self.model.spawn_new_customer(i_expert) if seed else self.model.spawn_new_customer()
 
             sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, self.n_expert_time_steps)

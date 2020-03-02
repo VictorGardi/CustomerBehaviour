@@ -222,21 +222,21 @@ def main():
     # Normalize observations based on their empirical mean and variance
     # obs_normalizer = None
     if args.state_rep == 1:
-        shape = obs_space.low.size
-    elif args.state_rep == 2:
-        shape = obs_space.n
+        obs_dim = obs_space.low.size
+    elif args.state_rep == 2 or args.state_rep == 21:
+        obs_dim = obs_space.n
     elif args.state_rep == 3:
-        shape = obs_space.nvec.size
+        obs_dim = obs_space.nvec.size
     else:
         raise NotImplementedError
-    obs_normalizer = chainerrl.links.EmpiricalNormalization(shape, clip_threshold=5)
+    obs_normalizer = chainerrl.links.EmpiricalNormalization(obs_dim, clip_threshold=5)
     #chainerrl.links.EmpiricalNormalization(obs_space.low.size, clip_threshold=5)
 
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
         if args.state_rep == 1:
             model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(args.batchsize, args.batchsize))      # Should it really be batchsize here???
-        elif args.state_rep == 2:
+        elif args.state_rep == 2 or args.state_rep == 21:
             model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(args.batchsize, args.batchsize))
         elif args.state_rep == 3:
             model = A3CFFSoftmax(obs_space.nvec.size, action_space.n)
@@ -269,8 +269,8 @@ def main():
         from customer_behaviour.algorithms.irl.gail import Discriminator2
         #demonstrations = np.load(args.load_demo)
         # D = Discriminator(gpu=args.gpu)
-        D = Discriminator2(obs_space.n, action_space.n, hidden_sizes=(32, 32), loss_type='gan', gpu=args.gpu)
-
+        D = Discriminator2(obs_dim, action_space.n, hidden_sizes=(32, 32), loss_type='gan', gpu=args.gpu)
+        
         #agent = GAIL(demonstrations=demonstrations, discriminator=D,
         #             model=model, optimizer=opt,
         #             obs_normalizer=obs_normalizer,

@@ -5,7 +5,7 @@ from chainerrl import links
 
 
 class Discriminator2:
-    def __init__(self, observation_dim, action_dim, hidden_sizes=(32, 32), loss_type='gan', gpu=-1):
+    def __init__(self, observation_dim, action_dim, hidden_sizes, loss_type='gan', gpu=-1):
 
         self.model = links.MLP(observation_dim + action_dim, 1, hidden_sizes=hidden_sizes, nonlinearity=F.relu)
 
@@ -26,7 +26,7 @@ class Discriminator2:
         return F.sigmoid(logits)  # prob(s) of x being expert data
 
     def train(self, expert_data, fake_data, xp):
-        self.model.cleargrads()  # model, not optimizer?
+        self.model.cleargrads() 
 
         # Compute loss
         if self.loss_type == 'gan':
@@ -36,7 +36,7 @@ class Discriminator2:
 
             mb_size = expert_data.shape[0]
             t = xp.zeros((2*mb_size, 1), dtype=xp.int32)
-            t[mb_size:] = 1
+            t[mb_size:] = 1  # we predict p(expert|data)
 
             self.loss = F.sigmoid_cross_entropy(logits, t, normalize=True, reduce='mean')
 
