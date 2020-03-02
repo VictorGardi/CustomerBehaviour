@@ -16,7 +16,7 @@ from chainerrl.misc.batch_states import batch_states
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-59-42'  # anton
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-54-25'  # victor
  
-directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/wednesday_0226/2020-02-26_12-13-17' # anton (new)
+directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/sunday_0301/2020-03-01_17-07-43' # anton (new)
 
 sample_length = 10000
 n_experts = 1
