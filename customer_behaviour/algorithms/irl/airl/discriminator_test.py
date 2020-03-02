@@ -7,47 +7,26 @@ from chainer.link_hooks.spectral_normalization import SpectralNormalization
 from chainer.initializers import LeCunNormal
 from chainer import links as L
 
-import numpy as np
-import chainer
-from chainer import cuda, Function, gradient_check, report, training, utils, Variable
-from chainer import datasets, iterators, optimizers, serializers
-from chainer import Link, Chain, ChainList
-import chainer.functions as F
-import chainer.links as L
-from chainer.training import extensions
-
-class MLP(chainer.Chain):
-
-    def __init__(self, in_size, n_units, n_out = 1):
-        super(MLP, self).__init__()
-        with self.init_scope():
-            # the size of the inputs to each layer will be inferred
-            self.l1 = L.Linear(None, in_size)  # n_in -> in_size
-            self.l2 = L.Linear(None, n_units)  # n_units -> n_units
-            self.l3 = L.Linear(None, 1)  # n_units -> n_out
-
-    def __call__(self, x):
-        h1 = F.relu(self.l1(x))
-        h2 = F.relu(self.l2(h1))
-        return self.l3(h2)
-
+from chainerrl import links
 
 class Discriminator():
-    def __init__(self, in_size, n_units = 32, out_size = 1, gpu=-1):
-        self.discriminator_net = MLP(in_size, n_units, out_size)
+    def __init__(self, obs_space, action_space, out_size = 1, gpu=-1):
+        hidden_sizes = (64,64)
+        self.reward_net = links.MLP(obs_space + action_space, out_size, hidden_sizes=hidden_sizes)
+        self.value_net = links.MLP(obs_space, out_size, hidden_sizes=hidden_sizes)
         if gpu >= 0:
-            self.discriminator_net.to_gpu(gpu)
+            self.reward_net.to_gpu(gpu)
+            self.value_net.to_gpu(gpu)
 
-    #def __init__(self, in_size, hidden_sizes = [64, 64], out_size = 1, gpu=-1):
-        #self.discriminator_net = MLP(2, 32, 1)
-
-        self.discriminator_optimizer = chainer.optimizers.Adam()
-        self.discriminator_optimizer.setup(self.discriminator_net)
+        self.reward_optimizer = chainer.optimizers.Adam()
+        self.reward_optimizer.setup(self.reward_net)
+        self.value_optimizer = chainer.optimizers.Adam()
+        self.value_optimizer.setup(self.value_net)
 
     def __call__(self, x):
-        return F.sigmoid(self.discriminator_net(x))
+        return self.reward_net(x), self.value_net(x)
 
-    def train(self, states, actions, action_probs, targets, xp):
+    def train(self, states, actions, action_logprobs, next_states, targets, xp, gamma = 1):
         """
         Return the loss function of the discriminator to be optimized.
         As in discriminator, we only want to discriminate the expert from
@@ -58,38 +37,52 @@ class Discriminator():
         D(s,a) = -------------------------
                   exp{f(s, a)} + \pi(a|s)
         """
+
+        # Create state-action pairs. Remember that both the agent's and the expert's s-a pairs are in the same list
         state_action = []
         for state, action in zip(states, actions):
-            array = np.append(state, float(action))
+            action = np.array([0, 1]) if action == 0 else np.array([0, 1])
+            array = np.append(state, action)
 
             state_action.append(array.reshape((-1,1)))
 
-        with chainer.configuration.using_config('train', False), chainer.no_backprop_mode():
-            log_p_tau = self.get_rewards(xp.asarray(np.concatenate([s_a.T.astype('float32') for s_a in state_action]))).data
+        # Get rewards for all s-a pairs
+        rewards = self.reward_net(xp.asarray([s_a.T.astype('float32') for s_a in state_action])).data
+        # Get values for current states
+        current_values = self.value_net(xp.asarray([s.T.astype('float32') for s in states])).data
+        # get values for next states
+        next_values = self.value_net(xp.asarray([s.T.astype('float32') for s in next_states])).data
 
+        # Define log p_tau(a|s) = r + gamma * V(s') - V(s)
+        log_p_tau = rewards + gamma*next_values - current_values
 
-        # Concatenate the log p(\tau) and log q(\tau) to compute sum
+        # log_q_tau = logprobs(pi(s)) = logprobs(a) calculated by policy net given a state
+        # action_logprobs contains probs for both expert and agent
+        log_q_tau = action_logprobs.reshape((-1,1))
+
+        # Concatenate the rewards from discriminator and action probs from policy net to compute sum
         # After concatenation, log_pq should have size N * 2
-        log_pq = np.concatenate((log_p_tau, action_probs.reshape((-1,1))), axis = 1)
+        log_pq = np.concatenate((log_p_tau, log_q_tau), axis = 1)
+        
+        # logsumexp = softmax, i.e. for each row we take log(sum(exp(val))) so that we add together probabilities 
+        # and then go back to logprobs
+        log_pq = F.logsumexp(log_pq, axis = 1).data.reshape((-1,1))
 
-        # Since log_pq is of size N * 2, we should sum each row, thus
-        # the answer is of size N * 1
-        log_pq = F.logsumexp(log_pq, axis = 1).data
+        # Calculate D 
+        discrim_output = F.exp(log_p_tau-log_pq)
 
+        # Calculate cross entropy loss
+        value_loss = np.matmul(targets, (log_p_tau - log_pq).T ) + np.matmul(1-targets, (log_q_tau - log_pq).T )
+        value_loss = -F.mean(value_loss)
 
-        # Binary Cross Entropy Loss
-        # loss_n= - [y_n * log(p(x_n)) + (1 − y_n) * log(1 − p(x_n))]
-        # where x_n is the input, and y_n is the output
+        reward_loss = F.log(discrim_output) - F.log(1 - discrim_output)
 
-        ones = np.ones_like(targets)
-
-        total_loss = (targets * (log_p_tau - log_pq.reshape((-1,1))) + (ones - targets) * (action_probs.reshape((-1,1)) - log_pq))
-        loss = -F.mean(total_loss)
-
-        self.discriminator_net.cleargrads()
-        loss.backward()
-        self.discriminator_optimizer.update()
-        return loss
+        self.reward_net.cleargrads()
+        self.value_net.cleargrads()
+        
+        self.reward_optimizer.update(reward_loss.backward())
+        self.value_optimizer.update(value_loss.backward())
+        return reward_loss       
 
     def get_rewards(self, state_action_pair):
-        return self.discriminator_net(state_action_pair) #should the reward be the output from sigmoid or raw output?
+        return self.reward_net(state_action_pair) #should the reward be the output from sigmoid or raw output?

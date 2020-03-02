@@ -281,7 +281,7 @@ def main():
         from customer_behaviour.algorithms.irl.airl.discriminator_test import Discriminator
         # obs_normalizer = None
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu, in_size=args.n_historical_events + 1)
+        D = Discriminator(gpu=args.gpu, obs_space = obs_space.n, action_space = action_space.n)
         agent = Agent(demonstrations=demonstrations, discriminator=D,
                       model=model, optimizer=opt,
                       obs_normalizer=obs_normalizer,
