@@ -1,0 +1,751 @@
+commit a91c076be67aa02017db9cc701c1d353ccf82372
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Sat Feb 29 07:48:25 2020 +0100
+
+    fixed main
+
+commit 9f935f1a16a752ad7519a87256e6333c1fec8440
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 27 08:52:40 2020 +0100
+
+    new folder
+
+commit 2a0cc6ad33d0d32148ad09bdb20d85987f2862f3
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 26 13:57:09 2020 +0100
+
+    bra skit
+
+commit 68eb5b723fd1dbe34467e4126c9c4f5b33cfcc40
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 26 13:09:10 2020 +0100
+
+    bra skit
+
+commit 62ea13912d1972fafb2ed2fc7a4ca4302fb34793
+Merge: 98a3faa 063da5c
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 26 11:35:17 2020 +0100
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit 98a3faa271210b9e96bbb3b6994db8f9468e156a
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 26 11:34:55 2020 +0100
+
+    hej
+
+commit 063da5c8e548bb9361b0e65e71d7acd5837c7e71
+Merge: f7c0948 1c4cd84
+Author: Victor Olsson <exjobb_vicols@ozzy.math.chalmers.se>
+Date:   Wed Feb 26 09:52:41 2020 +0000
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit f7c09484c3af4b089e06a3ab07438ba491901e10
+Author: Victor Olsson <exjobb_vicols@ozzy.math.chalmers.se>
+Date:   Wed Feb 26 09:52:14 2020 +0000
+
+    gks
+
+commit 1c4cd84f6cb8cb1ad3b4d6e81d1eb4697881f800
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 26 10:49:14 2020 +0100
+
+    run_policy script
+
+commit 61aac91c8adda8c7fa6cf6e51624ce16d2f7fc9d
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 25 16:52:15 2020 +0100
+
+    t-sne plot and max n purchaeses per window
+
+commit 43ce152a9c1316c5be7eba53067b9b95bf4dc282
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 25 14:40:13 2020 +0100
+
+    analyze
+
+commit 50ceef457d0d0b640f0809d48d51e77c8f62308a
+Merge: b4ca17f 0c02cef
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 25 14:38:45 2020 +0100
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit b4ca17f07733a3eec5b61750ec90d01731d7fe44
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 25 14:38:31 2020 +0100
+
+    ignore analyze_results
+
+commit 0c02cef5270b941adb55714c72e6bcb302838fe0
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 25 09:49:21 2020 +0100
+
+    benchmark main for time testing
+
+commit a4a04bb67eb9a194e49eae839eb0ed332ccc8749
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 25 09:32:34 2020 +0100
+
+    removed VM_requirements.txt
+
+commit 3ba78967fb549ea8b38b324537d80688733f2bcc
+Merge: df27086 39e3bf3
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 24 17:29:49 2020 +0100
+
+    gij
+
+commit 39e3bf3d7554b98b16b60d261099e9a82a8f57b7
+Author: Anton Matsson <antonmatsson@Antons-MBP.localdomain>
+Date:   Mon Feb 24 17:11:45 2020 +0100
+
+    lol
+
+commit df270867eac56f5625fef896afe044917c05bdb2
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 24 17:03:59 2020 +0100
+
+    jg
+
+commit 99376f61ca4c6aa328bc0cb74558d5a49326baea
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 24 15:02:45 2020 +0100
+
+    ei
+
+commit 8ce345c67a9248def40b84cf015ee5e21823d673
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 24 14:45:19 2020 +0100
+
+    gsnk
+
+commit 9dd1cad7b83dce1241548e9d75b8857bd2588e1a
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 24 13:21:00 2020 +0100
+
+    fixed analyze_results and results
+
+commit 7bab91bed0cdd0929ab598ac9bc71da557fac104
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 24 09:08:45 2020 +0100
+
+    jgij
+
+commit 18c44fa3b6b3f119ab6d4730487851de3b8d63af
+Author: Anton Matsson <antonmatsson@Antons-MBP.localdomain>
+Date:   Mon Feb 24 09:07:49 2020 +0100
+
+    hej
+
+commit de2553b86112e8402dbc4dfb0edbcbd4cc002c9a
+Merge: 4633027 d2cd791
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Mon Feb 24 07:52:49 2020 +0000
+
+    gjs
+
+commit 4633027a614b33bcac7b2e706ba725ac4f33c7f8
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Mon Feb 24 07:50:28 2020 +0000
+
+    weekend results
+
+commit d2cd791856af2a693d2e924744093e1ddd3124ab
+Author: antmats <anton.mattsson94@gmail.com>
+Date:   Fri Feb 21 09:57:28 2020 +0000
+
+    jzf
+
+commit 7122a3a5f1eb8009e1419877a64e7c80f2e79437
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Fri Feb 21 09:53:11 2020 +0000
+
+    automated runs
+
+commit 79c61c3289948c591ae19156cb612a00053644fc
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Fri Feb 21 10:51:31 2020 +0100
+
+    mmm
+
+commit d6a28540de6bf7ac7172c0019790fbe73f99966a
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Fri Feb 21 10:23:21 2020 +0100
+
+    fixed check of env
+
+commit 3a1bff26ad08d3e55111a74cb051cc13251de775
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Fri Feb 21 10:06:34 2020 +0100
+
+    changed size of hidden layers in model to batchsize
+
+commit 2cb86b79f12c017a5f30da159a76da4b685ee053
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Fri Feb 21 10:01:59 2020 +0100
+
+    automated runs heyo
+
+commit 77f10d3bf2a05e5f2fc74025f270829a2f674be3
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Thu Feb 20 14:32:50 2020 +0000
+
+    new results
+
+commit 6d9f531f3d258be2fb88748fd5a1812c825fe092
+Author: Anton Matsson <antonmatsson@Antons-MBP.localdomain>
+Date:   Thu Feb 20 13:36:33 2020 +0100
+
+    hejehj
+
+commit d86833b822549889859c5e39c24d4305964ee5f0
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Thu Feb 20 12:08:46 2020 +0000
+
+    new results
+
+commit fc1e937c06022b880eecd4cf3db4af9bee9874f8
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 20 09:14:08 2020 +0100
+
+    jgks
+
+commit c30f367f43eff38014def6b4227b7a1f4de695d5
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Thu Feb 20 07:55:40 2020 +0000
+
+    night run
+
+commit 8a58e379f69fbc470424efdc8e77f873f65028ce
+Merge: 3774bc0 c5b1daa
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 19 17:08:48 2020 +0100
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit 3774bc0658ccc25f4f70b2967b4e6ce0f1f8d804
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 19 17:08:42 2020 +0100
+
+    dsfjsfhjlk
+
+commit c5b1daa9ece04cc7d49e1a8be80b9204a35c5b75
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 19 17:06:58 2020 +0100
+
+    faigj
+
+commit 117f710e05e770365bd3ec1ea0500305783bbc7d
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 19 14:40:23 2020 +0100
+
+    fixed chainerrl
+
+commit 87a33efb0f52c9b2f860398c6385f89c794a9680
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 19 13:28:39 2020 +0100
+
+    function in tools works
+
+commit 13fadcc8a8712e89c769e45afc189cf6d6cf87b9
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 19 11:01:04 2020 +0100
+
+    new func in tools.py
+
+commit 35de3ace6e0ccdeb2223e13596f85f8a1646d9f6
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 19 10:43:32 2020 +0100
+
+    hgj
+
+commit 6050bfa241cd0e140763281b33364281fb5ed0e0
+Merge: 993ce30 85ea685
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Wed Feb 19 09:08:37 2020 +0000
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit 993ce306ddfce0cad67a9ed0f605782ea5f60637
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Wed Feb 19 09:07:40 2020 +0000
+
+    airl results
+
+commit 85ea685dd35fb8c97b6d68fc23aaef5a70ffb2d7
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 19 10:04:53 2020 +0100
+
+    downloaded chainerrl
+
+commit f6c65f350bc5ea168a659b42d75b12b2d2b72d54
+Merge: 7bb786f 67d0de9
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 19 09:31:10 2020 +0100
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit 7bb786fd1d4562d1422bd21683d26ece2d610022
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 19 09:30:47 2020 +0100
+
+    feature extraction
+
+commit 67d0de9f6157a377e3919c0e123efe312b3a18c3
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 19 09:29:16 2020 +0100
+
+    created cluster class
+
+commit 2718546aa6445d0c3eaad48bc1207076a9449a1c
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 18 16:08:14 2020 +0100
+
+    ghbnka
+
+commit a70fb578f326cc7704535e239df531873b82fc45
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 18 15:37:48 2020 +0100
+
+    added dist_btw_clusters and moved created result.py
+
+commit 60eb26ffbd225691bbf7f8a9763cd503ee6829b1
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 18 13:09:21 2020 +0100
+
+    fixed bug in feature extraction
+
+commit 19d99e47bf929df6383d80199448337ca3723f00
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 17 14:56:25 2020 +0100
+
+    added action_probs in main and merged our analyze_results file
+
+commit 7200de7cafa87df49b8ffa3da0bb298e3b804099
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Mon Feb 17 14:47:27 2020 +0100
+
+    features for time-series
+
+commit 313ed05b83644adc2d627f897edce3c156c5e408
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Mon Feb 17 10:12:35 2020 +0100
+
+    uploaded notebook
+
+commit 53e9d3cd4c351cb5a246d2106c9c63ff261d0568
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Mon Feb 17 08:29:50 2020 +0000
+
+    night run AIRL
+
+commit 07b5d24ffeab0fe2278b85a577c8c167d96d7f7d
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Sat Feb 15 16:04:37 2020 +0100
+
+    changed automated_runs for case 3
+
+commit 15453a0bcf6cef4abbeb4b67635901fe7588b0af
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Sat Feb 15 10:12:34 2020 +0100
+
+    added case 3
+
+commit b5a1065d9fd414ad8de0f08eda9bbd0003caf99c
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Fri Feb 14 09:59:58 2020 +0100
+
+    discriminator loss and policy loss are now saved in scores.txt
+
+commit dd1fc06c3a86ce3139cb853bfa57bac79781281d
+Merge: c129e41 deb6b5f
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Thu Feb 13 09:31:42 2020 +0000
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit c129e416011062cc65d17c5212349ce8650d853e
+Author: VictorGardi <victor@instance-1.europe-west1-d.c.amiable-catfish-267908.internal>
+Date:   Thu Feb 13 09:30:56 2020 +0000
+
+    victors resultat
+
+commit deb6b5f40a1d089ff58115678f5100fae4c6c72e
+Author: antmats <anton.mattsson94@gmail.com>
+Date:   Thu Feb 13 08:00:58 2020 +0000
+
+    uploaded results
+
+commit 8ed975c3bbdcbedc756122703d80d47d665c7c2e
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 12 16:53:36 2020 +0100
+
+    added new case
+
+commit 5262c9249fed698b09cac35faf1175ed7e2ba979
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 12 14:07:40 2020 +0100
+
+    found seed bug
+
+commit 5e25967473dad4d42b856d252bc6257750c298b7
+Merge: f76e516 c22619f
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 12 12:35:49 2020 +0100
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit f76e5168e5295554bce20860263d5e2a045e4f98
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 12 12:35:27 2020 +0100
+
+    added deterministic sampling
+
+commit c22619f66ef1aa175fc4055e64bb3942592c6e63
+Merge: 352cfed 6fad375
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 12 12:04:15 2020 +0100
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit 352cfed72e0255710a54bc8c8a43cbf0746dfe9b
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 12 12:03:57 2020 +0100
+
+    added VM_req
+
+commit 6fad375e0f42b8c45a6861bdad926c87dbbd0316
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Wed Feb 12 11:43:30 2020 +0100
+
+    added function sample_deterministcally
+
+commit 45c66262c2b10abeb10554f241f9024b1553a941
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 12 11:18:43 2020 +0100
+
+    fixed everything again
+
+commit 611812a12f667ae173156fe67abb12e8f5a09022
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 12 11:17:24 2020 +0100
+
+    fixed everything
+
+commit 70c82634d86831e05c55260303fb7cb27b3d7588
+Merge: 199eea5 866e0b7
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 12 10:04:11 2020 +0100
+
+    jf
+
+commit 199eea57eca9dffa0222fef6c0aac823541201a0
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 12 10:03:30 2020 +0100
+
+    hfisej
+
+commit 866e0b78c5bd25ff08d3262dce530825f356e565
+Author: antmats <anton.mattsson94@gmail.com>
+Date:   Wed Feb 12 09:01:13 2020 +0000
+
+    upload result
+
+commit 0bd0c57ba26ff566e292e4000a1fd5a42251a3cc
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 11 17:03:39 2020 +0100
+
+    rubbet
+
+commit 41b98ae1056ea9cf0f4a2629e371ca93387f5a4f
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 11 16:46:49 2020 +0100
+
+    bra skit
+
+commit db57d29d3f66ed11b7e4b76e4477380a7a0af289
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 11 15:37:24 2020 +0100
+
+    updated gym
+
+commit 46916bf42c169e458f019ea5cc3deb529c047e92
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 11 15:34:16 2020 +0100
+
+    hejhej
+
+commit 0361000869450317cff7387b46333602b49dea05
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 11 14:33:51 2020 +0100
+
+    automated_run.py
+
+commit 0b67e756f65d690ece094bce0c83b73895db61c0
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 11 12:28:48 2020 +0100
+
+    changed gym
+
+commit 92d5715279572f1e4185d692a1d202efa0d0860b
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 11 11:29:22 2020 +0100
+
+    changed univariat time series
+
+commit 3e7591aca09fe9c850fe95ff3a95351e85261284
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 11 08:59:58 2020 +0100
+
+    fixed argparse
+
+commit 673ae81c5f109a8d8abd4ad9d031a66377b7ecc3
+Author: Anton Matsson <antonmatsson@Antons-MBP.localdomain>
+Date:   Mon Feb 10 16:40:20 2020 +0100
+
+    hejhej
+
+commit 078970b57128a8270f82299aac3f3de3cdf5ea8b
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 10 14:52:35 2020 +0100
+
+    added n_buys in main
+
+commit ef1326221fb2a1f704fb4be0ca2056cbd5a78250
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 10 14:24:58 2020 +0100
+
+    hej
+
+commit 9d19b939e7b234a5955da9f90a5c11fa5ad3b16d
+Author: Anton Matsson <antonmatsson@Antons-MBP.localdomain>
+Date:   Mon Feb 10 14:10:47 2020 +0100
+
+    updated custom_gym
+
+commit e87522b0caed47cb93f01fd3e94a022768e97cdb
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 10 10:30:40 2020 +0100
+
+    fixed main
+
+commit 8f0f730a604fb9aaa530ebc0687c9cd21437275e
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 10 10:29:37 2020 +0100
+
+    fixed temp_main
+
+commit 92fa4b893bc749ddaa3a3d107d383d7ad35748f5
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Mon Feb 10 08:44:27 2020 +0100
+
+    kfj
+
+commit f4075f2a842d9dd1f4ea1f72b9f66179e7b3ae8a
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Fri Feb 7 15:08:07 2020 +0100
+
+    updated main
+
+commit 64c77e6c83cb38a134a2bcce169dd065a5d32082
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Fri Feb 7 14:57:39 2020 +0100
+
+    main hej
+
+commit fecbf304c9cc4e49d57bd1a0039e40a06a17de4c
+Merge: 551fe5f 8737870
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Fri Feb 7 14:50:41 2020 +0100
+
+    Merge branch 'master' of https://github.com/VictorGardi/CustomerBehaviour
+
+commit 551fe5fd9d3792cfff136e0cb883dc61df3ecb5f
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Fri Feb 7 14:47:48 2020 +0100
+
+    fixed main
+
+commit 8737870c484cb6b62516b732984a5a89d49758c9
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Fri Feb 7 14:44:23 2020 +0100
+
+    added fcn define_case()
+
+commit 2f8da159719fe2c35702c592f4655e6df90d9b3f
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Fri Feb 7 13:22:18 2020 +0100
+
+    hej
+
+commit 989a9ddbce8c70f8884960c940dff5cb85abe953
+Author: Anton Matsson <antonmatsson@Antons-MBP.localdomain>
+Date:   Thu Feb 6 17:12:55 2020 +0100
+
+    bra skit
+
+commit fcf59768c112e2f710499a11a083ddbf926e90f1
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 6 16:57:23 2020 +0100
+
+    fixed main
+
+commit 2cc2cd4d73f7f2e80f9d3e156a29757733d96610
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 6 16:36:26 2020 +0100
+
+    installed configparser, created config.ini and main.py
+
+commit 296e21d5f46eef31dba2e67cda3f2c214dd28235
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 6 16:23:36 2020 +0100
+
+    changed name of folders
+
+commit d3d68c49f46ba1486ad7a4eb5abadc03fb1c8089
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 6 15:48:33 2020 +0100
+
+    changed structure, added __init.py files
+
+commit 77f883b8a67c56c6e2b1e6b6cc6f1ee085f4f1ac
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 6 14:11:39 2020 +0100
+
+    changed structure
+
+commit 28daae8a8544c14b37f99e8726991791996ad55a
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Feb 6 14:09:29 2020 +0100
+
+    Changed structure of repo
+
+commit 0827fce01800fc2e1b06b88e6b512dea175b0c17
+Author: Anton Matsson <antonmatsson@Antons-MBP.localdomain>
+Date:   Thu Feb 6 13:05:51 2020 +0100
+
+    updated code to get GAIL to run
+
+commit 8487d7460bddb193b89807daf7cbba9f71edbfd9
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 5 10:41:03 2020 +0100
+
+    added results
+
+commit c4e9060be81e8c522eef9da0ac9b1f12ba27ffd1
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 5 09:56:40 2020 +0100
+
+    fin
+
+commit af0271a988f39d7ca5a1131b3d83665c22d9f8b1
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 5 09:43:09 2020 +0100
+
+    hgi
+
+commit faf34d5f495f4f5424279e5823d168af86fd7291
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 5 09:38:52 2020 +0100
+
+    fixed requirements.txt
+
+commit d0bbd5cabbc023ddc00945620543c56372367146
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 5 09:08:25 2020 +0100
+
+    added deepirl
+
+commit 42a8f4d053ee85c5e3af9f72784c7d9b12ab841c
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 5 09:06:32 2020 +0100
+
+    fixni
+
+commit 13215698e0d7d48d404df1075c540037bc470a59
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Wed Feb 5 09:00:49 2020 +0100
+
+    added files for custom_env
+
+commit a66ca9391ddb2c236dd5f298e0bceafd9075ecf1
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 4 16:09:26 2020 +0100
+
+    fixed .npz file
+
+commit 0b63489dbb6b19ddb73690a5d5c0f0b12934eb06
+Author: Anton Matsson <antonmatsson@Antons-MacBook-Pro.local>
+Date:   Tue Feb 4 16:08:32 2020 +0100
+
+    created env
+
+commit bbcd047115f3ee96f2da2727e8ad4aed971d96b0
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 4 13:54:48 2020 +0100
+
+    added traj
+
+commit 0c14abe2ce6371bfec745f3b9c691ee3087b74f0
+Merge: 89e455b 585fa30
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 4 13:39:11 2020 +0100
+
+    gij
+
+commit 89e455b1ca41f8ffdda2e5c23c5cb27136565254
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 4 13:38:22 2020 +0100
+
+    gg
+
+commit d279635f1e9d5a8db48d2cf5b9320b67bafee70d
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Feb 4 13:36:44 2020 +0100
+
+    changed in user class
+
+commit 585fa3013efb9d99a754cd70ed2199866ac6bbe1
+Author: VictorGardi <45388014+VictorGardi@users.noreply.github.com>
+Date:   Mon Feb 3 14:15:19 2020 +0100
+
+    Delete gail_pendulum.zip
+
+commit a167dce17c312fdbdc0d1105cb1b02287ce43bd9
+Author: VictorGardi <45388014+VictorGardi@users.noreply.github.com>
+Date:   Mon Feb 3 14:15:10 2020 +0100
+
+    Delete expert_pendulum.npz
+
+commit 5d83000b84635f517ffd723a2f47424e75a16f80
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Jan 30 16:30:13 2020 +0100
+
+    feature extraction + plots changed
+
+commit 060d3756ae019d5e9a0d032fdd81eadbe2b27f32
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Jan 30 11:57:18 2020 +0100
+
+    added generate_data.py
+
+commit 216496211fab6141cd7fcc891228f8692350a3ff
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Thu Jan 30 08:41:26 2020 +0100
+
+    Tested different ways to compare time series
+
+commit 1bb9ce65c1de1ef824955e95327d1de2a445c37d
+Author: VictorGardi <victor.olssn@gmail.com>
+Date:   Tue Jan 21 15:17:48 2020 +0100
+
+    first commit
+
+commit d7ea0cae84fa116cf8ede93ff322132e8bc9bfcc
+Author: VictorGardi <45388014+VictorGardi@users.noreply.github.com>
+Date:   Mon Jan 20 09:53:42 2020 +0100
+
+    Initial commit

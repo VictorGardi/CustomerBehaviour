@@ -56,17 +56,20 @@ class AIRL(PPO):
                                                                   for d in [states, demo_states,
                                                                             next_states, demo_next_states]]
 
+            # Get the probabilities for actions for expert and agent from policy net, i.e. self.model
             with chainer.configuration.using_config('train', False), chainer.no_backprop_mode():
                 action_log_probs = self.get_probs(states, actions).data
                 demo_action_log_probs = self.get_probs(demo_states, demo_actions).data
 
+            # Merge together expert's and agent's states, actions and probabilites and create a target array with ones and zeros
             batch_states = np.concatenate((states, demo_states))
+            batch_next_states = np.concatenate((next_states, demo_next_states))
             batch_actions = np.concatenate((actions, demo_actions))
             batch_probs = np.concatenate((action_log_probs, demo_action_log_probs))
             targets = np.ones((len(actions) + len(demo_actions), 1))
-            targets[:len(actions)] = 0
+            targets[:len(actions)] = 0 # the target for fake data is 0 and 1 for expert (true) data
 
-            loss = self.discriminator.train(states = batch_states, actions = batch_actions, action_probs = batch_probs, targets = targets, xp = self.xp)
+            loss = self.discriminator.train(states = batch_states, actions = batch_actions, action_logprobs = batch_probs, next_states = batch_next_states, targets = targets, xp = self.xp)
 
             loss_mean += loss / (self.epochs * self.minibatch_size)
         self.discriminator_loss_record.append(float(loss_mean.array))
@@ -84,17 +87,22 @@ class AIRL(PPO):
 
             # update reward in self.memory
             transitions = list(chain(*self.memory))
+
+            # Get agent's states and actions. Each list should be update_interval long
             saved_states = [transition['state'][None] for transition in transitions]
             saved_actions = [transition['action'][None] for transition in transitions]
 
+            # Create state-action pairs, i.e. add a corresponding action to the state list. Each state-action pair
+            # should be n_historical events + 1 long for a discrete action, i.e. buy/not buy
             state_action = []
             for state, action in zip(saved_states, saved_actions):
-                array = np.append(state, float(action))
+                action = np.array([0, 1]) if action == 0 else np.array([0, 1])
+                array = np.append(state, action)
                 state_action.append(array.reshape((-1,1)))
 
-
+            # Get rewards for all s-a pairs
             with chainer.configuration.using_config('train', False), chainer.no_backprop_mode():
-                rewards = self.discriminator.get_rewards(self.xp.asarray(np.concatenate([s_a.T.astype('float32') for s_a in state_action]))).array
+                rewards = self.discriminator.get_rewards(self.xp.asarray([s_a.T.astype('float32') for s_a in state_action])).array
                 #rewards = self.discriminator.get_rewards(state_action.T.astype('float32')).data
 
             self.reward_mean_record.append(float(np.mean(rewards)))
