@@ -73,7 +73,7 @@ class Discriminator():
 
         # Calculate cross entropy loss
         loss = np.matmul(targets, (log_p_tau - log_pq).T ) + np.matmul(1-targets, (log_q_tau - log_pq).T )
-        #value_loss = -F.mean(value_loss)
+        loss = -F.mean(loss)
 
         #reward_loss = F.mean(F.log(discrim_output) - F.log(1 - discrim_output))
 
