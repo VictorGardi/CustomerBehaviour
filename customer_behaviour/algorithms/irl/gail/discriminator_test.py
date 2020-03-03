@@ -35,8 +35,8 @@ class Discriminator2:
             logits = self.model(x)
 
             mb_size = expert_data.shape[0]
-            t = xp.zeros((2*mb_size, 1), dtype=xp.int32)
-            t[mb_size:] = 1  # we predict p(expert|data)
+            t = xp.zeros((2*mb_size, 1), dtype=xp.float32)
+            t[mb_size:] = 0.9  # we predict p(expert|data)  # use One-sided label smoothing
 
             self.loss = F.sigmoid_cross_entropy(logits, t, normalize=True, reduce='mean')
 
