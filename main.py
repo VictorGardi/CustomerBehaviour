@@ -283,7 +283,7 @@ def main():
         from customer_behaviour.algorithms.irl.gail import GAIL2
         from customer_behaviour.algorithms.irl.gail import Discriminator2
 
-        D = Discriminator2(obs_dim, action_space.n, hidden_sizes=(32, 32), loss_type='gan', gpu=args.gpu)
+        D = Discriminator2(obs_dim, action_space.n, hidden_sizes=(64, 64), loss_type='gan', gpu=args.gpu)
         agent = GAIL2(demonstrations=demonstrations, discriminator=D,
                     model=model, optimizer=opt,
                     obs_normalizer=obs_normalizer,
