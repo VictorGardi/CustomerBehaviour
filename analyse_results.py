@@ -11,10 +11,8 @@ from customer_behaviour.tools.cluster import Cluster
 from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
 
-#dir_path = '/results/airl/discrete_events/1_expert(s)/case_2/2020-03-02_08-15-27' # no sigmoid AIRL test
-dir_path = '/results/airl/discrete_events/1_expert(s)/case_2/2020-03-01_12-11-01' # sigmoid AIRL test
-#dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_2/friday_0228/2020-02-28_12-38-12'
-#dir_path = '/discrete_events/1_expert(s)/case_2/2020-02-29_06-53-54' # long run weekend old GAIL
+dir_path = '/saved_results/gail2/discrete_events/1_expert(s)/case_2/2020-03-03_13-21-20' # no sigmoid AIRL test
+
 
 def main():
     result = Case2(dir_path)
