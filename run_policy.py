@@ -16,7 +16,7 @@ from chainerrl.misc.batch_states import batch_states
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-59-42'  # anton
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/tuesday_0225/2020-02-25_15-54-25'  # victor
  
-directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/sunday_0301/2020-03-01_17-07-43' # anton (new)
+directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48' # anton (new)
 
 sample_length = 10000
 n_experts = 1
@@ -163,5 +163,7 @@ x = range(len(possible_val_states))
 
 _, (ax1, ax2) = plt.subplots(1, 2)
 ax1.bar(x, expert_counts)
+ax1.set_title('Expert')
 ax2.bar(x, agent_counts)
+ax2.set_title('Agent')
 plt.show()

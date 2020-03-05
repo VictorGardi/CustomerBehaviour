@@ -1,0 +1,11 @@
+diff --git a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+index b012bfb..d686478 100644
+--- a/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
++++ b/customer_behaviour/custom_gym/custom_gym/envs/discrete_buying_events.py
+@@ -387,4 +387,4 @@ class StepSwitcher():
+         new_state = [self.model.sex, categorize_age(self.model.age), *new_history]
+ 
+         return new_state
+-'''
+\ No newline at end of file
++'''

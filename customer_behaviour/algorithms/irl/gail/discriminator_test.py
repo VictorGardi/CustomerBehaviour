@@ -7,7 +7,7 @@ from chainerrl import links
 class Discriminator2:
     def __init__(self, observation_dim, action_dim, hidden_sizes, loss_type='gan', gpu=-1):
 
-        self.model = links.MLP(observation_dim + action_dim, 1, hidden_sizes=hidden_sizes, nonlinearity=F.relu)
+        self.model = links.MLP(observation_dim + action_dim, 1, hidden_sizes=hidden_sizes, nonlinearity=F.leaky_relu)
 
         if gpu >= 0: self.model.to_gpu(gpu)
 
