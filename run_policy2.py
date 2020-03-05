@@ -40,7 +40,7 @@ def main():
         )
 
     # Initialize model and observation normalizer
-    model = A3CFFSoftmax(args['n_historical_events'], 2, hidden_sizes=(64, 64))  # Assmuning state = [historical purchases]
+    model = A3CFFSoftmax(args['n_historical_events'], 2, hidden_sizes=(64, 64))  # Assuming state = [historical purchases]
     obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_historical_events'], clip_threshold=5)
 
     # Load model and observation normalizer

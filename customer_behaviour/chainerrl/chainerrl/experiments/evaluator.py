@@ -14,6 +14,7 @@ from customer_behaviour.tools.time_series_analysis import FeatureExtraction
 from customer_behaviour.tools.cluster import Cluster
 from customer_behaviour.tools.validation_states import get_features_from_counts
 from custom_gym.envs.discrete_buying_events import Case21
+from scipy.stats import entropy
 # from customer_behaviour.custom_gym.custom_gym.envs.discrete_buying_events import Case21
 
 
@@ -71,8 +72,8 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
         if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
             temp = FeatureExtraction(np.array(actions), case='discrete_events').get_features()
             assert isinstance(env.env.case, Case21), 'Must use case 2.1 for validation measure to work'
-            _, no_purchase = get_features_from_counts([states], [actions])
-            temp.extend(no_purchase)  # start by adding counts given no purchase
+            expert_purchase, expert_no_purchase = get_features_from_counts([states], [actions])
+            temp.extend(expert_no_purchase)  # start by adding counts given no purchase
         else:
             raise NotImplementedError
         expert_features.append(temp)
@@ -80,6 +81,9 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     agent_features = []
 
     print('----- ----- ----- ----- ----- ----- ----- ----- ----- -----')
+
+    entropy_purchase = []
+    entropy_no_purchase = []
 
     reset = True
     while not terminate:
@@ -110,10 +114,16 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
             if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
                 temp_features = FeatureExtraction(np.array(actions), case='discrete_events').get_features()
                 assert isinstance(env.env.case, Case21), 'Must use case 2.1 for validation measure to work'
-                _, no_purchase = get_features_from_counts([states], [actions])
+                purchase, no_purchase = get_features_from_counts([states], [actions])
                 temp_features.extend(no_purchase)  # start by adding counts given no purchase
             else:
                 raise NotImplementedError
+
+            e1 = entropy(purchase, qk=expert_purchase)  # comparing with the "last expert"
+            entropy_purchase.append(e1)
+
+            e2 = entropy(no_purchase, qk=expert_no_purchase)
+            entropy_no_purchase.append(e2)
 
             agent_features.append(temp_features)
 
@@ -149,6 +159,13 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     with open(os.path.join(outdir, 'cluster.txt'), 'a+') as f:
         values = [mean_dist, min_dist, max_dist, agent_within_SS, expert_within_SS]
         print('\t'.join(str(x) for x in values), file=f)
+
+    # Print KL divergences
+    with open(os.path.join(outdir, 'kl_div_purchase.txt'), 'a+') as f:
+        print('\t'.join(str(x) for x in entropy_purchase), file=f)
+
+    with open(os.path.join(outdir, 'kl_div_no_purchase.txt'), 'a+') as f:
+        print('\t'.join(str(x) for x in entropy_no_purchase), file=f)
 
     # If all steps were used for a single unfinished episode
     if len(scores) == 0:
@@ -401,6 +418,12 @@ class Evaluator(object):
             custom_columns = ('mean_dist', 'min_dist', 'max_dist', 'agent_within_SS', 'expert_within_SS')
             # column_names = _basic_columns + custom_columns
             print('\t'.join(custom_columns), file=f)
+
+        with open(os.path.join(self.outdir, 'kl_div_purchase.txt'), 'w') as f:
+            pass
+
+        with open(os.path.join(self.outdir, 'kl_div_no_purchase.txt'), 'w') as f:
+            pass
 
     def evaluate_and_update_max_score(self, t, episodes):
         eval_stats = eval_performance(

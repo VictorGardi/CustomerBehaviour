@@ -8,7 +8,7 @@ def get_counts(observed_val_states, possible_val_states, normalize=False):
         i = possible_val_states.index(temp)
         counts[i] += 1
     if normalize:
-        counts = list(np.array(counts) / np.sum(counts))
+        if np.sum(counts) > 0: counts = list(np.array(counts) / np.sum(counts))
     return counts
 
 def get_cond_val_states(states, actions, n):
@@ -70,15 +70,22 @@ def get_features_from_counts(states, actions, n_last_days=7, max_n_purchases_per
     purchase, no_purchase = get_cond_val_states(states, actions, n_last_days)
 
     # Reduce the dimensionality by treating all validation states with more than x purchases as one single state
-    purchase = reduce_dimensionality(purchase, max_n_purchases_per_n_last_days)
-    no_purchase = reduce_dimensionality(no_purchase, max_n_purchases_per_n_last_days)
+    try:
+        purchase = reduce_dimensionality(purchase, max_n_purchases_per_n_last_days)
+    except np.AxisError:
+        purchase = []
 
+    try:
+        no_purchase = reduce_dimensionality(no_purchase, max_n_purchases_per_n_last_days)
+    except np.AxisError:
+        no_purchase = []
+    
     # Get possible validation states
     possible_val_states = [list(x) for x in itertools.product([0, 1], repeat=n_last_days)]
     possible_val_states = reduce_dimensionality(possible_val_states, max_n_purchases_per_n_last_days, keep_only_unique=True)
     possible_val_states = sort_possible_val_states(possible_val_states)
 
-    purchase = get_counts(purchase, possible_val_states, normalize=False)
-    no_purchase = get_counts(no_purchase, possible_val_states, normalize=False)
+    counts_purchase = get_counts(purchase, possible_val_states, normalize=False)
+    counts_no_purchase = get_counts(no_purchase, possible_val_states, normalize=False)
 
-    return purchase, no_purchase
+    return counts_purchase, counts_no_purchase

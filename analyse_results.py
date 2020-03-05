@@ -8,7 +8,7 @@ from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
 from customer_behaviour.tools.tools import save_plt_as_eps
 
-dir_path = '/saved_results/gail2/discrete_events/1_expert(s)/case_2/2020-03-03_13-21-20' # no sigmoid AIRL test
+dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'  # 2.1
 
 
 def main():
@@ -17,8 +17,9 @@ def main():
     #fig_traj = result.plot_trajectories(n_trajectories = 1)
     
     result.plot_clusters(n_dim = 3, show_benchmark = True)
-    #fig_stats = result.plot_statistics()
+    fig_stats = result.plot_statistics()
     #fig_stats_cluster = result.plot_cluster_data()
+    '''
     try:
         os.makedirs(root_path + '/figs')
         fig_path = root_path + '/figs'
@@ -29,7 +30,7 @@ def main():
     except OSError as e:
         fig_path = root_path + '/figs'
         print('Figures are already saved! Take a look in ' + str(fig_path))
-    
+    '''
 
 ############################
 ########## Case 3 ##########
