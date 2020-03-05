@@ -12,12 +12,12 @@ class Result():
     def __init__(self, dir_path):
         self.expert_data = os.getcwd() + dir_path + '/eval_expert_trajectories.npz' # change to eval_expert_trajectories.npz
         self.learner_data = os.getcwd() + dir_path + '/trajectories.npz'
-        self.action_probs_path = os.getcwd() + dir_path + '/action_probs.npz'
-        self.scores_path = os.getcwd() + dir_path + '/scores.txt'
-        self.cluster_data_path = os.getcwd() + dir_path + '/cluster.txt'
-        self.args_path = os.getcwd() + dir_path + '/args.txt'
+        #self.action_probs_path = os.getcwd() + dir_path + '/action_probs.npz'
+        #self.scores_path = os.getcwd() + dir_path + '/scores.txt'
+        #self.cluster_data_path = os.getcwd() + dir_path + '/cluster.txt'
+        #self.args_path = os.getcwd() + dir_path + '/args.txt'
 
-        args = self.read_json_txt(self.args_path)
+        #args = self.read_json_txt(self.args_path)
         
         # self.action_probs = self.load_action_probs(self.action_probs_path) if os.path.exists(self.action_probs_path) else None
         self.expert_states, self.expert_actions = self.load_data(self.expert_data)
@@ -26,9 +26,10 @@ class Result():
         self.n_expert_trajectories = self.expert_states.shape[0]
         #print(self.expert_states)
         #print(self.learner_states)
-        #print(self.learner_states.shape)
 
         self.n_learner_trajectories, self.episode_length, _ = self.learner_states.shape
+
+
 
         self.expert_features = []
         self.learner_features = []
