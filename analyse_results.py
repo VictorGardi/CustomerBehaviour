@@ -1,8 +1,4 @@
-import os
-import re
-import json
-import time
-import collections
+import os, re, json, time, collections, errno
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
@@ -10,16 +6,29 @@ from pprint import pprint
 from customer_behaviour.tools.cluster import Cluster
 from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
+from customer_behaviour.tools.tools import save_plt_as_eps
 
 dir_path = '/saved_results/gail2/discrete_events/1_expert(s)/case_2/2020-03-03_13-21-20' # no sigmoid AIRL test
 
 
 def main():
     result = Case2(dir_path)
-    result.plot_trajectories(n_trajectories = 3)
-    result.plot_clusters(n_dim = 3)
-    result.plot_statistics()
-    result.plot_cluster_data()
+    root_path = os.getcwd() + dir_path
+    #fig_traj = result.plot_trajectories(n_trajectories = 1)
+    
+    result.plot_clusters(n_dim = 3, show_benchmark = True)
+    #fig_stats = result.plot_statistics()
+    #fig_stats_cluster = result.plot_cluster_data()
+    try:
+        os.makedirs(root_path + '/figs')
+        fig_path = root_path + '/figs'
+        save_plt_as_eps(fig_traj, fig_path + '/trajectories.eps')
+        save_plt_as_eps(fig_stats, fig_path + '/stats.eps')
+        save_plt_as_eps(fig_stats_cluster, fig_path + '/cluster_stats.eps')
+        print('Figures have been saved! Take a look in ' + str(fig_path))
+    except OSError as e:
+        fig_path = root_path + '/figs'
+        print('Figures are already saved! Take a look in ' + str(fig_path))
     
 
 ############################
@@ -58,6 +67,7 @@ class Case2(Result):
     
     def __init__(self, dir_path):
         Result.__init__(self, dir_path)
+        self.dir_path = dir_path
         self.n_historical_events = self.learner_states.shape[2]
         
     def plot_trajectories(self, n_trajectories=None):
@@ -81,6 +91,7 @@ class Case2(Result):
                          
         fig.tight_layout()
         plt.show()
+        return fig
 
 ############################
 ########## Case 1 ##########

@@ -12,24 +12,24 @@ class Result():
     def __init__(self, dir_path):
         self.expert_data = os.getcwd() + dir_path + '/eval_expert_trajectories.npz' # change to eval_expert_trajectories.npz
         self.learner_data = os.getcwd() + dir_path + '/trajectories.npz'
-        #self.action_probs_path = os.getcwd() + dir_path + '/action_probs.npz'
-        #self.scores_path = os.getcwd() + dir_path + '/scores.txt'
-        #self.cluster_data_path = os.getcwd() + dir_path + '/cluster.txt'
-        #self.args_path = os.getcwd() + dir_path + '/args.txt'
+        self.action_probs_path = os.getcwd() + dir_path + '/action_probs.npz'
+        self.scores_path = os.getcwd() + dir_path + '/scores.txt'
+        self.cluster_data_path = os.getcwd() + dir_path + '/cluster.txt'
+        self.args_path = os.getcwd() + dir_path + '/args.txt'
 
-        #args = self.read_json_txt(self.args_path)
+        args = self.read_json_txt(self.args_path)
         
         # self.action_probs = self.load_action_probs(self.action_probs_path) if os.path.exists(self.action_probs_path) else None
         self.expert_states, self.expert_actions = self.load_data(self.expert_data)
         self.learner_states, self.learner_actions = self.load_data(self.learner_data)
 
         self.n_expert_trajectories = self.expert_states.shape[0]
-        #print(self.expert_states)
-        #print(self.learner_states)
-
         self.n_learner_trajectories, self.episode_length, _ = self.learner_states.shape
+        all_zeros = np.zeros_like(self.expert_actions[0])
+        all_ones = np.zeros_like(self.expert_actions[0]) 
 
-
+        self.benchmark_zeros_features = [self.get_features(all_zeros)]
+        self.benchmark_ones_features = [self.get_features(all_ones)]
 
         self.expert_features = []
         self.learner_features = []
@@ -38,10 +38,19 @@ class Result():
 
         for j in range(self.n_learner_trajectories):
             self.learner_features.append(self.get_features(self.learner_actions[j]))
+        mean_expert = 0
+        for ls in self.expert_features:
+            mean_expert += ls[0]
+        mean_expert = int(mean_expert/self.n_expert_trajectories)
+
+        benchmark_mean = np.zeros_like(all_zeros)
+        for i in range(benchmark_mean.shape[0]):
+            benchmark_mean[i] = 1 if i % mean_expert == 0 else 0
+
+        self.benchmark_mean_features = [self.get_features(benchmark_mean)]
 
     def get_features(self, trajectory):
-            tsa = FeatureExtraction(trajectory, case='discrete_events')
-            return tsa.get_features()
+            return FeatureExtraction(trajectory, case='discrete_events').get_features()
     
     def load_data(self, file):
         data = np.load(file, allow_pickle=True)
@@ -57,29 +66,45 @@ class Result():
         assert sorted(data.files) == sorted(['action_probs'])
         return data['action_probs']
 
-    def plot_clusters(self, n_dim = 2):
+    def plot_clusters(self, n_dim = 2, show_benchmark = False):
         features = self.expert_features.copy()
         features.extend(self.learner_features)
+        features.extend(self.benchmark_zeros_features)
+        features.extend(self.benchmark_ones_features)
+        features.extend(self.benchmark_mean_features)
         features = np.array(features)
         X_embedded = TSNE(n_components=n_dim).fit_transform(features)
         expert_cluster = X_embedded[:self.n_expert_trajectories,:]
-        agent_cluster = X_embedded[self.n_expert_trajectories:,:]
+        agent_cluster = X_embedded[self.n_expert_trajectories:self.n_expert_trajectories + self.n_learner_trajectories,:]
+        benchmark_zeros = X_embedded[-3, :].reshape((-1,1)).T
+        benchmark_ones = X_embedded[-2, :].reshape((-1,1)).T
+        benchmark_mean = X_embedded[-1, :].reshape((-1,1)).T
 
         if n_dim == 2:
-            plt.scatter(expert_cluster[:,0], expert_cluster[:,1])
-            plt.scatter(agent_cluster[:,0], agent_cluster[:,1])
+            plt.scatter(expert_cluster[:,0], expert_cluster[:,1], label='Expert')
+            plt.scatter(agent_cluster[:,0], agent_cluster[:,1], label='Agent')
+            if show_benchmark:
+                plt.scatter(benchmark_zeros[:,0], benchmark_zeros[:,1], label='No buys')
+                plt.scatter(benchmark_ones[:,0], benchmark_ones[:,1], label='All buys')
+                plt.scatter(benchmark_mean[:,0], benchmark_mean[:,1], label='Mean buys')
+            plt.legend()
             plt.show()
         elif n_dim == 3:
             fig = pyplot.figure()
             ax = Axes3D(fig)
-            ax.scatter(expert_cluster[:,0], expert_cluster[:,1], expert_cluster[:,2])
-            ax.scatter(agent_cluster[:,0], agent_cluster[:,1], agent_cluster[:,2])
+            ax.scatter(expert_cluster[:,0], expert_cluster[:,1], expert_cluster[:,2], label='Expert')
+            ax.scatter(agent_cluster[:,0], agent_cluster[:,1], agent_cluster[:,2], label='Agent')
+            if show_benchmark:
+                ax.scatter(benchmark_zeros[:,0], benchmark_zeros[:,1], label='No buys')
+                ax.scatter(benchmark_ones[:,0], benchmark_ones[:,1], label='All buys')
+                ax.scatter(benchmark_mean[:,0], benchmark_mean[:,1], label='Mean buys')
+            ax.legend()
             pyplot.show()
-
 
     def plot_cluster_data(self):
         episodes, mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert = self.read_cluster_data()
 
+        fig = plt.figure()
         plt.subplot(2,3,1)
         plt.plot(episodes, mean_dist)
         plt.xticks(rotation=90)
@@ -112,10 +137,14 @@ class Result():
 
         plt.tight_layout()
         plt.show()
+        return fig
+        
+        
 
     def plot_statistics(self):
         discriminator_loss, policy_loss, average_rewards, episodes, value, value_loss, n_updates, average_entropy = self.read_scores_txt()
 
+        fig = plt.figure()
         plt.subplot(2,3,1)
         plt.plot(episodes, discriminator_loss)
         plt.xlabel('Episode')
@@ -148,6 +177,7 @@ class Result():
         
         plt.tight_layout()
         plt.show()
+        return fig
 
     def read_cluster_data(self):
         episodes = []

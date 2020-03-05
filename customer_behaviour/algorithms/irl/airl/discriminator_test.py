@@ -73,9 +73,12 @@ class Discriminator():
 
         # Calculate cross entropy loss
 
-        loss = targets*(log_p_tau-log_pq) + (1-targets)*(log_q_tau-log_pq)
+        loss = F.sigmoid_cross_entropy(log_p_tau-log_pq, np.ones_like(log_p_tau).astype(np.int))
+        loss += F.sigmoid_cross_entropy(log_q_tau-log_pq, np.zeros_like(log_q_tau).astype(np.int))
 
-        loss = -F.mean(loss)        
+        #loss = targets*(log_p_tau-log_pq) + (1-targets)*(log_q_tau-log_pq) # lång körning ozzy 3/3
+
+        #loss = -F.mean(loss)        
 
         self.reward_net.cleargrads()
         self.value_net.cleargrads()

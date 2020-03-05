@@ -75,4 +75,7 @@ def convert_imports(dir):
                     f.write(newText)
                 
     print('----- .py files that had ' + str(keyword) + ' in it has now been replaced to ' + str(replacement) + ' -----')
+
+def save_plt_as_eps(obj, path):
+    obj.savefig(path, format='eps')
     
