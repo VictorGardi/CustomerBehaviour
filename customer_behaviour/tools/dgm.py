@@ -26,7 +26,7 @@ class DGM:
         self.alpha0 = np.random.uniform(self.alpha0_lower,self.alpha0_upper)
         self.alpha1 = np.random.uniform(self.alpha1_lower,self.alpha1_upper)
         
-        self.beta0 = np.random.uniform(-5,-2)
+        self.beta0 = np.random.uniform(-4,-2)
         self.beta1 = np.random.uniform(self.beta1_lower,self.beta1_upper)
         self.gamma = np.random.triangular(0.1,0.1+0.2*((self.age-18))/62,0.3,(self.N,1)) + np.random.uniform(0,self.sex * 0.1)
         self.lambd = np.random.uniform(1,2,(self.N,1)) 

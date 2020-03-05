@@ -12,6 +12,9 @@ import chainerrl
 
 from customer_behaviour.tools.time_series_analysis import FeatureExtraction
 from customer_behaviour.tools.cluster import Cluster
+from customer_behaviour.tools.validation_states import get_features_from_counts
+from custom_gym.envs.discrete_buying_events import Case21
+# from customer_behaviour.custom_gym.custom_gym.envs.discrete_buying_events import Case21
 
 
 """Columns that describe information about an experiment.
@@ -60,12 +63,16 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     data = np.load(file, allow_pickle=True)
     assert sorted(data.files) == sorted(['states', 'actions'])
     
+    expert_states = data['states']
     expert_actions = data['actions']
     expert_features = []
-    print(len(expert_actions))
-    for x in expert_actions:
+    # print(len(expert_actions))
+    for states, actions in zip(expert_states, expert_actions):
         if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
-            temp = FeatureExtraction(np.array(x), case='discrete_events').get_features()
+            temp = FeatureExtraction(np.array(actions), case='discrete_events').get_features()
+            assert isinstance(env.env.case, Case21), 'Must use case 2.1 for validation measure to work'
+            _, no_purchase = get_features_from_counts([states], [actions])
+            temp.extend(no_purchase)  # start by adding counts given no purchase
         else:
             raise NotImplementedError
         expert_features.append(temp)
@@ -78,12 +85,14 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     while not terminate:
         if reset:
             actions = []
+            states = []
             obs = env.reset()
             done = False
             test_r = 0
             episode_len = 0
             info = {}
         a = agent.act(obs)
+        states.append(obs)
         actions.append(a)
         obs, r, done, info = env.step(a)
         test_r += r
@@ -99,13 +108,16 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
             # compare this feature vector against the cluster of expert features
 
             if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
-                temp_features = [FeatureExtraction(np.array(actions), case='discrete_events').get_features()] 
+                temp_features = FeatureExtraction(np.array(actions), case='discrete_events').get_features()
+                assert isinstance(env.env.case, Case21), 'Must use case 2.1 for validation measure to work'
+                _, no_purchase = get_features_from_counts([states], [actions])
+                temp_features.extend(no_purchase)  # start by adding counts given no purchase
             else:
                 raise NotImplementedError
 
-            agent_features.append(temp_features[0])
+            agent_features.append(temp_features)
 
-            cluster = Cluster(temp_features, expert_features)
+            cluster = Cluster(agent_features[-1], expert_features)
 
             mean_dist, min_dist, max_dist = cluster.get_dist_between_clusters()
             # logger.info('mean_dist: %.1f, min_dist: %.1f, max_dist: %.1f' % (mean_dist, min_dist, max_dist))

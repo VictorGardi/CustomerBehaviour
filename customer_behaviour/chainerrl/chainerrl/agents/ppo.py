@@ -443,6 +443,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
             mean_advs = xp.mean(all_advs)
             std_advs = xp.std(all_advs)
 
+        i = 0
         while dataset_iter.epoch < self.epochs:
             batch = dataset_iter.__next__()
             states = self.batch_states(
@@ -466,14 +467,26 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
             vs_pred_old = vs_pred_old[..., None]
             vs_teacher = vs_teacher[..., None]
 
-            self.optimizer.update(
-                self._lossfun,
-                distribs.entropy, vs_pred, distribs.log_prob(actions),
-                vs_pred_old=vs_pred_old,
-                log_probs_old=log_probs_old,
-                advs=advs,
-                vs_teacher=vs_teacher,
-            )
+            if i % 50 == 0:
+                self.optimizer.update(
+                    self._lossfun_record,
+                    distribs.entropy, vs_pred, distribs.log_prob(actions),
+                    vs_pred_old=vs_pred_old,
+                    log_probs_old=log_probs_old,
+                    advs=advs,
+                    vs_teacher=vs_teacher,
+                )
+                first_update = False
+            else:
+                self.optimizer.update(
+                    self._lossfun,
+                    distribs.entropy, vs_pred, distribs.log_prob(actions),
+                    vs_pred_old=vs_pred_old,
+                    log_probs_old=log_probs_old,
+                    advs=advs,
+                    vs_teacher=vs_teacher,
+                )
+            i += 1
 
     def _update_once_recurrent(
             self, episodes, mean_advs, std_advs):
@@ -562,6 +575,51 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
                  advs, vs_teacher):
 
         prob_ratio = F.exp(log_probs - log_probs_old)
+
+        loss_policy = - F.mean(F.minimum(
+            prob_ratio * advs,
+            F.clip(prob_ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advs))
+
+        if self.clip_eps_vf is None:
+            loss_value_func = F.mean_squared_error(vs_pred, vs_teacher)
+        else:
+            loss_value_func = F.mean(F.maximum(
+                F.square(vs_pred - vs_teacher),
+                F.square(_elementwise_clip(vs_pred,
+                                           vs_pred_old - self.clip_eps_vf,
+                                           vs_pred_old + self.clip_eps_vf)
+                         - vs_teacher)
+            ))
+        loss_entropy = -F.mean(entropy)
+
+        self.value_loss_record.append(float(loss_value_func.array))
+        self.policy_loss_record.append(float(loss_policy.array))
+
+        loss = (
+            loss_policy
+            + self.value_func_coef * loss_value_func
+            + self.entropy_coef * loss_entropy
+        )
+
+        return loss
+
+    def _lossfun_record(self,
+                 entropy, vs_pred, log_probs,
+                 vs_pred_old, log_probs_old,
+                 advs, vs_teacher):
+
+        import os
+
+        prob_ratio = F.exp(log_probs - log_probs_old)
+
+
+        L_clip_1 = F.mean(prob_ratio * advs).array
+        L_clip_2 = F.mean(F.clip(prob_ratio, 1 - self.clip_eps, 1 + self.clip_eps) * advs).array
+        vs_teacher_array = [x[0] for x in vs_teacher]
+
+        with open('ppo.txt', 'a+') as f:
+            values = [L_clip_1, L_clip_2, *vs_teacher_array]
+            print('\t'.join(str(x) for x in values), file=f)
 
         loss_policy = - F.mean(F.minimum(
             prob_ratio * advs,

@@ -24,9 +24,9 @@ class FeatureExtraction():
                 feature_vector.append(std_purchase_freqs[i])
                 feature_vector.append(min_elapsed_days[i])
                 feature_vector.append(max_elapsed_days[i])
-                feature_vector.append(max_purchases_per_week[i])
-                feature_vector.append(max_purchases_per_two_weeks[i])
-                feature_vector.append(max_purchases_per_month[i])
+                #feature_vector.append(max_purchases_per_week[i])
+                #feature_vector.append(max_purchases_per_two_weeks[i])
+                #feature_vector.append(max_purchases_per_month[i])
                 #autocorr = self.get_autocorr(self.x[i,:])
                 #feature_vector.extend(autocorr)
         else:
