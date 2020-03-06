@@ -44,7 +44,7 @@ def main():
     obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_historical_events'], clip_threshold=5)
 
     # Load model and observation normalizer
-    model_directory = [x[0] for x in os.walk(directory)][1]
+    model_directory = next((d for d in [x[0] for x in os.walk(directory)] if d.endswith('finish') == 1), None)
     chainer.serializers.load_npz(join(model_directory, 'model.npz'), model)
     chainer.serializers.load_npz(join(model_directory, 'obs_normalizer.npz'), obs_normalizer)
 
