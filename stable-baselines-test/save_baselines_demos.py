@@ -17,7 +17,7 @@ def main():
     env = gym.make('discrete-buying-events-v0')
     env.initialize_environment(case = 2, n_historical_events = 96, episode_length = 256, n_demos_per_expert=1, n_expert_time_steps=256, agent_seed=0)
     env = DummyVecEnv([lambda: env])
-    agent = GAIL.load('gail_sb')
+    agent = GAIL.load('gail')
     eval_length = 1024
     save_agent_demo(env, agent, out_dir = os.getcwd(), max_t = 10*eval_length)
 

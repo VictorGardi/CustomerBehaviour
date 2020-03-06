@@ -8,8 +8,8 @@ import os
 import gym
 import custom_gym
 
-from stable_baselines import GAIL, SAC
-from stable_baselines.gail import ExpertDataset
+from stable_baselines import SAC
+from stable_baselines.gail import ExpertDataset, GAIL
 
 
 def main():
@@ -22,7 +22,7 @@ def main():
     env.initialize_environment(case = 21, n_historical_events = 96, episode_length = 512, n_demos_per_expert=1, n_expert_time_steps=256, agent_seed=0)
     model = GAIL('MlpPolicy', env, dataset, verbose=1, full_tensorboard_log=True)
     # Note: in practice, you need to train for 1M steps to have a working policy
-    model.learn(total_timesteps=1000000)
+    model.learn(total_timesteps=10**7)
     model.save("gail")
 
     del model # remove to demonstrate saving and loading
