@@ -13,9 +13,10 @@ from main import A3CFFSoftmax
 from math import floor
 from chainerrl.misc.batch_states import batch_states
 from scipy.stats import chisquare
+from customer_behaviour.tools.tools import save_plt_as_eps
 
-directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'  # 2.1
-# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/friday_0228/2020-02-29_06-53-54'  # 2.0
+directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'
+# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'
 
 sample_length = 10000
 n_experts = 1
@@ -102,6 +103,8 @@ def main():
 
     x = range(len(possible_val_states))
 
+    if not os.path.exists(join(directory, 'figs')): os.makedirs(join(directory, 'figs'))
+
     # Plot expert
     fig, ax = plt.subplots()
     ax.bar(x, expert_counts_no_purchase)
@@ -109,6 +112,8 @@ def main():
     fig.subplots_adjust(bottom=0.25)
     fig.suptitle('Expert')
     ax.set_title('No purchase today')
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase.eps'))
+
 
     fig, ax = plt.subplots()
     ax.bar(x, expert_counts_purchase)
@@ -116,6 +121,7 @@ def main():
     fig.subplots_adjust(bottom=0.25)
     fig.suptitle('Expert')
     ax.set_title('Purchase today')
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase.eps'))
 
     # Plot agent
     fig, ax = plt.subplots()
@@ -124,6 +130,7 @@ def main():
     fig.subplots_adjust(bottom=0.25)
     fig.suptitle('Agent | p-value: %.5f' % p_value_no_purchase)
     ax.set_title('No purchase today')
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_no_purchase.eps'))
     
     fig, ax = plt.subplots()
     ax.bar(x, agent_counts_purchase)
@@ -131,6 +138,7 @@ def main():
     fig.subplots_adjust(bottom=0.25)
     fig.suptitle('Agent | p-value: %.5f' % p_value_purchase)
     ax.set_title('Purchase today')
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_purchase.eps'))
 
     plt.show()
 
