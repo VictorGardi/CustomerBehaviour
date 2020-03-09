@@ -16,6 +16,10 @@ class Result():
         self.scores_path = os.getcwd() + dir_path + '/scores.txt'
         self.cluster_data_path = os.getcwd() + dir_path + '/cluster.txt'
         self.args_path = os.getcwd() + dir_path + '/args.txt'
+        self.kl_no_purchase_path = os.getcwd() + dir_path + '/kl_div_no_purchase.txt'
+        self.kl_purchase_path = os.getcwd() + dir_path + '/kl_div_purchase.txt'
+
+        self.episodes = self.read_episodes()
 
         args = self.read_json_txt(self.args_path)
         
@@ -102,44 +106,64 @@ class Result():
             pyplot.show()
 
     def plot_cluster_data(self):
-        episodes, mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert = self.read_cluster_data()
+        mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert = self.read_cluster_data()
 
         fig = plt.figure()
         plt.subplot(2,3,1)
-        plt.plot(episodes, mean_dist)
+        plt.plot(self.episodes, mean_dist)
         plt.xticks(rotation=90)
         plt.xlabel('Episode')
         plt.ylabel('Mean dist. between clusters')
 
         plt.subplot(2,3,2)
-        plt.plot(episodes, min_dist)
+        plt.plot(self.episodes, min_dist)
         plt.xticks(rotation=90)
         plt.xlabel('Episode')
         plt.ylabel('Min dist. between clusters')
 
         plt.subplot(2,3,3)
-        plt.plot(episodes, max_dist)
+        plt.plot(self.episodes, max_dist)
         plt.xticks(rotation=90)
         plt.xlabel('Episode')
         plt.ylabel('Max dist. between clusters')
 
         plt.subplot(2,3,4)
-        plt.plot(episodes, avg_dist_from_centroid_agent)
+        plt.plot(self.episodes, avg_dist_from_centroid_agent)
         plt.xticks(rotation=90)
         plt.xlabel('Episode')
         plt.ylabel("Mean dist. to centroid in agent cluster")
 
         plt.subplot(2,3,5)
         plt.xticks(rotation=90)
-        plt.plot(episodes, avg_dist_from_centroid_expert)
+        plt.plot(self.episodes, avg_dist_from_centroid_expert)
         plt.xlabel('Episode')
         plt.ylabel("Mean dist. to centroid in expert cluster")
 
         plt.tight_layout()
         plt.show()
         return fig
+    
+    def plot_kl_div(self):
+        kl_purchase_mean, kl_purchase_std, kl_no_purchase_mean, kl_no_purchase_std = self.read_kl_div()
+
+        fig, (ax1, ax2) = plt.subplots(1, 2)
         
-        
+        # ax1.errorbar(self.episodes, kl_purchase_mean, kl_purchase_std, linestyle='None')
+        ax1.plot(self.episodes, kl_purchase_mean)
+        ax1.set_xlabel('Episode')
+        ax1.set_ylabel('KL divergence')
+        ax1.set_title('Purchase')
+
+        # ax2.errorbar(self.episodes, kl_no_purchase_mean, kl_no_purchase_std, linestyle='None')
+        ax2.plot(self.episodes, kl_no_purchase_mean)
+        ax2.set_xlabel('Episode')
+        ax2.set_ylabel('KL divergence')
+        ax2.set_title('No purchase')
+
+        plt.tight_layout()
+        plt.show()
+
+        return fig
 
     def plot_statistics(self):
         discriminator_loss, policy_loss, average_rewards, episodes, value, value_loss, n_updates, average_entropy = self.read_scores_txt()
@@ -179,7 +203,7 @@ class Result():
         plt.show()
         return fig
 
-    def read_cluster_data(self):
+    def read_episodes(self):
         episodes = []
         with open(self.scores_path, 'r') as file:
             lines = file.readlines()
@@ -190,7 +214,9 @@ class Result():
                     episode = float(line2[0])
                     episodes.append(episode)
 
+        return episodes
 
+    def read_cluster_data(self):
         with open(self.cluster_data_path, 'r') as file: 
             lines = file.readlines()
 
@@ -214,8 +240,31 @@ class Result():
                 avg_dist_from_centroid_agent.append(line3[3])
                 avg_dist_from_centroid_expert.append(line3[4])
 
-        return episodes, mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert
+        return mean_dist, min_dist, max_dist, avg_dist_from_centroid_agent, avg_dist_from_centroid_expert
 
+    def read_kl_div(self):
+        kl_purchase_mean = []
+        kl_purchase_std = []
+        with open(self.kl_purchase_path, 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                line1 = re.split(r'\t+', line)
+                line2 = [float(x.rstrip("\n\r")) for x in line1]
+                kl_purchase_mean.append(np.mean(line2))
+                kl_purchase_std.append(np.std(line2))
+
+        kl_no_purchase_mean = []
+        kl_no_purchase_std = []
+        with open(self.kl_no_purchase_path, 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                line1 = re.split(r'\t+', line)
+                line2 = [float(x.rstrip("\n\r")) for x in line1]
+                kl_no_purchase_mean.append(np.mean(line2))
+                kl_no_purchase_std.append(np.std(line2))
+
+        return kl_purchase_mean, kl_purchase_std, kl_no_purchase_mean, kl_no_purchase_std
+        
     def read_scores_txt(self):
         file_obj = open(self.scores_path, "r") 
         lines = file_obj.readlines()
