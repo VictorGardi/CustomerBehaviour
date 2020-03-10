@@ -129,7 +129,8 @@ def main():
     parser.add_argument('--seed_expert', type=str2bool, nargs='?',
                         const=True, default=False,
                         help="Activate expert seed mode.")
-    parser.add_argument('--agent_seed', type=int, default=None)
+    # parser.add_argument('--agent_seed', type=int, default=None)
+    parser.add_argument('seed_agent', type=str2bool, nargs='?', const=True, default=False)
     
     parser.add_argument('--n_historical_events', type=int, default=20)
     parser.add_argument('--gpu', type=int, default=-1)
@@ -180,7 +181,16 @@ def main():
         else:
             episode_length = args.episode_length
 
-        env.initialize_environment(args.state_rep, args.n_historical_events, episode_length, 1, args.length_expert_TS, args.agent_seed)
+        env.initialize_environment(
+            case=args.state_rep, 
+            n_historical_events=args.n_historical_events, 
+            episode_length=episode_length,
+            n_experts=args.n_experts,
+            n_demos_per_expert=1,
+            n_expert_time_steps=args.length_expert_TS, 
+            seed_agent=args.seed_agent,
+            seed_expert=args.seed_expert
+            )
 
         # Use different random seeds for train and test envs
         env_seed = 2 ** 32 - 1 - args.seed if test else args.seed
@@ -198,22 +208,32 @@ def main():
         return env
 
     sample_env = gym.make(args.env)
-    sample_env.initialize_environment(args.state_rep, args.n_historical_events, args.episode_length, 1, args.length_expert_TS, args.agent_seed)
-    demonstrations = sample_env.generate_expert_trajectories(args.n_experts, out_dir=dst, seed=args.seed_expert, eval=False)
+    sample_env.initialize_environment(
+        case=args.state_rep, 
+        n_historical_events=args.n_historical_events, 
+        episode_length=args.episode_length,
+        n_experts=args.n_experts,
+        n_demos_per_expert=1,
+        n_expert_time_steps=args.length_expert_TS,
+        seed_agent=args.seed_agent,
+        seed_expert=args.seed_expert
+        )
+    demonstrations = sample_env.generate_expert_trajectories(out_dir=dst, eval=False)
     timestep_limit = sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
 
 
     # Generate expert data for evaluation
     temp_env = gym.make(args.env)
     temp_env.initialize_environment(
-        args.state_rep, 
-        args.n_historical_events, 
-        args.episode_length,  # This parameter does not really matter since we create this env only for generating samples 
-        args.n_demos_per_expert,  # How large should the expert cluster be?
-        args.eval_episode_length, 
-        args.agent_seed
+        case=args.state_rep, 
+        n_historical_events=args.n_historical_events, 
+        episode_length=0,  # This parameter does not really matter since we create this env only for generating samples
+        n_experts=args.n_experts,
+        n_demos_per_expert=args.n_demos_per_expert,  # How large should the expert cluster be?
+        n_expert_time_steps=args.eval_episode_length,  # How long should each expert trajectory be?
+        seed_expert=args.seed_expert
     )
-    temp_env.generate_expert_trajectories(args.n_experts, out_dir=dst, seed=args.seed_expert, eval=True)
+    temp_env.generate_expert_trajectories(out_dir=dst, eval=True)
 
     
     obs_space = sample_env.observation_space

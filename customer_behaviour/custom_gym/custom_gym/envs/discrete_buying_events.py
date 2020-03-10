@@ -208,25 +208,27 @@ class DiscreteBuyingEvents(gym.Env):
         self.state = None
 
 
-    def initialize_environment(self, case, n_historical_events, episode_length, n_demos_per_expert, n_expert_time_steps, agent_seed=None):
+    def initialize_environment(self, case, n_historical_events, episode_length, n_experts, n_demos_per_expert, n_expert_time_steps, seed_agent=True, seed_expert=True):
         temp = define_case(case)
         self.case = temp(self.model)
 
         self.n_historical_events = n_historical_events
         self.episode_length = episode_length
+        self.n_experts = n_experts
         self.n_expert_time_steps = n_expert_time_steps
         self.n_demos_per_expert = n_demos_per_expert
-        self.agent_seed = agent_seed
+        self.seed_agent = seed_agent
+        self.seed_expert = seed_expert
 
         self.observation_space, self.action_space = self.case.get_spaces(n_historical_events)
 
 
-    def generate_expert_trajectories(self, n_experts, out_dir, seed=True, eval=False):
+    def generate_expert_trajectories(self, out_dir, eval=False):
         states = []
         actions = []
 
-        for i_expert in range(n_experts):
-            self.model.spawn_new_customer(i_expert) if seed else self.model.spawn_new_customer()
+        for i_expert in range(self.n_experts):
+            self.model.spawn_new_customer(i_expert) if self.seed_expert else self.model.spawn_new_customer()
 
             sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, self.n_expert_time_steps)
 
@@ -286,10 +288,21 @@ class DiscreteBuyingEvents(gym.Env):
 
     def reset(self):
         # Reset the state of the environment to an initial state
-        self.model.spawn_new_customer(self.agent_seed)
+
+        if self.seed_agent:
+            assert self.seed_expert, 'It only makes sense to seed agent if expert(s) are seeded'
+            seed = np.random.randint(0, self.n_experts)
+        else:
+            seed = None
+
+        self.model.spawn_new_customer(seed)
 
         # Sample expert trajectory
-        sample = self.case.get_sample(1, self.n_historical_events, self.n_expert_time_steps)
+        sample = self.case.get_sample(
+            n_demos_per_expert=1, 
+            n_historical_events=self.n_historical_events, 
+            n_time_steps=self.n_expert_time_steps
+            )
 
         history, data = sample[0]
 

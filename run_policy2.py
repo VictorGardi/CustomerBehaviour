@@ -15,17 +15,11 @@ from chainerrl.misc.batch_states import batch_states
 from scipy.stats import chisquare
 from customer_behaviour.tools.tools import save_plt_as_eps
 
-<<<<<<< HEAD
-#directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'  # 2.1
-# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/friday_0228/2020-02-29_06-53-54'  # 2.0
-directory = 'discrete_events/discrete_events/1_expert(s)/case_21/2020-03-05_16-07-27'
-=======
 directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'
->>>>>>> bbcf26d54405ec6d0528c316296a2e7aec49acfe
 
 sample_length = 10000
-n_experts = 1
+# n_experts = 1
 n_last_days = 7
 max_n_purchases_per_n_last_days = 2
 alpha = 0.01  # significance level
@@ -41,9 +35,11 @@ def main():
         case=args['state_rep'], 
         n_historical_events=args['n_historical_events'], 
         episode_length=sample_length,  # length of the agent's sample
+        n_experts=args['n_experts'],
         n_demos_per_expert=1,
         n_expert_time_steps=sample_length,  # length of expert's sample
-        agent_seed=args['agent_seed']
+        seed_agent=args['agent_seed'],
+        seed_expert=args['seed_expert']
         )
 
     # Initialize model and observation normalizer
@@ -59,12 +55,7 @@ def main():
     agent_states, agent_actions = sample_from_policy(env, model, obs_normalizer)
 
     # Sample expert data
-    trajectories = env.generate_expert_trajectories(
-        n_experts=n_experts, 
-        out_dir='.',
-        seed=True, 
-        eval=False
-        )
+    trajectories = env.generate_expert_trajectories(out_dir='.', eval=False)
     expert_states = trajectories['states']
     expert_actions = trajectories['actions']
 
@@ -109,7 +100,7 @@ def main():
 
     x = range(len(possible_val_states))
 
-    if not os.path.exists(join(directory, 'figs')): os.makedirs(join(directory, 'figs'))
+    os.makedirs(join(directory, 'figs'), exist_ok=True)
 
     # Plot expert
     fig, ax = plt.subplots()
