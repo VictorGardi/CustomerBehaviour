@@ -8,21 +8,22 @@ from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
 from customer_behaviour.tools.tools import save_plt_as_eps
 
-dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'  # 2.1
+dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'  # 2.1
 
 
 def main():
     result = Case2(dir_path)
     root_path = os.getcwd() + dir_path
-    #fig_traj = result.plot_trajectories(n_trajectories = 1)
+    fig_traj = result.plot_trajectories(n_trajectories = 1)
     
     result.plot_clusters(n_dim = 3, show_benchmark = True)
     fig_stats = result.plot_statistics()
-    #fig_stats_cluster = result.plot_cluster_data()
-    '''
+    fig_stats_cluster = result.plot_cluster_data()
+    fig_kl = result.plot_kl_div()
     try:
         os.makedirs(root_path + '/figs')
         fig_path = root_path + '/figs'
+        save_plt_as_eps(fig_kl, fig_path + '/kl_div.eps')
         save_plt_as_eps(fig_traj, fig_path + '/trajectories.eps')
         save_plt_as_eps(fig_stats, fig_path + '/stats.eps')
         save_plt_as_eps(fig_stats_cluster, fig_path + '/cluster_stats.eps')
@@ -30,7 +31,7 @@ def main():
     except OSError as e:
         fig_path = root_path + '/figs'
         print('Figures are already saved! Take a look in ' + str(fig_path))
-    '''
+    
 
 ############################
 ########## Case 3 ##########
