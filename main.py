@@ -130,7 +130,7 @@ def main():
                         const=True, default=False,
                         help="Activate expert seed mode.")
     # parser.add_argument('--agent_seed', type=int, default=None)
-    parser.add_argument('seed_agent', type=str2bool, nargs='?', const=True, default=False)
+    parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
     
     parser.add_argument('--n_historical_events', type=int, default=20)
     parser.add_argument('--gpu', type=int, default=-1)
