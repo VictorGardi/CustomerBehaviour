@@ -2,6 +2,7 @@ import os
 import re
 import json
 from customer_behaviour.tools.time_series_analysis import FeatureExtraction
+from customer_behaviour.tools.validation_states import get_features_from_counts
 import numpy as np
 from matplotlib import pyplot
 import matplotlib.pyplot as plt
@@ -25,29 +26,50 @@ class Result():
 
         self.n_expert_trajectories = self.expert_states.shape[0]
         self.n_learner_trajectories, self.episode_length, _ = self.learner_states.shape
-        all_zeros = np.zeros_like(self.expert_actions[0])
-        all_ones = np.zeros_like(self.expert_actions[0]) 
+        all_zeros = np.zeros_like(self.expert_actions)
+        all_ones = np.zeros_like(self.expert_actions)
 
-        self.benchmark_zeros_features = [self.get_features(all_zeros)]
-        self.benchmark_ones_features = [self.get_features(all_ones)]
+        state_all_zeros = np.zeros_like(self.expert_states)
+        state_all_ones = np.ones_like(state_all_zeros)
+
+        self.benchmark_zeros_features = [self.get_features(all_zeros[0,:])]
+        self.benchmark_ones_features = [self.get_features(all_ones[0,:])]
 
         self.expert_features = []
         self.learner_features = []
         for i in range(self.n_expert_trajectories):
-            self.expert_features.append(self.get_features(self.expert_actions[i]))
+            self.expert_features.append(self.get_features(self.expert_actions[i,:]))
+            temp1, temp2 = get_features_from_counts([self.expert_states[i,:,:]], [self.expert_actions[i,:]])
+            self.expert_features[i].extend(temp1)
+            self.expert_features[i].extend(temp2)
+            if i == 0:
+                temp1, temp2 = get_features_from_counts([state_all_ones[i,:,:]], [all_ones[i,:]])
+                self.benchmark_ones_features[0].extend(temp1)
+                self.benchmark_ones_features[0].extend(temp2)
+                temp1, temp2 = get_features_from_counts([state_all_zeros[i,:,:]], [all_zeros[i,:]])
+                self.benchmark_zeros_features[0].extend(temp1)
+                self.benchmark_zeros_features[0].extend(temp2)
 
-        for j in range(self.n_learner_trajectories):
-            self.learner_features.append(self.get_features(self.learner_actions[j]))
-        mean_expert = 0
-        for ls in self.expert_features:
-            mean_expert += ls[0]
-        mean_expert = int(mean_expert/self.n_expert_trajectories)
 
-        benchmark_mean = np.zeros_like(all_zeros)
-        for i in range(benchmark_mean.shape[0]):
-            benchmark_mean[i] = 1 if i % mean_expert == 0 else 0
+        for i in range(self.n_learner_trajectories):
+            self.learner_features.append(self.get_features(self.learner_actions[i,:]))
+            temp1, temp2 = get_features_from_counts([self.learner_states[i,:,:]], [self.learner_actions[i,:]])
+            self.learner_features[i].extend(temp1)
+            self.learner_features[i].extend(temp2)
 
-        self.benchmark_mean_features = [self.get_features(benchmark_mean)]
+        #mean_expert = 0
+        #for ls in self.expert_features:
+        #    mean_expert += ls[0]
+        #mean_expert = int(mean_expert/self.n_expert_trajectories)
+
+        #benchmark_mean = np.zeros_like(all_zeros)
+        #for i in range(benchmark_mean.shape[0]):
+        #    benchmark_mean[i] = 1 if i % mean_expert == 0 else None
+
+        #self.benchmark_mean_features = [self.get_features(benchmark_mean)]
+        # print('expert')
+        
+        
 
     def get_features(self, trajectory):
             return FeatureExtraction(trajectory, case='discrete_events').get_features()
@@ -67,12 +89,13 @@ class Result():
         return data['action_probs']
 
     def plot_clusters(self, n_dim = 2, show_benchmark = False):
-        features = self.expert_features.copy()
-        features.extend(self.learner_features)
-        features.extend(self.benchmark_zeros_features)
-        features.extend(self.benchmark_ones_features)
-        features.extend(self.benchmark_mean_features)
-        features = np.array(features)
+        args = (np.array(self.expert_features), np.array(self.learner_features), np.array(self.benchmark_zeros_features), np.array(self.benchmark_ones_features))
+        print(np.array(self.expert_features).shape)
+        print(np.array(self.learner_features).shape)
+        print(np.array(self.benchmark_zeros_features).shape)
+        print(np.array(self.benchmark_ones_features).shape)
+        features = np.concatenate(args)
+
         X_embedded = TSNE(n_components=n_dim).fit_transform(features)
         expert_cluster = X_embedded[:self.n_expert_trajectories,:]
         agent_cluster = X_embedded[self.n_expert_trajectories:self.n_expert_trajectories + self.n_learner_trajectories,:]

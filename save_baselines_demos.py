@@ -19,7 +19,7 @@ def main():
     env = DummyVecEnv([lambda: env])
     agent = GAIL.load(os.getcwd() + '/stable-baselines-test/gail')
     episode_length = 1024
-    save_agent_demo(env, agent, 'stable-baselines-test', 256)
+    save_agent_demo(env, agent, 'stable-baselines-test', 10*episode_length)
 
 
 def save_agent_demo(env, agent, out_dir, max_t=10000):

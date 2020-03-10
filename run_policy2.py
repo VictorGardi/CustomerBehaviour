@@ -14,8 +14,9 @@ from math import floor
 from chainerrl.misc.batch_states import batch_states
 from scipy.stats import chisquare
 
-directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'  # 2.1
+#directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'  # 2.1
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_2/friday_0228/2020-02-29_06-53-54'  # 2.0
+directory = 'discrete_events/discrete_events/1_expert(s)/case_21/2020-03-05_16-07-27'
 
 sample_length = 10000
 n_experts = 1
