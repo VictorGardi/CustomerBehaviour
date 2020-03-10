@@ -231,10 +231,15 @@ class Result():
         with open(self.scores_path, 'r') as file:
             lines = file.readlines()
             for idx, line in enumerate(lines):
-                if idx > 0:
+                if idx == 0:
+                    line1 = line.split(" ")[0]
+                    columns = re.split(r'\t+', line1)
+                    columns = [x.rstrip("\n\r") for x in columns]
+                    i_e = columns.index('episodes')
+                else:
                     line1 = line.split(" ")[0]
                     line2 = re.split(r'\t+', line1)
-                    episode = float(line2[0])
+                    episode = float(line2[i_e])
                     episodes.append(episode)
 
         return episodes
