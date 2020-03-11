@@ -94,10 +94,6 @@ class Result():
 
     def plot_clusters(self, n_dim = 2, show_benchmark = False):
         args = (np.array(self.expert_features), np.array(self.learner_features), np.array(self.benchmark_zeros_features), np.array(self.benchmark_ones_features))
-        print(np.array(self.expert_features).shape)
-        print(np.array(self.learner_features).shape)
-        print(np.array(self.benchmark_zeros_features).shape)
-        print(np.array(self.benchmark_ones_features).shape)
         features = np.concatenate(args)
 
         X_embedded = TSNE(n_components=n_dim).fit_transform(features)
