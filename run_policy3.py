@@ -16,13 +16,10 @@ from scipy.stats import chisquare, wasserstein_distance
 from scipy.spatial.distance import jensenshannon
 from customer_behaviour.tools.tools import save_plt_as_eps
 
-# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'
-# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'
-# directory = 'results/gail/discrete_events/1_expert(s)/case_21/2020-03-09_10-26-19'
 directory = 'results/gail/discrete_events/10_expert(s)/case_21/2020-03-10_14-04-29'
 
 sample_length = 10000
-normalize_counts = False
+normalize_counts = True
 # n_experts = 1
 n_last_days = 7
 max_n_purchases_per_n_last_days = 2
@@ -35,29 +32,16 @@ def main():
 
     # Create environment
     env = gym.make('discrete-buying-events-v0')
-    try:
-        env.initialize_environment(
-            case=args['state_rep'], 
-            n_historical_events=args['n_historical_events'], 
-            episode_length=sample_length,  # length of the agent's sample
-            n_experts=args['n_experts'],
-            n_demos_per_expert=1,
-            n_expert_time_steps=sample_length,  # length of expert's sample
-            seed_agent=args['seed_agent'],
-            seed_expert=args['seed_expert']
-            )
-    except KeyError:
-        # seed_agent was not an argument 
-        env.initialize_environment(
-            case=args['state_rep'], 
-            n_historical_events=args['n_historical_events'], 
-            episode_length=sample_length,  # length of the agent's sample
-            n_experts=args['n_experts'],
-            n_demos_per_expert=1,
-            n_expert_time_steps=sample_length,  # length of expert's sample
-            seed_agent=True,
-            seed_expert=args['seed_expert']
-            )
+    env.initialize_environment(
+        case=args['state_rep'], 
+        n_historical_events=args['n_historical_events'], 
+        episode_length=sample_length,  # length of the agent's sample
+        n_experts=args['n_experts'],
+        n_demos_per_expert=1,
+        n_expert_time_steps=sample_length,  # length of expert's sample
+        seed_agent=args['seed_agent'],
+        seed_expert=args['seed_expert']
+        )
 
     # Initialize model and observation normalizer
     model = A3CFFSoftmax(args['n_historical_events'], 2, hidden_sizes=(64, 64))  # Assuming state = [historical purchases]
@@ -68,130 +52,88 @@ def main():
     chainer.serializers.load_npz(join(model_directory, 'model.npz'), model)
     chainer.serializers.load_npz(join(model_directory, 'obs_normalizer.npz'), obs_normalizer)
 
-    # Sample agent data
-    agent_states = []
-    agent_actions = []
-    for i in range(args['n_experts']):
-        temp_states, temp_actions = sample_from_policy(env, model, obs_normalizer)
-        agent_states.append(temp_states)
-        agent_actions.append(temp_actions)
-
     # Sample expert data
     trajectories = env.generate_expert_trajectories(out_dir='.', eval=False)
     expert_states = trajectories['states']
     expert_actions = trajectories['actions']
-
-    # Get conditional validation states
-    agent_purchase, agent_no_purchase = get_cond_val_states(agent_states, agent_actions, n_last_days)
-    expert_purchase, expert_no_purchase = get_cond_val_states(expert_states, expert_actions, n_last_days)
-
-    # Reduce the dimensionality by treating all validation states with more than x purchases as one single state
-    expert_purchase = reduce_dimensionality(expert_purchase, max_n_purchases_per_n_last_days)
-    expert_no_purchase = reduce_dimensionality(expert_no_purchase, max_n_purchases_per_n_last_days)
-    agent_purchase = reduce_dimensionality(agent_purchase, max_n_purchases_per_n_last_days)
-    agent_no_purchase = reduce_dimensionality(agent_no_purchase, max_n_purchases_per_n_last_days)
 
     # Get possible validation states
     possible_val_states = [list(x) for x in itertools.product([0, 1], repeat=n_last_days)]
     possible_val_states = reduce_dimensionality(possible_val_states, max_n_purchases_per_n_last_days, True)
     possible_val_states = sort_possible_val_states(possible_val_states)
 
-    # Get counts
-    expert_counts_purchase = get_counts(expert_purchase, possible_val_states, normalize=normalize_counts)
-    expert_counts_no_purchase = get_counts(expert_no_purchase, possible_val_states, normalize=normalize_counts)
-    agent_counts_purchase = get_counts(agent_purchase, possible_val_states, normalize=normalize_counts)
-    agent_counts_no_purchase = get_counts(agent_no_purchase, possible_val_states, normalize=normalize_counts)
+    avg_expert_purchase, avg_expert_no_purchase = get_cond_val_states(expert_states, expert_actions, n_last_days)
+    avg_expert_purchase = reduce_dimensionality(avg_expert_purchase, max_n_purchases_per_n_last_days)
+    avg_expert_no_purchase = reduce_dimensionality(avg_expert_no_purchase, max_n_purchases_per_n_last_days)
+    avg_expert_counts_purchase = get_counts(avg_expert_purchase, possible_val_states, normalize=normalize_counts)
+    avg_expert_counts_no_purchase = get_counts(avg_expert_no_purchase, possible_val_states, normalize=normalize_counts)
 
-    # Calculate one-way chi-square tests (https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chisquare.html)
-    # Null hypothesis: The categorical data has the given frequencies
-    # "Assuming that the null hypothesis is true, 
-    # the p-value is the probability of obtaining agent counts as extreme as the agent counts actually observed during this test."
-    # A typical rule is that all of the observed and expected frequencies should be at least 5
+    # Sample agent data
+    agent_states = []
+    agent_actions = []
+    for i in range(args['n_experts']):
+        initial_state = expert_states[i][0]
+        temp_states, temp_actions = sample_from_policy(env, model, obs_normalizer)
+        agent_states.append(temp_states)
+        agent_actions.append(temp_actions)
 
-    # _, p_value_purchase = chisquare(f_obs=agent_counts_purchase[:8], f_exp=expert_counts_purchase[:8], ddof=0)
-    # print('P-value given purchase: %.5f' % p_value_purchase)
-    # if p_value_purchase <= alpha: print('Rejecting null hypothesis')
+    for i in range(args['n_experts']):
+        # Get conditional validation states
+        agent_purchase, agent_no_purchase = get_cond_val_states([agent_states[i]], [agent_actions[i]], n_last_days)
+        expert_purchase, expert_no_purchase = get_cond_val_states([expert_states[i]], [expert_actions[i]], n_last_days)
+
+        # Reduce the dimensionality by treating all validation states with more than x purchases as one single state
+        expert_purchase = reduce_dimensionality(expert_purchase, max_n_purchases_per_n_last_days)
+        expert_no_purchase = reduce_dimensionality(expert_no_purchase, max_n_purchases_per_n_last_days)
+        agent_purchase = reduce_dimensionality(agent_purchase, max_n_purchases_per_n_last_days)
+        agent_no_purchase = reduce_dimensionality(agent_no_purchase, max_n_purchases_per_n_last_days)
+
+        # Get counts
+        expert_counts_purchase = get_counts(expert_purchase, possible_val_states, normalize=normalize_counts)
+        expert_counts_no_purchase = get_counts(expert_no_purchase, possible_val_states, normalize=normalize_counts)
+        agent_counts_purchase = get_counts(agent_purchase, possible_val_states, normalize=normalize_counts)
+        agent_counts_no_purchase = get_counts(agent_no_purchase, possible_val_states, normalize=normalize_counts)
+
+        # Calculate Wasserstein distances
+        if normalize_counts:
+            wd_purchase = wasserstein_distance(expert_counts_purchase, agent_counts_purchase)
+            wd_no_purchase = wasserstein_distance(expert_counts_no_purchase, agent_counts_no_purchase)
+        else:
+            u = np.array(expert_counts_purchase)
+            v = np.array(agent_counts_purchase)
+            wd_purchase = wasserstein_distance(u / np.sum(u), v / np.sum(v))
+            u = np.array(expert_counts_no_purchase)
+            v = np.array(agent_counts_no_purchase)
+            wd_no_purchase = wasserstein_distance(u / np.sum(u), v / np.sum(v))
+
+        x = range(len(possible_val_states))
+        colors = ['r', 'b']
+        ending = '_normalize.eps' if normalize_counts else '.eps'
+
+        os.makedirs(join(directory, 'figs'), exist_ok=True)
+
+        # Plot (no purchase)
+        fig, ax = plt.subplots()
+        data = {'Expert': expert_counts_no_purchase, 'Agent': agent_counts_no_purchase, 'Average expert': avg_expert_counts_no_purchase}
+        bar_plot(ax, data, colors=None, total_width=0.7)
+        set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
+        fig.subplots_adjust(bottom=0.25)
+        fig.suptitle('No purchase')
+        ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
+        # save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase' + ending))
+
+        # Plot (purchase)
+        fig, ax = plt.subplots()
+        data = {'Expert': expert_counts_purchase, 'Agent': agent_counts_purchase, 'Average expert': avg_expert_counts_purchase}
+        bar_plot(ax, data, colors=None, total_width=0.7)
+        set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
+        fig.subplots_adjust(bottom=0.25)
+        fig.suptitle('Purchase')
+        ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_purchase))
+        # save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase' + ending))
+
+        plt.show()
     
-    # _, p_value_no_purchase = chisquare(f_obs=agent_counts_no_purchase[:8], f_exp=expert_counts_no_purchase[:8], ddof=0)
-    # print('P-value given no purchase: %.5f' % p_value_no_purchase)
-    # if p_value_no_purchase <= alpha: print('Rejecting null hypothesis')
-
-    # Calculate Wasserstein distances
-    if normalize_counts:
-        wd_purchase = wasserstein_distance(expert_counts_purchase, agent_counts_purchase)
-        wd_no_purchase = wasserstein_distance(expert_counts_no_purchase, agent_counts_no_purchase)
-    else:
-        u = np.array(expert_counts_purchase)
-        v = np.array(agent_counts_purchase)
-        wd_purchase = wasserstein_distance(u / np.sum(u), v / np.sum(v))
-        u = np.array(expert_counts_no_purchase)
-        v = np.array(agent_counts_no_purchase)
-        wd_no_purchase = wasserstein_distance(u / np.sum(u), v / np.sum(v))
-
-    x = range(len(possible_val_states))
-    colors = ['r', 'b']
-    ending = '_normalize.eps' if normalize_counts else '.eps'
-
-    os.makedirs(join(directory, 'figs'), exist_ok=True)
-
-    # Plot (no purchase)
-    fig, ax = plt.subplots()
-    data = {'Expert': expert_counts_no_purchase, 'Agent': agent_counts_no_purchase}
-    bar_plot(ax, data, colors=None, total_width=0.7)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('No purchase')
-    ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase' + ending))
-
-    # Plot (purchase)
-    fig, ax = plt.subplots()
-    data = {'Expert': expert_counts_purchase, 'Agent': agent_counts_purchase}
-    bar_plot(ax, data, colors=None, total_width=0.7)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Purchase')
-    ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_purchase))
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase' + ending))
-
-    '''
-    # Plot expert
-    fig, ax = plt.subplots()
-    ax.bar(x, expert_counts_no_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Expert')
-    ax.set_title('No purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase.eps'))
-
-    fig, ax = plt.subplots()
-    ax.bar(x, expert_counts_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Expert')
-    ax.set_title('Purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase.eps'))
-
-    # Plot agent
-    fig, ax = plt.subplots()
-    ax.bar(x, agent_counts_no_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Agent | Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
-    ax.set_title('No purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_no_purchase.eps'))
-    
-    fig, ax = plt.subplots()
-    ax.bar(x, agent_counts_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Agent | Wasserstein distance: {0:.10f}'.format(wd_purchase))
-    ax.set_title('Purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_purchase.eps'))
-    '''
-
-    plt.show()
-
 ############################
 ##### Helper functions #####
 ############################
@@ -302,10 +244,38 @@ def get_counts(observed_val_states, possible_val_states, normalize=False):
         counts = list(np.array(counts) / np.sum(counts))
     return counts
 
-def autocorr(x, t = 20):
-    result = np.correlate(x - np.mean(x), x - np.mean(x), mode='full')
-    temp = result[floor(result.size/2):floor(result.size/2)+t]
-    return temp / np.amax(temp)
+def sample_from_policy(env, model, obs_normalizer, initial_state=None):
+    xp = numpy
+    phi = lambda x: x
+
+    states = []
+    actions = []
+
+    if initial_state is None:
+        obs = env.reset().astype('float32')  # Initial state
+    else:
+        env.reset()
+        env.state = initial_state
+        obs = initial_state  # One should check that initial_state has the correct dimension
+
+    states.append(obs)
+    done = False
+    while not done:
+        b_state = batch_states([obs], xp, phi)
+        b_state = obs_normalizer(b_state, update=False)
+
+        with chainer.using_config('train', False), chainer.no_backprop_mode():
+            action_distrib, _ = model(b_state)
+            action = chainer.cuda.to_cpu(action_distrib.sample().array)[0]
+
+        actions.append(action)
+
+        new_obs, _, done, _ = env.step(action)
+        obs = new_obs.astype('float32')
+
+        if not done: states.append(obs)
+
+    return states, actions
 
 def bar_plot(ax, data, colors=None, total_width=0.8, single_width=1, legend=True):
     """Draws a bar plot with multiple bars per data point.
