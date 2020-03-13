@@ -6,9 +6,9 @@ from pprint import pprint
 from customer_behaviour.tools.cluster import Cluster
 from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
-from customer_behaviour.tools.tools import save_plt_as_eps
+from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png
 
-dir_path = '/saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'  # 2.1
+dir_path = '/saved_results/airl/discrete_events/10_expert(s)/case_21/2020-03-11_08-49-53'  # 2.1
 
 
 def main():
@@ -19,14 +19,16 @@ def main():
     result.plot_clusters(n_dim = 3, show_benchmark = True)
     fig_stats = result.plot_statistics()
     fig_stats_cluster = result.plot_cluster_data()
-    fig_kl = result.plot_kl_div()
+    #fig_kl = result.plot_kl_div()
     try:
-        os.makedirs(root_path + '/figs')
+        os.makedirs(root_path + '/figs', exist_ok=True)
         fig_path = root_path + '/figs'
-        save_plt_as_eps(fig_kl, fig_path + '/kl_div.eps')
+        
         save_plt_as_eps(fig_traj, fig_path + '/trajectories.eps')
         save_plt_as_eps(fig_stats, fig_path + '/stats.eps')
+        save_plt_as_png(fig_stats, fig_path + '/stats.png')
         save_plt_as_eps(fig_stats_cluster, fig_path + '/cluster_stats.eps')
+        #save_plt_as_eps(fig_kl, fig_path + '/kl_div.eps')
         print('Figures have been saved! Take a look in ' + str(fig_path))
     except OSError as e:
         fig_path = root_path + '/figs'

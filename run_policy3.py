@@ -16,7 +16,7 @@ from scipy.stats import chisquare, wasserstein_distance
 from scipy.spatial.distance import jensenshannon
 from customer_behaviour.tools.tools import save_plt_as_eps
 
-directory = 'results/gail/discrete_events/10_expert(s)/case_21/2020-03-10_14-04-29'
+directory = 'ozzy_results/results/gail/discrete_events/1_expert(s)/case_21/2020-03-09_09-29-26'
 
 sample_length = 10000
 normalize_counts = True
