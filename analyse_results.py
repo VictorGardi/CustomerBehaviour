@@ -13,27 +13,34 @@ dir_path = '/saved_results/airl/discrete_events/10_expert(s)/case_21/2020-03-11_
 
 def main():
     result = Case2(dir_path)
-    root_path = os.getcwd() + dir_path
-    fig_traj = result.plot_trajectories(n_trajectories = 1)
     
-    result.plot_clusters(n_dim = 3, show_benchmark = True)
+    # fig_traj = result.plot_trajectories(n_trajectories = 1)
+    fig_cluster = result.plot_clusters(n_dim = 3, show_benchmark = True)
     fig_stats = result.plot_statistics()
     fig_stats_cluster = result.plot_cluster_data()
-    #fig_kl = result.plot_kl_div()
+    # fig_kl = result.plot_kl_div()
+
+    # Save plots
+    root_path = os.getcwd() + dir_path
+    fig_path = root_path + '/figs'
+    os.makedirs(fig_path, exist_ok=True)
     try:
-        os.makedirs(root_path + '/figs', exist_ok=True)
-        fig_path = root_path + '/figs'
-        
         save_plt_as_eps(fig_traj, fig_path + '/trajectories.eps')
+    except NameError:
+        print('Could not save trajectory plot.')
+    try:
         save_plt_as_eps(fig_stats, fig_path + '/stats.eps')
         save_plt_as_png(fig_stats, fig_path + '/stats.png')
+    except NameError:
+        print('Could not save plot of statistics.')
+    try:
         save_plt_as_eps(fig_stats_cluster, fig_path + '/cluster_stats.eps')
-        #save_plt_as_eps(fig_kl, fig_path + '/kl_div.eps')
-        print('Figures have been saved! Take a look in ' + str(fig_path))
-    except OSError as e:
-        fig_path = root_path + '/figs'
-        print('Figures are already saved! Take a look in ' + str(fig_path))
-    
+    except NameError:
+        print('Could not save plot of cluster statistics.')
+    try:
+        save_plt_as_eps(fig_kl, fig_path + '/kl_div.eps')
+    except:
+        print('Could not save plot KL distance.')
 
 ############################
 ########## Case 3 ##########
