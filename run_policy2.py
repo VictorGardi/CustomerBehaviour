@@ -20,7 +20,6 @@ from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'
 directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0309/2020-03-09_10-26-19'
 # directory = 'saved_results/gail/discrete_events/10_expert(s)/case_21/tuesday_0310/2020-03-10_14-04-29'
-# directory = 'saved_results/gail/discrete_events/10_expert(s)/case_21/wednesday_0311/2020-03-11_15-11-31'
 
 sample_length = 10000
 normalize_counts = True
@@ -79,6 +78,7 @@ def main():
 
     # Sample expert data
     trajectories = env.generate_expert_trajectories(out_dir='.', eval=False)
+    os.remove('expert_trajectories.npz')  # Remove file containing expert trajectories
     expert_states = trajectories['states']
     expert_actions = trajectories['actions']
 
@@ -146,8 +146,8 @@ def main():
     fig.subplots_adjust(bottom=0.3)
     fig.suptitle('No purchase')
     ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase' + ending_eps))
-    save_plt_as_png(fig, path=join(directory, 'figs', 'expert_no_purchase' + ending_png))
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'no_purchase' + ending_eps))
+    save_plt_as_png(fig, path=join(directory, 'figs', 'no_purchase' + ending_png))
 
     # Plot (purchase)
     fig, ax = plt.subplots()
@@ -159,8 +159,8 @@ def main():
     fig.subplots_adjust(bottom=0.3)
     fig.suptitle('Purchase')
     ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_purchase))
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase' + ending_eps))
-    save_plt_as_png(fig, path=join(directory, 'figs', 'expert_purchase' + ending_png))
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'purchase' + ending_eps))
+    save_plt_as_png(fig, path=join(directory, 'figs', 'purchase' + ending_png))
 
     '''
     # Plot expert

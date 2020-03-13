@@ -78,4 +78,7 @@ def convert_imports(dir):
 
 def save_plt_as_eps(obj, path):
     obj.savefig(path, format='eps')
+
+def save_plt_as_png(obj, path):
+    obj.savefig(path, format='png')
     
