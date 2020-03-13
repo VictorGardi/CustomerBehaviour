@@ -103,20 +103,6 @@ def main():
     agent_counts_purchase = get_counts(agent_purchase, possible_val_states, normalize=normalize_counts)
     agent_counts_no_purchase = get_counts(agent_no_purchase, possible_val_states, normalize=normalize_counts)
 
-    # Calculate one-way chi-square tests (https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chisquare.html)
-    # Null hypothesis: The categorical data has the given frequencies
-    # "Assuming that the null hypothesis is true, 
-    # the p-value is the probability of obtaining agent counts as extreme as the agent counts actually observed during this test."
-    # A typical rule is that all of the observed and expected frequencies should be at least 5
-
-    # _, p_value_purchase = chisquare(f_obs=agent_counts_purchase[:8], f_exp=expert_counts_purchase[:8], ddof=0)
-    # print('P-value given purchase: %.5f' % p_value_purchase)
-    # if p_value_purchase <= alpha: print('Rejecting null hypothesis')
-    
-    # _, p_value_no_purchase = chisquare(f_obs=agent_counts_no_purchase[:8], f_exp=expert_counts_no_purchase[:8], ddof=0)
-    # print('P-value given no purchase: %.5f' % p_value_no_purchase)
-    # if p_value_no_purchase <= alpha: print('Rejecting null hypothesis')
-
     # Calculate Wasserstein distances
     if normalize_counts:
         wd_purchase = wasserstein_distance(expert_counts_purchase, agent_counts_purchase)
@@ -161,42 +147,6 @@ def main():
     ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_purchase))
     save_plt_as_eps(fig, path=join(directory, 'figs', 'purchase' + ending_eps))
     save_plt_as_png(fig, path=join(directory, 'figs', 'purchase' + ending_png))
-
-    '''
-    # Plot expert
-    fig, ax = plt.subplots()
-    ax.bar(x, expert_counts_no_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Expert')
-    ax.set_title('No purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase.eps'))
-
-    fig, ax = plt.subplots()
-    ax.bar(x, expert_counts_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Expert')
-    ax.set_title('Purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase.eps'))
-
-    # Plot agent
-    fig, ax = plt.subplots()
-    ax.bar(x, agent_counts_no_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Agent | Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
-    ax.set_title('No purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_no_purchase.eps'))
-    
-    fig, ax = plt.subplots()
-    ax.bar(x, agent_counts_purchase)
-    set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
-    fig.suptitle('Agent | Wasserstein distance: {0:.10f}'.format(wd_purchase))
-    ax.set_title('Purchase today')
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_purchase.eps'))
-    '''
 
     plt.show()
 
@@ -386,3 +336,57 @@ def bar_plot(ax, data, colors=None, total_width=0.8, single_width=1, legend=True
 
 if __name__ == '__main__':
     main()
+
+#################
+##### Trash #####
+#################
+
+'''
+# Plot expert
+fig, ax = plt.subplots()
+ax.bar(x, expert_counts_no_purchase)
+set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
+fig.subplots_adjust(bottom=0.25)
+fig.suptitle('Expert')
+ax.set_title('No purchase today')
+save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase.eps'))
+
+fig, ax = plt.subplots()
+ax.bar(x, expert_counts_purchase)
+set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
+fig.subplots_adjust(bottom=0.25)
+fig.suptitle('Expert')
+ax.set_title('Purchase today')
+save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase.eps'))
+
+# Plot agent
+fig, ax = plt.subplots()
+ax.bar(x, agent_counts_no_purchase)
+set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
+fig.subplots_adjust(bottom=0.25)
+fig.suptitle('Agent | Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
+ax.set_title('No purchase today')
+save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_no_purchase.eps'))
+
+fig, ax = plt.subplots()
+ax.bar(x, agent_counts_purchase)
+set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
+fig.subplots_adjust(bottom=0.25)
+fig.suptitle('Agent | Wasserstein distance: {0:.10f}'.format(wd_purchase))
+ax.set_title('Purchase today')
+save_plt_as_eps(fig, path=join(directory, 'figs', 'agent_purchase.eps'))
+'''
+
+# Calculate one-way chi-square tests (https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chisquare.html)
+# Null hypothesis: The categorical data has the given frequencies
+# "Assuming that the null hypothesis is true, 
+# the p-value is the probability of obtaining agent counts as extreme as the agent counts actually observed during this test."
+# A typical rule is that all of the observed and expected frequencies should be at least 5
+
+# _, p_value_purchase = chisquare(f_obs=agent_counts_purchase[:8], f_exp=expert_counts_purchase[:8], ddof=0)
+# print('P-value given purchase: %.5f' % p_value_purchase)
+# if p_value_purchase <= alpha: print('Rejecting null hypothesis')
+
+# _, p_value_no_purchase = chisquare(f_obs=agent_counts_no_purchase[:8], f_exp=expert_counts_no_purchase[:8], ddof=0)
+# print('P-value given no purchase: %.5f' % p_value_no_purchase)
+# if p_value_no_purchase <= alpha: print('Rejecting null hypothesis')
