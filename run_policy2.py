@@ -14,15 +14,16 @@ from math import floor
 from chainerrl.misc.batch_states import batch_states
 from scipy.stats import chisquare, wasserstein_distance
 from scipy.spatial.distance import jensenshannon
-from customer_behaviour.tools.tools import save_plt_as_eps
+from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png
 
-# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'
 # directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0302/2020-03-02_19-42-48'
-# directory = 'results/gail/discrete_events/1_expert(s)/case_21/2020-03-09_10-26-19'
-directory = 'results/gail/discrete_events/10_expert(s)/case_21/2020-03-10_14-04-29'
+# directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/thursday_0305/2020-03-05_15-47-03'
+directory = 'saved_results/gail/discrete_events/1_expert(s)/case_21/monday_0309/2020-03-09_10-26-19'
+# directory = 'saved_results/gail/discrete_events/10_expert(s)/case_21/tuesday_0310/2020-03-10_14-04-29'
+# directory = 'saved_results/gail/discrete_events/10_expert(s)/case_21/wednesday_0311/2020-03-11_15-11-31'
 
 sample_length = 10000
-normalize_counts = False
+normalize_counts = True
 # n_experts = 1
 n_last_days = 7
 max_n_purchases_per_n_last_days = 2
@@ -130,29 +131,36 @@ def main():
 
     x = range(len(possible_val_states))
     colors = ['r', 'b']
-    ending = '_normalize.eps' if normalize_counts else '.eps'
+    ending_eps = '_normalize.eps' if normalize_counts else '.eps'
+    ending_png = '_normalize.png' if normalize_counts else '.png'
 
     os.makedirs(join(directory, 'figs'), exist_ok=True)
 
     # Plot (no purchase)
     fig, ax = plt.subplots()
-    data = {'Expert': expert_counts_no_purchase, 'Agent': agent_counts_no_purchase}
+    expert_str = 'Expert (' + str(len(expert_no_purchase)) + ')'
+    agent_str = 'Agent (' + str(len(agent_no_purchase)) + ')'
+    data = {expert_str: expert_counts_no_purchase, agent_str: agent_counts_no_purchase}
     bar_plot(ax, data, colors=None, total_width=0.7)
     set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
+    fig.subplots_adjust(bottom=0.3)
     fig.suptitle('No purchase')
     ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase' + ending))
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_no_purchase' + ending_eps))
+    save_plt_as_png(fig, path=join(directory, 'figs', 'expert_no_purchase' + ending_png))
 
     # Plot (purchase)
     fig, ax = plt.subplots()
-    data = {'Expert': expert_counts_purchase, 'Agent': agent_counts_purchase}
+    expert_str = 'Expert (' + str(len(expert_purchase)) + ')'
+    agent_str = 'Agent (' + str(len(agent_purchase)) + ')'
+    data = {expert_str: expert_counts_purchase, agent_str: agent_counts_purchase}
     bar_plot(ax, data, colors=None, total_width=0.7)
     set_xticks(ax, possible_val_states, max_n_purchases_per_n_last_days)
-    fig.subplots_adjust(bottom=0.25)
+    fig.subplots_adjust(bottom=0.3)
     fig.suptitle('Purchase')
     ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_purchase))
-    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase' + ending))
+    save_plt_as_eps(fig, path=join(directory, 'figs', 'expert_purchase' + ending_eps))
+    save_plt_as_png(fig, path=join(directory, 'figs', 'expert_purchase' + ending_png))
 
     '''
     # Plot expert
