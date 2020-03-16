@@ -134,7 +134,6 @@ class Case21():
         return new_state
 
 
-
 class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT ENDAST [1, 1, ..., 1, 1]
     def __init__(self, model):
         self.model = model
@@ -155,7 +154,7 @@ class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT 
         return action
 
     def get_initial_state(self, history):
-        # decode days between purchases
+        # Extract number of elapsed days between purchases
         temp = history[0, :]  # We only consider the first item
         assert temp[-1] > 0
 
@@ -223,14 +222,24 @@ class DiscreteBuyingEvents(gym.Env):
         self.observation_space, self.action_space = self.case.get_spaces(n_historical_events)
 
 
-    def generate_expert_trajectories(self, out_dir, eval=False):
+    def generate_expert_trajectories(self, out_dir, eval=False, seed_expert=None, n_experts=None, n_demos_per_expert=None, n_expert_time_steps=None):
+        if n_experts is None: n_experts = self.n_experts
+        if seed_expert is None: seed_expert = self.seed_expert
+        if n_demos_per_expert is None: n_demos_per_expert = self.n_demos_per_expert
+        if n_expert_time_steps is None: n_expert_time_steps = self.n_expert_time_steps
+
         states = []
         actions = []
+        sex = []
+        age = []
 
-        for i_expert in range(self.n_experts):
-            self.model.spawn_new_customer(i_expert) if self.seed_expert else self.model.spawn_new_customer()
+        for i_expert in range(n_experts):
+            self.model.spawn_new_customer(i_expert) if seed_expert else self.model.spawn_new_customer()
+            
+            sex.append(self.model.sex)
+            age.append(self.model.age)
 
-            sample = self.case.get_sample(self.n_demos_per_expert, self.n_historical_events, self.n_expert_time_steps)
+            sample = self.case.get_sample(n_demos_per_expert, self.n_historical_events, n_expert_time_steps)
 
             for subsample in sample:
                 temp_states = []
@@ -259,18 +268,20 @@ class DiscreteBuyingEvents(gym.Env):
                 states.append(temp_states)
                 actions.append(temp_actions)
 
-        if eval:
-            np.savez(out_dir + '/eval_expert_trajectories.npz', 
-                states=np.array(states, dtype=object),
-                actions=np.array(actions, dtype=object)
-            )
-        else:
-            np.savez(out_dir + '/expert_trajectories.npz', 
-                states=np.array(states, dtype=object), 
-                actions=np.array(actions, dtype=object)
-            )
+        if out_dir is not None:
+            # Save trajectories
+            if eval:
+                np.savez(out_dir + '/eval_expert_trajectories.npz', 
+                    states=np.array(states, dtype=object),
+                    actions=np.array(actions, dtype=object)
+                )
+            else:
+                np.savez(out_dir + '/expert_trajectories.npz', 
+                    states=np.array(states, dtype=object), 
+                    actions=np.array(actions, dtype=object)
+                )
 
-        return {'states': states, 'actions': actions}
+        return {'states': states, 'actions': actions, 'sex': sex, 'age': age}
 
 
     def seed(self, seed=None):
