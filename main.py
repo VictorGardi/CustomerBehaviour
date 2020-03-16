@@ -286,7 +286,7 @@ def main():
         from customer_behaviour.algorithms.irl.gail import GAIL
         from customer_behaviour.algorithms.irl.gail import Discriminator
         
-        #demonstrations = np.load(args.load_demo)
+        demonstrations = np.load(dst + '/expert_trajectories.npz')
         D = Discriminator(gpu=args.gpu)
         
         agent = GAIL(demonstrations=demonstrations, discriminator=D,
