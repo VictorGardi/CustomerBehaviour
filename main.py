@@ -219,7 +219,7 @@ def main():
         seed_expert=args.seed_expert
         )
     demonstrations = sample_env.generate_expert_trajectories(out_dir=dst, eval=False)
-    timestep_limit = sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
+    timestep_limit = None #sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
 
 
     # Generate expert data for evaluation
