@@ -8,7 +8,8 @@ from customer_behaviour.tools.result import Result
 from customer_behaviour.tools import dgm as dgm
 from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png
 
-dir_path = '/saved_results/airl/discrete_events/10_expert(s)/case_21/2020-03-11_08-49-53'  # 2.1
+# dir_path = '/saved_results/airl/discrete_events/10_expert(s)/case_21/2020-03-11_08-49-53'  # 2.1
+dir_path = '/results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | 10 000 episodes
 
 
 def main():
@@ -17,7 +18,7 @@ def main():
     # fig_traj = result.plot_trajectories(n_trajectories = 1)
     fig_cluster = result.plot_clusters(n_dim = 3, show_benchmark = True)
     fig_stats = result.plot_statistics()
-    fig_stats_cluster = result.plot_cluster_data()
+    # fig_stats_cluster = result.plot_cluster_data()
     # fig_kl = result.plot_kl_div()
 
     # Save plots

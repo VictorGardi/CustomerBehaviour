@@ -13,6 +13,13 @@ def categorize_age(age):
     elif 60 <= age < 70: return 0.8
     elif 70 <= age: return 1
 
+def categorize_age2(age):
+    if age < 30: return 0
+    elif 30 <= age < 40: return 1
+    elif 40 <= age < 50: return 2
+    elif 50 <= age < 60: return 3
+    elif 60 <= age < 70: return 4
+    elif 70 <= age: return 5
 
 class Case1():
     def __init__(self, model):
@@ -56,6 +63,50 @@ class Case1():
 
         return new_state
 
+class Case11():
+    def __init__(self, model):
+        self.model = model
+
+    def get_spaces(self, n_historical_events):
+        sex_age = [2, 6]
+        history = n_historical_events * [1]
+        space = sex_age + history
+        observation_space = spaces.MultiDiscrete(space)
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.any(np.nonzero(receipt)) else 0
+        return action
+
+    def get_initial_state(self, history):
+        temp = history.copy()
+        temp = np.sum(temp, axis=0)
+
+        temp[temp > 0] = 1
+
+        initial_state = [self.model.sex, categorize_age2(self.model.age), *temp]
+
+        return initial_state
+
+    def get_step(self, state, action):
+        history = state[2:]
+        new_history = [*history[1:], action]
+
+        new_state = [self.model.sex, categorize_age2(self.model.age), *new_history]
+
+        return new_state
 
 class Case2():
     def __init__(self, model):
@@ -184,6 +235,7 @@ class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT 
 def define_case(case):
     switcher = {
         1: Case1,
+        11: Case11,
         2: Case2,
         21: Case21,
         3: Case3

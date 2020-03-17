@@ -245,11 +245,11 @@ def main():
         obs_dim = obs_space.low.size
     elif args.state_rep == 2 or args.state_rep == 21:
         obs_dim = obs_space.n
-    elif args.state_rep == 3:
+    elif args.state_rep == 3 or args.state_rep == 11:
         obs_dim = obs_space.nvec.size
     else:
         raise NotImplementedError
-    obs_normalizer = chainerrl.links.EmpiricalNormalization(obs_dim, clip_threshold=5)
+    obs_normalizer = chainerrl.links.EmpiricalNormalization(obs_dim, clip_threshold=5)  # shape: Shape of input values except batch axis
     #chainerrl.links.EmpiricalNormalization(obs_space.low.size, clip_threshold=5)
 
     # Switch policy types accordingly to action space types
@@ -258,7 +258,7 @@ def main():
             model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(64, 64))
         elif args.state_rep == 2 or args.state_rep == 21:
             model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(64, 64))
-        elif args.state_rep == 3:
+        elif args.state_rep == 3 or args.state_rep == 11:
             model = A3CFFSoftmax(obs_space.nvec.size, action_space.n, hidden_sizes=(64, 64))
         else:
             raise NotImplementedError

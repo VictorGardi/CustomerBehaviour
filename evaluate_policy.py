@@ -31,12 +31,19 @@ def main():
     args_path = join(dir_path, 'args.txt')
     args = json.loads(open(args_path, 'r').read())
 
+    # args['state_rep'] = 2
+
     # Get path of model 
     model_dir_path = next((d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('finish')), None)
 
-    # evaluate_policy_at_population_level(args, model_dir_path)
+    os.makedirs(join(dir_path, 'figs'), exist_ok=True)
+
+    ending_eps = '_normalize.eps' if normalize else '.eps'
+    ending_png = '_normalize.png' if normalize else '.png'
+
+    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png)
     # evaluate_policy_at_individual_level(args, model_dir_path)
-    compare_clusters(args, model_dir_path)
+    # compare_clusters(args, model_dir_path, ending_eps, ending_png)
 
 ############################
 ############################
@@ -49,7 +56,19 @@ class Expert():
         self.avg_purchase = avg_purchase
         self.avg_no_purchase = avg_no_purchase
 
-        self.calculate_pairwise_distances()
+        self.calc_avg_dist_from_centroid()
+        # self.calculate_pairwise_distances()
+
+    def calc_avg_dist_from_centroid(self):
+        temp = []
+        for d in self.purchases:
+            temp.append(pe.get_wd(d, self.avg_purchase, normalize))
+        self.avg_dist_purchase = np.mean(temp)
+
+        temp = []
+        for d in self.no_purchases:
+            temp.append(pe.get_wd(d, self.avg_no_purchase, normalize))
+        self.avg_dist_no_purchase = np.mean(temp)
 
     def calculate_pairwise_distances(self):
         self.distances_purchase = []
@@ -62,7 +81,7 @@ class Expert():
             wd = pe.get_wd(u, v, normalize)
             self.distances_no_purchase.append(wd)
 
-def compare_clusters(args, model_dir_path):
+def compare_clusters(args, model_dir_path, ending_eps, ending_png):
     # Load environment, model and observation normalizer
     env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length)
 
@@ -71,12 +90,15 @@ def compare_clusters(args, model_dir_path):
 
     # Get multiple samples from each expert
     assert (sample_length % n_demos_per_expert) == 0
-    N = int(sample_length / n_demos_per_expert)
-    expert_trajectories = env.generate_expert_trajectories(out_dir=None, n_demos_per_expert=n_demos_per_expert, n_expert_time_steps=N)
+    expert_trajectories = env.generate_expert_trajectories(
+        out_dir=None, 
+        n_demos_per_expert=n_demos_per_expert, 
+        n_expert_time_steps=int(sample_length / n_demos_per_expert)
+        )
     expert_states = np.array(expert_trajectories['states'])
     expert_actions = np.array(expert_trajectories['actions'])
-    sex = expert_trajectories['sex']
-    age = expert_trajectories['age']
+    sex = ['F' if s == 1 else 'M' for s in expert_trajectories['sex']]
+    age = [int(a) for a in expert_trajectories['age']]
 
     n_experts = args['n_experts']
 
@@ -128,7 +150,7 @@ def compare_clusters(args, model_dir_path):
         initial_state = expert_states[i][0]
         agent_states, agent_actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
 
-        agent_purchase, agent_no_purchase, agent_n_shopping_days = pe.get_cond_distribs(
+        agent_purchase, agent_no_purchase, _ = pe.get_cond_distribs(
             [agent_states], 
             [agent_actions], 
             n_last_days, 
@@ -136,18 +158,27 @@ def compare_clusters(args, model_dir_path):
             normalize
             )
 
+        e = experts[i]
+
         # Compare distributions (purchase)
-        temp = [1000 * pe.get_wd(e.avg_purchase, agent_purchase, normalize) for e in experts]  # [mW]
+        temp = [1000 * e.avg_dist_purchase]
+        temp.append(1000 * pe.get_wd(e.avg_purchase, agent_purchase, normalize))
         temp.append(1000 * pe.get_wd(avg_expert_purchase, agent_purchase, normalize))
+        # temp = [1000 * pe.get_wd(e.avg_purchase, agent_purchase, normalize) for e in experts]  # [mW]
+        # temp.append(1000 * pe.get_wd(avg_expert_purchase, agent_purchase, normalize))
         distances_purchase.append(temp)
 
         # Compare distributions (no purchase)
-        temp = [1000 * pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize) for e in experts]  # [mW]
+        temp = [1000 * e.avg_dist_no_purchase]
+        temp.append(1000 * pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize))
         temp.append(1000 * pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
+        # temp = [1000 * pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize) for e in experts]  # [mW]
+        # temp.append(1000 * pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
         distances_no_purchase.append(temp)
 
-    columns = ['Expert {}'.format(i + 1) for i in range(n_experts)]
-    columns.append('Average expert')
+    columns = ['Variability in expert cluster', 'Dist. to expert', 'Dist. to avg. expert']
+    # columns = ['Expert {}'.format(i + 1) for i in range(n_experts)]
+    # columns.append('Average expert')
     index = ['Expert {}'.format(i + 1) for i in range(n_experts)]
 
     distances_purchase = pd.DataFrame(distances_purchase,
@@ -166,8 +197,9 @@ def compare_clusters(args, model_dir_path):
         linewidth=1,
         cbar_kws={'label': 'mW'}
         )
-    fig.subplots_adjust(bottom=0.3)
+    fig.subplots_adjust(bottom=0.35)
     fig.suptitle('Purchase')
+    save_plt_as_png(fig, path=join(dir_path, 'figs', 'heatmap_purchase' + ending_png))
 
     fig, ax = plt.subplots()
     seaborn.heatmap(
@@ -177,30 +209,44 @@ def compare_clusters(args, model_dir_path):
         linewidth=1,
         cbar_kws={'label': 'mW'}
         )
+    fig.subplots_adjust(bottom=0.35)
+    fig.suptitle('No purchase')
+    save_plt_as_png(fig, path=join(dir_path, 'figs', 'heatmap_no_purchase' + ending_png))
+
+    ##### Look at distances between the experts #####
+
+    columns = ['Expert {}'.format(i + 1) for i in range(n_experts)]
+    columns.append('Average expert')
+    index = ['Expert {} | {} | {}'.format(i + 1, sex[i], age[i]) for i in range(n_experts)]
+    index.append('Average expert')
+
+    # Plot the distance between each expert cluster (purcahse)
+    temp = [e.avg_purchase for e in experts]
+    temp.append(avg_expert_purchase)
+    avg_purchase = np.array(temp)
+    df_purchase = pd.DataFrame(squareform(pdist(avg_purchase, lambda u, v: wasserstein_distance(u, v))),
+    columns=columns,
+    index=index
+    )
+    fig, ax = plt.subplots()
+    seaborn.heatmap(df_purchase, cmap='OrRd', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'})
+    fig.subplots_adjust(bottom=0.3)
+    fig.suptitle('Purchase')
+
+    # Plot the distance between each expert cluster (no purcahse)
+    temp = [e.avg_no_purchase for e in experts]
+    temp.append(avg_expert_no_purchase)
+    avg_no_purchase = np.array(temp)
+    df_no_purchase = pd.DataFrame(squareform(pdist(avg_no_purchase, lambda u, v: wasserstein_distance(u, v))),
+    columns=columns,
+    index=index
+    )
+    fig, ax = plt.subplots()
+    seaborn.heatmap(df_no_purchase, cmap='OrRd', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'})
     fig.subplots_adjust(bottom=0.3)
     fig.suptitle('No purchase')
 
     plt.show()
-
-
-'''
-# Heatmap
-avg_purchase = np.array([expert.avg_purchase for expert in experts])
-
-df = pd.DataFrame(squareform(pdist(avg_purchase, lambda u, v: wasserstein_distance(u, v))),
-    columns=['Expert {}'.format(i + 1) for i in range(n_experts)],
-    index=['Expert {} | {} | {}'.format(i + 1, sex[i], age[i]) for i in range(n_experts)]
-    )
-
-_, ax = plt.subplots()
-seaborn.heatmap(
-    df,
-    cmap='OrRd',
-    ax=ax,
-    linewidth=1
-)
-plt.show()
-'''
 
 ############################
 ############################
@@ -252,8 +298,6 @@ def evaluate_policy_at_individual_level(args, model_dir_path):
         wd_purchase = pe.get_wd(expert_purchase, agent_purchase, normalize)
         wd_no_purchase = pe.get_wd(expert_no_purchase, agent_no_purchase, normalize)
 
-        os.makedirs(join(dir_path, 'figs'), exist_ok=True)
-
         # Plot (purchase)
         fig, ax = plt.subplots()
         expert_str = 'Expert (' + str(expert_n_shopping_days) + ')'
@@ -281,7 +325,7 @@ def evaluate_policy_at_individual_level(args, model_dir_path):
 ############################
 ############################
 
-def evaluate_policy_at_population_level(args, model_dir_path):
+def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png):
     # Load environment, model and observation normalizer
     env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length)
 
@@ -320,11 +364,7 @@ def evaluate_policy_at_population_level(args, model_dir_path):
     # Calculate Wasserstein distances
     wd_purchase = pe.get_wd(expert_purchase, agent_purchase, normalize)
     wd_no_purchase = pe.get_wd(expert_no_purchase, agent_no_purchase, normalize)
-
-    os.makedirs(join(dir_path, 'figs'), exist_ok=True)
     
-    ending_eps = '_normalize.eps' if normalize else '.eps'
-    ending_png = '_normalize.png' if normalize else '.png'
     n_sampled_days = sample_length * args['n_experts']
 
     # Plot (purchase)
@@ -337,8 +377,8 @@ def evaluate_policy_at_population_level(args, model_dir_path):
     fig.subplots_adjust(bottom=0.3)
     fig.suptitle('Purchase')
     ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_purchase))
-    # save_plt_as_eps(fig, path=join(dir_path, 'figs', 'purchase' + ending_eps))
-    # save_plt_as_png(fig, path=join(dit_path, 'figs', 'purchase' + ending_png))
+    save_plt_as_eps(fig, path=join(dir_path, 'figs', 'purchase' + ending_eps))
+    save_plt_as_png(fig, path=join(dir_path, 'figs', 'purchase' + ending_png))
 
     # Plot (no purchase)
     fig, ax = plt.subplots()
@@ -350,8 +390,8 @@ def evaluate_policy_at_population_level(args, model_dir_path):
     fig.subplots_adjust(bottom=0.3)
     fig.suptitle('No purchase')
     ax.set_title('Wasserstein distance: {0:.10f}'.format(wd_no_purchase))
-    # save_plt_as_eps(fig, path=join(dir_path, 'figs', 'no_purchase' + ending_eps))
-    # save_plt_as_png(fig, path=join(dit_path, 'figs', 'no_purchase' + ending_png))
+    save_plt_as_eps(fig, path=join(dir_path, 'figs', 'no_purchase' + ending_eps))
+    save_plt_as_png(fig, path=join(dir_path, 'figs', 'no_purchase' + ending_png))
 
     plt.show()
 
