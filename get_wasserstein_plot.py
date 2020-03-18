@@ -17,8 +17,11 @@ from scipy.spatial.distance import jensenshannon
 from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png, sample_from_policy,\
     get_cond_val_states, reduce_dimensionality, sort_possible_val_states, get_counts
 
-policy_directories = ['saved_results/airl/discrete_events/1_expert(s)/case_21/2020-03-10_15-05-38', \
-    'saved_results/airl/discrete_events/1_expert(s)/case_21/2020-03-11_08-29-10']
+policy_directories = ['ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_21-07-57', \
+    'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_07-49-19', \
+        'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_07-47-01', \
+            'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_07-44-24', \
+                'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_21-08-30']
 
 sample_length = 10000
 normalize_counts = True
@@ -124,10 +127,18 @@ def main():
         saved_w_no_purchase.append(wd_no_purchase)
     
     plt.figure(1)
-    plt.plot(saved_parameter, saved_w_purchase)
+    plt.scatter(saved_parameter, saved_w_purchase)
+    plt.xlabel(parameter_to_plot)
+    plt.ylabel('Wasserstein distance')
+    plt.title('Purchase')
+
 
     plt.figure(2)
-    plt.plot(saved_parameter, saved_w_no_purchase)
+    plt.scatter(saved_parameter, saved_w_no_purchase)
+    plt.xlabel(parameter_to_plot)
+    plt.ylabel('Wasserstein distance')
+    plt.title('No Purchase')
+
     plt.show()
 
 
