@@ -340,7 +340,7 @@ class DiscreteBuyingEvents(gym.Env):
         pass
 
 
-    def step(self, action):        
+    def step(self, action):
         new_state = self.case.get_step(self.state, action)
         self.state = new_state
         self.n_time_steps += 1
