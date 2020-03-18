@@ -443,7 +443,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
             mean_advs = xp.mean(all_advs)
             std_advs = xp.std(all_advs)
 
-        i = 0
+        # i = 0
         while dataset_iter.epoch < self.epochs:
             batch = dataset_iter.__next__()
             states = self.batch_states(
@@ -467,6 +467,16 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
             vs_pred_old = vs_pred_old[..., None]
             vs_teacher = vs_teacher[..., None]
 
+            self.optimizer.update(
+                    self._lossfun,
+                    distribs.entropy, vs_pred, distribs.log_prob(actions),
+                    vs_pred_old=vs_pred_old,
+                    log_probs_old=log_probs_old,
+                    advs=advs,
+                    vs_teacher=vs_teacher,
+                )
+
+            '''
             if i % 50 == 0:
                 self.optimizer.update(
                     self._lossfun_record,
@@ -487,6 +497,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
                     vs_teacher=vs_teacher,
                 )
             i += 1
+            '''
 
     def _update_once_recurrent(
             self, episodes, mean_advs, std_advs):
