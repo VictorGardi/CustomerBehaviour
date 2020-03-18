@@ -192,7 +192,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png):
     fig, ax = plt.subplots()
     seaborn.heatmap(
         distances_purchase,
-        cmap='OrRd',
+        cmap='BuPu',
         ax=ax,
         linewidth=1,
         cbar_kws={'label': 'mW'}
@@ -204,7 +204,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png):
     fig, ax = plt.subplots()
     seaborn.heatmap(
         distances_no_purchase,
-        cmap='OrRd',
+        cmap='BuPu',
         ax=ax,
         linewidth=1,
         cbar_kws={'label': 'mW'}
@@ -336,6 +336,8 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
     agent_states = []
     agent_actions = []
     for i in range(args['n_experts']):
+        # What happens if the agent is repeatedly initialized with history from expert with unique behavior?
+        # Should we collect more than n_experts samples (especially if n_experts <= 10)?
         temp_states, temp_actions = pe.sample_from_policy(env, model, obs_normalizer)
         agent_states.append(temp_states)
         agent_actions.append(temp_actions)

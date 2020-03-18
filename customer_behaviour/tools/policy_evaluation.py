@@ -80,10 +80,6 @@ def sample_from_policy(env, model, obs_normalizer, initial_state=None):
         env.state = initial_state
         obs = np.array(initial_state).astype('float32')
 
-    # print(initial_state)
-    # print(env.state)
-    # quit()
-
     states.append(obs)
     done = False
     while not done:
