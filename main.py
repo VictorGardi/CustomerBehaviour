@@ -229,7 +229,8 @@ def main():
         n_historical_events=args.n_historical_events, 
         episode_length=0,  # This parameter does not really matter since we create this env only for generating samples
         n_experts=args.n_experts,
-        n_demos_per_expert=args.n_demos_per_expert,  # How large should the expert cluster be?
+        n_demos_per_expert=1,  # We do not perform any clustering right now
+        # n_demos_per_expert=args.n_demos_per_expert,  # How large should the expert cluster be?
         n_expert_time_steps=args.eval_episode_length,  # How long should each expert trajectory be?
         seed_expert=args.seed_expert
     )
