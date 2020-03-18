@@ -200,6 +200,23 @@ def get_wd(u, v, uv_normalized):
 ##### Plot distributions #####
 ##############################
 
+def get_info(args):
+    algorithm = args['algo'].upper()
+    n_experts = args['n_experts']
+    expert_length = args['length_expert_TS']
+    episode_length = args['episode_length']
+    n_training_episodes = args['n_training_episodes']
+    n_historical_events = args['n_historical_events']
+
+    info = 'Algorithm: ' + algorithm + ' | ' \
+         + 'Number of training episodes: ' + str(n_training_episodes) + ' | ' \
+         + 'Episode length: ' + str(episode_length) + ' | ' \
+         + 'Number of experts: ' + str(n_experts) + ' | ' \
+         + 'Length of expert trajectory: ' + str(expert_length) + ' | ' \
+         + 'Length of purchase history: ' + str(n_historical_events)
+
+    return info
+
 def set_xticks(ax, possible_val_states, n):
     ticks = list(range(len(possible_val_states)))
     labels = []

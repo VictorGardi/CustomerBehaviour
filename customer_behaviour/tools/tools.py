@@ -86,7 +86,8 @@ def save_plt_as_eps(obj, path):
     obj.savefig(path, format='eps')
 
 def save_plt_as_png(obj, path):
-    obj.savefig(path, format='png')
+    obj.set_size_inches((12, 8.5), forward=False)
+    obj.savefig(path, format='png', dpi=300)
 
 def sort_possible_val_states(possible_val_states):
     temp = possible_val_states.copy()
