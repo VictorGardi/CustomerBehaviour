@@ -51,18 +51,19 @@ def get_env_and_model(args, model_dir_path, sample_length):
             seed_agent=True,
             seed_expert=args['seed_expert']
             )
-    
-    # Initialize model and observation normalizer
-    # Assume network with 4 layers of size (n_historical_purchases, 64, 64, 2)
-    model = A3CFFSoftmax(args['n_historical_events'], 2, hidden_sizes=(64, 64))
-    obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_historical_events'], clip_threshold=5)
 
+    # Initialize model and observation normalizer
+    if args['state_rep'] == 21:
+        model = A3CFFSoftmax(args['n_historical_events'], 2, hidden_sizes=(64, 64))
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_historical_events'], clip_threshold=5)
+    elif args['state_rep'] == 11:
+        model = A3CFFSoftmax(2 + args['n_historical_events'], 2, hidden_sizes=(64, 64))
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(2 + args['n_historical_events'], clip_threshold=5)
+    else:
+        raise NotImplementedError
+    
     # Load model and observation normalizer
-    try:
-        pass
-        chainer.serializers.load_npz(join(model_dir_path, 'model.npz'), model)
-    except ValueError:
-        print('\nCould not load the model, which is assumed to be a network with 4 layers of size (n_historical_purchases, 64, 64, 2).\n')
+    chainer.serializers.load_npz(join(model_dir_path, 'model.npz'), model)
     chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
 
     return env, model, obs_normalizer

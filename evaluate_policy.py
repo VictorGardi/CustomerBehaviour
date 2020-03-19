@@ -17,9 +17,11 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.stats import wasserstein_distance
 from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png
 
-# dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 10 000 episodes
-dir_path = 'results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | length_expert_TS = 256  | 10 000 episodes
+# dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
+# dir_path = 'results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | length_expert_TS = 256  | 10 000 episodes
 # dir_path = 'results_anton/2020-03-16_20-13-19'  # 10 experts | 256 historical events | length_expert_TS = 1024 | 15 000 episodes
+# dir_path = 'results_anton/2020-03-18_14-01-33'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
+dir_path = 'results_anton/2020-03-17_11-59-59'  # 10 experts | state_rep = 11
 
 sample_length = 10000
 normalize = True
@@ -44,8 +46,8 @@ def main():
     ending_eps = '_normalize.eps' if normalize else '.eps'
     ending_png = '_normalize.png' if normalize else '.png'
 
-    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
-    evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
+    # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
     compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
