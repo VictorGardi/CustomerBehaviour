@@ -131,6 +131,8 @@ def main():
                         help="Activate expert seed mode.")
     # parser.add_argument('--agent_seed', type=int, default=None)
     parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
+
+    parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=True)
     
     parser.add_argument('--n_historical_events', type=int, default=20)
     parser.add_argument('--gpu', type=int, default=-1)
@@ -241,23 +243,25 @@ def main():
     action_space = sample_env.action_space
 
     # Normalize observations based on their empirical mean and variance
-    # obs_normalizer = None
     if args.state_rep == 1:
         obs_dim = obs_space.low.size
-    elif args.state_rep == 2 or args.state_rep == 21:
+    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22:
         obs_dim = obs_space.n
     elif args.state_rep == 3 or args.state_rep == 11:
         obs_dim = obs_space.nvec.size
     else:
         raise NotImplementedError
-    obs_normalizer = chainerrl.links.EmpiricalNormalization(obs_dim, clip_threshold=5)  # shape: Shape of input values except batch axis
-    #chainerrl.links.EmpiricalNormalization(obs_space.low.size, clip_threshold=5)
+    
+    if args.normalize_obs:
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(obs_dim, clip_threshold=5)  # shape: Shape of input values except batch axis
+    else:
+        obs_normalizer = None
 
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
         if args.state_rep == 1:
             model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(64, 64))
-        elif args.state_rep == 2 or args.state_rep == 21:
+        elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22:
             model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(64, 64))
         elif args.state_rep == 3 or args.state_rep == 11:
             model = A3CFFSoftmax(obs_space.nvec.size, action_space.n, hidden_sizes=(64, 64))
@@ -288,9 +292,9 @@ def main():
         from customer_behaviour.algorithms.irl.gail import Discriminator
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu)
+        D = Discriminator(gpu=args.gpu, n_units=64)
         
-        agent = GAIL(demonstrations=demonstrations, discriminator=D,
+        agent = GAIL(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
                      obs_normalizer=obs_normalizer,
                      gpu=args.gpu,
@@ -320,8 +324,8 @@ def main():
         from customer_behaviour.algorithms.irl.airl import Discriminator
         # obs_normalizer = None
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu, n_units=args.batchsize)
-        agent = Agent(demonstrations=demonstrations, discriminator=D,
+        D = Discriminator(gpu=args.gpu, n_units=64)
+        agent = Agent(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
                       model=model, optimizer=opt,
                       obs_normalizer=obs_normalizer,
                       gpu=args.gpu,
