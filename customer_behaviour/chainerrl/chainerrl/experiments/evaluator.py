@@ -118,7 +118,8 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
             logger.info('evaluation episode %s length:%s R:%s',
                         len(scores), episode_len, test_r)
             
-            i_expert += 1
+            if i_expert < len(expert_states) - 1:
+                i_expert += 1
 
             # Extract features from the time-series (i.e. "actions") and
             # compare this feature vector against the cluster of expert features
