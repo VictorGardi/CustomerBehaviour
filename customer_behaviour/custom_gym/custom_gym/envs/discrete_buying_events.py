@@ -47,7 +47,7 @@ class Case1():
         action = 1 if receipt[0] > 0 else 0  # We only consider the first item
         return action
 
-    def get_initial_state(self, history):
+    def get_initial_state(self, history, seed=None):
         temp = history[0, :].copy()  # We only consider the first item
         temp[temp > 0] = 1
 
@@ -90,7 +90,7 @@ class Case11():
         action = 1 if np.any(np.nonzero(receipt)) else 0
         return action
 
-    def get_initial_state(self, history):
+    def get_initial_state(self, history, seed=None):
         temp = history.copy()
         temp = np.sum(temp, axis=0)
 
@@ -132,7 +132,7 @@ class Case2():
         action = 1 if receipt[0] > 0 else 0  # We only consider the first item
         return action
 
-    def get_initial_state(self, history):
+    def get_initial_state(self, history, seed=None):
         temp = history[0, :].copy()  # We only consider the first item
 
         temp[temp > 0] = 1
@@ -170,7 +170,7 @@ class Case21():
         action = 1 if np.any(np.nonzero(receipt)) else 0
         return action
 
-    def get_initial_state(self, history):
+    def get_initial_state(self, history, seed=None):
         temp = history.copy()
         temp = np.sum(temp, axis=0)
 
@@ -182,6 +182,49 @@ class Case21():
 
     def get_step(self, state, action):
         new_state = [*state[1:], action]
+        return new_state
+
+
+class Case22():
+    def __init__(self, model):
+        self.model = model
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(10 + n_historical_events)  # Assume 10 experts
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.any(np.nonzero(receipt)) else 0
+        return action
+
+    def get_initial_state(self, history, seed):
+        temp = np.sum(history, axis=0)
+
+        temp[temp > 0] = 1
+
+        dummy = np.zeros(10)
+        dummy[seed] = 1
+
+        initial_state = np.concatenate((dummy, temp))
+
+        return initial_state
+
+    def get_step(self, state, action):
+        dummy = state[:10]
+        history = state[10:]
+        new_state = [*dummy, *history[1:], action]
         return new_state
 
 
@@ -204,7 +247,7 @@ class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT 
         action = 1 if receipt[0] > 0 else 0  # We only consider the first item
         return action
 
-    def get_initial_state(self, history):
+    def get_initial_state(self, history, seed=None):
         # Extract number of elapsed days between purchases
         temp = history[0, :]  # We only consider the first item
         assert temp[-1] > 0
@@ -238,6 +281,7 @@ def define_case(case):
         11: Case11,
         2: Case2,
         21: Case21,
+        22: Case22,
         3: Case3
     }
     return switcher.get(case)
@@ -300,7 +344,7 @@ class DiscreteBuyingEvents(gym.Env):
                 history = subsample[0]
                 data = subsample[1]
 
-                initial_state = self.case.get_initial_state(history)
+                initial_state = self.case.get_initial_state(history, i_expert)
 
                 self.state = initial_state
 
@@ -377,7 +421,7 @@ class DiscreteBuyingEvents(gym.Env):
 
         history = all_data[:, i:i+self.n_historical_events]
         
-        self.state = self.case.get_initial_state(history)
+        self.state = self.case.get_initial_state(history, seed)
         self.n_time_steps = 0
         return np.array(self.state)
     
