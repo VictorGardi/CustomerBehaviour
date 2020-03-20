@@ -10,9 +10,11 @@ from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_n
 
 
 class GAIL(PPO):
-    def __init__(self, discriminator, demonstrations, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, case, discriminator, demonstrations, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
+
+        self.case = case
 
         self.discriminator = discriminator
 
@@ -90,21 +92,19 @@ class GAIL(PPO):
             self.memory = []
 
     def convert_data_to_feed_discriminator(self, states, actions, noise_scale=0.1):
+
         xp = self.model.xp
+
         if isinstance(self.model.pi, SoftmaxPolicy):
             # if discrete action
             actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
         if noise_scale:
             actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
 
-        #print('-----------------')
-        #print(states)
-        #print('---')
-        #print(actions)
-        #print('---')
-        #print(F.concat((xp.array(states), xp.array(actions))))
-        #print('---------------')
-        #quit()
+        if self.case == 22:
+            # Do not show dummy encoding to discriminator
+            temp_states = [s[10:] for s in states]
+            return F.concat((xp.array(temp_states), xp.array(actions)))
 
         return F.concat((xp.array(states), xp.array(actions)))
     

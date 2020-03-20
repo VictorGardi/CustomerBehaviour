@@ -13,13 +13,17 @@ from customer_behaviour.algorithms.irl.common.utils import get_states_actions_ne
 
 
 class AIRL(PPO):
-    def __init__(self, discriminator: Discriminator, demonstrations, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, case, discriminator, demonstrations, discriminator_loss_stats_window=1000, **kwargs):
 
         super().__init__(**kwargs)
+
+        self.case = case
+
         self.discriminator = discriminator
 
         self.demo_states, self.demo_actions, self.demo_next_states = \
             get_states_actions_next_states(demonstrations['states'], demonstrations['actions'], xp=self.xp)
+
         if isinstance(self.model.pi, SoftmaxPolicy):
             # action space is continuous
             self.demo_actions = self.demo_actions.astype(dtype=self.xp.int32)
@@ -58,6 +62,12 @@ class AIRL(PPO):
                 action_log_probs = self.get_probs(states, actions)
                 demo_action_log_probs = self.get_probs(demo_states, demo_actions)
 
+            if self.case == 22:
+                states = np.array([s[10:] for s in states])
+                demo_states = np.array([s[10:] for s in demo_states])
+                next_states = np.array([s[10:] for s in next_states])
+                demo_next_states = np.array([s[10:] for s in demo_next_states])
+
             loss = self.discriminator.train(expert_states=demo_states, expert_next_states=demo_next_states,
                                             expert_action_probs=demo_action_log_probs, fake_states=states,
                                             fake_next_states=next_states, fake_action_probs=action_log_probs,
@@ -79,7 +89,12 @@ class AIRL(PPO):
             # update reward in self.memory
             transitions = list(chain(*self.memory))
             with chainer.configuration.using_config('train', False), chainer.no_backprop_mode():
-                rewards = self.discriminator.get_rewards(self.xp.asarray(np.concatenate([transition['state'][None]
+                if self.case == 22:
+                    temp_states = [transition['state'] for transition in transitions]
+                    temp_states = [s[10:][None] for s in temp_states]
+                    rewards = self.discriminator.get_rewards(self.xp.asarray(np.concatenate(temp_states))).array
+                else:
+                    rewards = self.discriminator.get_rewards(self.xp.asarray(np.concatenate([transition['state'][None]  # [None] adds an extra [] around the states
                                                                          for transition in transitions]))).array
             self.reward_mean_record.append(float(np.mean(rewards)))
             i = 0
