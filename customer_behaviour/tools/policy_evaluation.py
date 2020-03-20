@@ -133,6 +133,8 @@ def reduce_dimensionality(val_states, max_n_purchases, keep_only_unique=False):
     val_states: [[v_{0}], [v_{1}], ..., [v_{n-2}], [v_{n-1}]]
     max_n_purchases: The maximum number of purchases that is allowed in a validation state
     '''
+    if not val_states:
+        return []
     indices = np.argwhere(np.sum(val_states, axis=1) > max_n_purchases)  # list of lists
     indices = [x[0] for x in indices]
 
@@ -167,6 +169,8 @@ def sort_possible_val_states(possible_val_states):
 
 def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize):
     purchase, no_purchase = get_cond_val_states(states, actions, n_last_days)
+    print(len(purchase))
+    print(len(no_purchase))
 
     # Reduce dimensionality by merging all validation states with more than max_n_purchases purchases to a single state
     purchase = reduce_dimensionality(purchase, max_n_purchases)
