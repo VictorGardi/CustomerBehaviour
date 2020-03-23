@@ -59,12 +59,18 @@ def get_env_and_model(args, model_dir_path, sample_length):
     elif args['state_rep'] == 11:
         model = A3CFFSoftmax(2 + args['n_historical_events'], 2, hidden_sizes=(64, 64))
         obs_normalizer = chainerrl.links.EmpiricalNormalization(2 + args['n_historical_events'], clip_threshold=5)
+    elif args['state_rep'] == 22:
+        model = A3CFFSoftmax(10 + args['n_historical_events'], 2, hidden_sizes=(64, 64))
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(10 +args['n_historical_events'], clip_threshold=5)
     else:
         raise NotImplementedError
     
     # Load model and observation normalizer
     chainer.serializers.load_npz(join(model_dir_path, 'model.npz'), model)
-    chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
+    if args['normalize_obs']:
+        chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
+    else:
+        obs_normalizer = None
 
     return env, model, obs_normalizer
 
@@ -85,7 +91,9 @@ def sample_from_policy(env, model, obs_normalizer, initial_state=None):
     done = False
     while not done:
         b_state = batch_states([obs], xp, phi)
-        b_state = obs_normalizer(b_state, update=False)
+        
+        if obs_normalizer:
+            b_state = obs_normalizer(b_state, update=False)
 
         with chainer.using_config('train', False), chainer.no_backprop_mode():
             action_distrib, _ = model(b_state)
@@ -133,12 +141,11 @@ def reduce_dimensionality(val_states, max_n_purchases, keep_only_unique=False):
     val_states: [[v_{0}], [v_{1}], ..., [v_{n-2}], [v_{n-1}]]
     max_n_purchases: The maximum number of purchases that is allowed in a validation state
     '''
-    if not val_states:
-        return []
+    if not val_states: return []
+
     indices = np.argwhere(np.sum(val_states, axis=1) > max_n_purchases)  # list of lists
     indices = [x[0] for x in indices]
 
-    assert len(val_states) > 0
     n = len(val_states[0])
     substitute = n * [1]
 
@@ -167,7 +174,13 @@ def sort_possible_val_states(possible_val_states):
 ##### Conditional distributions #####
 #####################################
 
-def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize):
+def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize, case):
+    #if case == 22:
+    #    temp = []
+    #    for trajectory in states:
+    #        temp.append([s[10:] for s in trajectory])
+    #    states = temp
+
     purchase, no_purchase = get_cond_val_states(states, actions, n_last_days)
     print(len(purchase))
     print(len(no_purchase))
