@@ -4,8 +4,13 @@ from customer_behaviour.algorithms.irl.common.model import MLP
 
 
 class Discriminator:
-    def __init__(self, n_layer=3, n_units=64, loss_type='wgangp', gpu=-1):
-        self.model = MLP(n_layer, n_units, 1)
+    def __init__(self, hidden_sizes=(64,64,64), loss_type='wgangp', gpu=-1):
+        n_layers = len(hidden_sizes)
+        n_units = hidden_sizes[0]
+        print(n_layers)
+        print(n_units)
+        quit()
+        self.model = MLP(n_layers, n_units, 1)
 
         if gpu >= 0:
             self.model.to_gpu(gpu)

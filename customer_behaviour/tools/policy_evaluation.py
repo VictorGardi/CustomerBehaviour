@@ -67,10 +67,11 @@ def get_env_and_model(args, model_dir_path, sample_length):
     
     # Load model and observation normalizer
     chainer.serializers.load_npz(join(model_dir_path, 'model.npz'), model)
-    if args['normalize_obs']:
-        chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
-    else:
-        obs_normalizer = None
+    if 'normalize_obs' in args:
+        if args['normalize_obs']:
+            chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
+        else:
+            obs_normalizer = None
 
     return env, model, obs_normalizer
 

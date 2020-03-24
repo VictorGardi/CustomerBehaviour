@@ -136,6 +136,8 @@ def main():
     
     parser.add_argument('--n_historical_events', type=int, default=20)
     parser.add_argument('--gpu', type=int, default=-1)
+    parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
+    parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))
@@ -162,6 +164,8 @@ def main():
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     args = parser.parse_args()
+    args.D_layers = tuple(args.D_layers)
+    args.G_layers = tuple(args.G_layers)
     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
     args.env = get_env(args.case, args.n_experts)  
     args.steps = args.n_training_episodes*args.episode_length
@@ -260,11 +264,11 @@ def main():
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
         if args.state_rep == 1:
-            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=(64, 64))
+            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=args.G_layers)
         elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22:
-            model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=(64, 64))
+            model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=args.G_layers)
         elif args.state_rep == 3 or args.state_rep == 11:
-            model = A3CFFSoftmax(obs_space.nvec.size, action_space.n, hidden_sizes=(64, 64))
+            model = A3CFFSoftmax(obs_space.nvec.size, action_space.n, hidden_sizes=args.G_layers)
         else:
             raise NotImplementedError
     elif args.arch == 'FFMellowmax':
@@ -292,7 +296,7 @@ def main():
         from customer_behaviour.algorithms.irl.gail import Discriminator
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu, n_units=64)
+        D = Discriminator(gpu=args.gpu, hidden_sizes=args.D_layers)
         
         agent = GAIL(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
@@ -324,7 +328,7 @@ def main():
         from customer_behaviour.algorithms.irl.airl import Discriminator
         # obs_normalizer = None
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu, n_units=64)
+        D = Discriminator(gpu=args.gpu, hidden_sizes=args.D_layers)
         agent = Agent(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
                       model=model, optimizer=opt,
                       obs_normalizer=obs_normalizer,
