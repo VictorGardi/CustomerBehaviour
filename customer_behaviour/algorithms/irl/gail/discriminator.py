@@ -7,9 +7,7 @@ class Discriminator:
     def __init__(self, hidden_sizes=(64,64,64), loss_type='wgangp', gpu=-1):
         n_layers = len(hidden_sizes)
         n_units = hidden_sizes[0]
-        print(n_layers)
-        print(n_units)
-        quit()
+
         self.model = MLP(n_layers, n_units, 1)
 
         if gpu >= 0:
