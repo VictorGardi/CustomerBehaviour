@@ -14,6 +14,18 @@ sys.path.append('..')
 from main import A3CFFSoftmax
 from chainerrl.misc.batch_states import batch_states
 
+###########################
+##### Other functions #####
+###########################
+
+def get_cluster_labels(T):
+    _, indices = np.unique(T, return_index=True)
+    indices.sort()
+    temp = np.zeros(T.shape)
+    for i, j in enumerate(indices, start=1):
+        temp[T == T[j]] = i
+    return temp
+
 #############################
 ##### Sample generators #####
 #############################
@@ -67,11 +79,13 @@ def get_env_and_model(args, model_dir_path, sample_length):
     
     # Load model and observation normalizer
     chainer.serializers.load_npz(join(model_dir_path, 'model.npz'), model)
-    if 'normalize_obs' in args:
+    try:
         if args['normalize_obs']:
             chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
         else:
             obs_normalizer = None
+    except KeyError:
+         chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
 
     return env, model, obs_normalizer
 
@@ -175,16 +189,8 @@ def sort_possible_val_states(possible_val_states):
 ##### Conditional distributions #####
 #####################################
 
-def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize, case):
-    #if case == 22:
-    #    temp = []
-    #    for trajectory in states:
-    #        temp.append([s[10:] for s in trajectory])
-    #    states = temp
-
+def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize):
     purchase, no_purchase = get_cond_val_states(states, actions, n_last_days)
-    print(len(purchase))
-    print(len(no_purchase))
 
     # Reduce dimensionality by merging all validation states with more than max_n_purchases purchases to a single state
     purchase = reduce_dimensionality(purchase, max_n_purchases)
