@@ -119,7 +119,12 @@ def train_agent_batch(agent, env, steps, outdir,
             # Start new episodes if needed
             episode_r[end] = 0
             episode_len[end] = 0
-            obss = env.reset(not_end)
+            
+            # obss = env.reset(not_end)  # Uses Stable-Baselines vecenv which does not support extra argument  --> assume all espisode end at same time
+            if np.all(dones):
+                print(episode_len)
+                obss = env.reset()
+           
 
     except (Exception, KeyboardInterrupt):
         # Save the current model before being killed
