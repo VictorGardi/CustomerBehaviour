@@ -22,7 +22,7 @@ def categorize_age2(age):
     elif 70 <= age: return 5
 
 class Case1():
-    def __init__(self, model):
+    def __init__(self, model, n_experts=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -64,7 +64,7 @@ class Case1():
         return new_state
 
 class Case11():
-    def __init__(self, model):
+    def __init__(self, model, n_experts=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -109,7 +109,7 @@ class Case11():
         return new_state
 
 class Case2():
-    def __init__(self, model):
+    def __init__(self, model, n_experts=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -147,7 +147,7 @@ class Case2():
 
 
 class Case21():
-    def __init__(self, model):
+    def __init__(self, model, n_experts=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -186,11 +186,12 @@ class Case21():
 
 
 class Case22():
-    def __init__(self, model):
+    def __init__(self, model, n_experts=None):
         self.model = model
+        self.n_experts = n_experts
 
     def get_spaces(self, n_historical_events):
-        observation_space = spaces.MultiBinary(10 + n_historical_events)  # Assume 10 experts
+        observation_space = spaces.MultiBinary(self.n_experts + n_historical_events) 
 
         action_space = spaces.Discrete(2)
 
@@ -214,7 +215,7 @@ class Case22():
 
         temp[temp > 0] = 1
 
-        dummy = np.zeros(10)
+        dummy = np.zeros(self.n_experts)
         dummy[seed] = 1
 
         initial_state = np.concatenate((dummy, temp))
@@ -222,14 +223,58 @@ class Case22():
         return initial_state
 
     def get_step(self, state, action):
-        dummy = state[:10]
-        history = state[10:]
+        dummy = state[:self.n_experts]
+        history = state[self.n_experts:]
+        new_state = [*dummy, *history[1:], action]
+        return new_state
+
+
+class Case23():
+    def __init__(self, model, n_experts=None):
+        self.model = model
+        self.n_experts = n_experts
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(self.n_experts + n_historical_events)
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.any(np.nonzero(receipt)) else 0
+        return action
+
+    def get_initial_state(self, history, seed):
+        temp = np.sum(history, axis=0)
+
+        temp[temp > 0] = 1
+
+        dummy = np.zeros(self.n_experts)
+        dummy[seed] = 1
+
+        initial_state = np.concatenate((dummy, temp))
+
+        return initial_state
+
+    def get_step(self, state, action):
+        dummy = state[:self.n_experts]
+        history = state[self.n_experts:]
         new_state = [*dummy, *history[1:], action]
         return new_state
 
 
 class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT ENDAST [1, 1, ..., 1, 1]
-    def __init__(self, model):
+    def __init__(self, model, n_experts=None):
         self.model = model
 
     def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
@@ -305,7 +350,7 @@ class DiscreteBuyingEvents(gym.Env):
 
     def initialize_environment(self, case, n_historical_events, episode_length, n_experts, n_demos_per_expert, n_expert_time_steps, seed_agent=True, seed_expert=True):
         temp = define_case(case)
-        self.case = temp(self.model)
+        self.case = temp(self.model, n_experts)
 
         self.n_historical_events = n_historical_events
         self.episode_length = episode_length
