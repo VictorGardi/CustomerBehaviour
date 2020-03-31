@@ -17,7 +17,7 @@ import gym.wrappers
 import chainer
 from chainer import functions as F
 import chainerrl
-# from customer_behaviour import chainerrl
+import logging
 
 from chainerrl.agents import a3c
 from chainerrl.agents import PPO
@@ -114,64 +114,7 @@ def save_agent_demo(env, agent, out_dir, max_t=10000):
     np.savez(out_dir+'/action_probs.npz', action_probs = np.array(action_probs, dtype=object))
 
 
-def main():
-    import logging
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('algo', default='gail', choices=['gail', 'gail2', 'pacgail', 'airl'], type=str)
-    parser.add_argument('--case', type=str, default='discrete_events')
-    parser.add_argument('--n_experts', type=int, default=1)
-    parser.add_argument('--n_demos_per_expert', type=int, default=10)
-    parser.add_argument('--state_rep', type=int, default=1)
-    parser.add_argument('--length_expert_TS', type=int, default=100)
-    parser.add_argument('--episode_length', type=int, default=100)
-    parser.add_argument('--n_training_episodes', type=int, default=1000)
-    parser.add_argument('--seed_expert', type=str2bool, nargs='?',
-                        const=True, default=False,
-                        help="Activate expert seed mode.")
-    # parser.add_argument('--agent_seed', type=int, default=None)
-    parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
-
-    parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=True)
-    
-    parser.add_argument('--n_historical_events', type=int, default=20)
-    parser.add_argument('--gpu', type=int, default=-1)
-    parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
-    parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
-    parser.add_argument('--PAC_k', type=int, default=1)
-    parser.add_argument('--arch', type=str, default='FFSoftmax',
-                        choices=('FFSoftmax', 'FFMellowmax',
-                                 'FFGaussian'))
-    parser.add_argument('--bound-mean', action='store_true', default=False)  # only for FFGaussian
-    parser.add_argument('--seed', type=int, default=0,
-                        help='Random seed [0, 2 ** 32)')
-    #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
-    
-    parser.add_argument('--eval_episode_length', type=int, default=100)
-    parser.add_argument('--eval_interval', type=int, default=10000)
-    parser.add_argument('--eval-n-runs', type=int, default=10)
-    parser.add_argument('--reward-scale-factor', type=float, default=1e-2)  # does not make sense since we do not have any reward signal
-    parser.add_argument('--standardize-advantages', action='store_true', default=True)  # True is default in PPO
-    parser.add_argument('--render', action='store_true', default=False)
-    parser.add_argument('--lr', type=float, default=3e-4)
-    parser.add_argument('--weight-decay', type=float, default=0.0)
-    parser.add_argument('--demo', action='store_true', default=False)
-    parser.add_argument('--load', type=str, default='')
-    #parser.add_argument('--load_demo', type=str, default='')
-    parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
-    parser.add_argument('--monitor', action='store_true', default=False)
-    parser.add_argument('--update-interval', type=int, default=1024)
-    parser.add_argument('--batchsize', type=int, default=64)  # mini-batch size
-    parser.add_argument('--epochs', type=int, default=10)
-    parser.add_argument('--entropy-coef', type=float, default=0.01)
-    args = parser.parse_args()
-    args.D_layers = tuple(args.D_layers)
-    args.G_layers = tuple(args.G_layers)
-    args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
-    args.env = get_env(args.case, args.n_experts)  
-    args.steps = args.n_training_episodes*args.episode_length
-
-
+def main(args, train_env):
     logging.basicConfig(level=args.logger_level)
 
     # Set a random seed used in ChainerRL
@@ -298,14 +241,13 @@ def main():
                     standardize_advantages=args.standardize_advantages,
                     )
     elif args.algo == 'gail':
-        import numpy as np
         from customer_behaviour.algorithms.irl.gail import GAIL as G
         from customer_behaviour.algorithms.irl.gail import Discriminator as D
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
         D = D(gpu=args.gpu, input_dim = input_dim_D, hidden_sizes=args.D_layers)
         
-        agent = G(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
+        agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
                      obs_normalizer=obs_normalizer,
                      gpu=args.gpu,
@@ -315,7 +257,6 @@ def main():
                      standardize_advantages=args.standardize_advantages,)
 
     elif args.algo == 'pacgail':
-        import numpy as np
         from customer_behaviour.algorithms.irl.gail.gail import PACGAIL as G
         from customer_behaviour.algorithms.irl.gail.discriminator import Discriminator as D
         
@@ -323,7 +264,7 @@ def main():
         
         D = D(gpu=args.gpu, input_dim = (input_dim_D)*args.PAC_k, hidden_sizes=args.D_layers)
         
-        agent = G(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
+        agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
                      obs_normalizer=obs_normalizer,
                      gpu=args.gpu,
@@ -335,7 +276,6 @@ def main():
 
         
     elif args.algo == 'gail2':
-        import numpy as np
         from customer_behaviour.algorithms.irl.gail import GAIL2
         from customer_behaviour.algorithms.irl.gail import Discriminator2
 
@@ -350,7 +290,6 @@ def main():
                     standardize_advantages=args.standardize_advantages,)
 
     elif args.algo == 'airl':
-        import numpy as np
         from customer_behaviour.algorithms.irl.airl import AIRL as Agent
         from customer_behaviour.algorithms.irl.airl import Discriminator
         # obs_normalizer = None
@@ -398,7 +337,8 @@ def main():
         clip_eps_decay_hook = experiments.LinearInterpolationHook(
             args.steps, 0.2, 0, clip_eps_setter)
 
-        experiments.train_agent_with_evaluation(
+        if train_env is None:
+            experiments.train_agent_with_evaluation(
             agent=agent,
             env=make_env(False),                    # Environment train the agent against (False -> scaled rewards)
             eval_env=make_env(True),                # Environment used for evaluation
@@ -413,7 +353,23 @@ def main():
                 lr_decay_hook,
                 clip_eps_decay_hook,
             ],
-        )
+            )
+        else:    
+            experiments.train_agent_batch_with_evaluation(
+                agent=agent,
+                env=train_env,
+                steps=args.steps,
+                eval_n_steps=None,
+                eval_n_episodes=args.eval_n_runs,
+                eval_interval=args.eval_interval,
+                outdir=args.outdir,
+                max_episode_len=timestep_limit,
+                eval_max_episode_len=None,
+                eval_env=make_env(True),
+                step_hooks=[lr_decay_hook, clip_eps_decay_hook,],
+                save_best_so_far_agent=False
+                )
+
         save_agent_demo(make_env(True), agent, args.outdir, 10 * args.eval_episode_length)  # originally it was make_env(test=False) which seems strange
     
     # Move result files to correct folder and remove empty folder
@@ -421,6 +377,94 @@ def main():
     os.rmdir(args.outdir)
 
 
+def make_par_env(args, rank, seed=0):
+    from stable_baselines.common import set_global_seeds
+    def _init():
+        env = gym.make(args.env)
+
+        env.initialize_environment(
+            case=args.state_rep, 
+            n_historical_events=args.n_historical_events, 
+            episode_length=args.episode_length,
+            n_experts=args.n_experts,
+            n_demos_per_expert=1,
+            n_expert_time_steps=args.length_expert_TS, 
+            seed_agent=args.seed_agent,
+            seed_expert=args.seed_expert
+            )
+
+        env.seed(seed + rank)
+
+        env = chainerrl.wrappers.CastObservationToFloat32(env)
+        
+        return env
+    
+    set_global_seeds(seed)
+    return _init
+
+
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('algo', default='gail', choices=['gail', 'gail2', 'pacgail', 'airl'], type=str)
+    parser.add_argument('--case', type=str, default='discrete_events')
+    parser.add_argument('--n_experts', type=int, default=1)
+    parser.add_argument('--n_demos_per_expert', type=int, default=10)
+    parser.add_argument('--state_rep', type=int, default=1)
+    parser.add_argument('--length_expert_TS', type=int, default=100)
+    parser.add_argument('--episode_length', type=int, default=100)
+    parser.add_argument('--n_training_episodes', type=int, default=1000)
+    parser.add_argument('--seed_expert', type=str2bool, nargs='?',
+                        const=True, default=False,
+                        help="Activate expert seed mode.")
+    # parser.add_argument('--agent_seed', type=int, default=None)
+    parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
+
+    parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=True)
+    
+    parser.add_argument('--n_historical_events', type=int, default=20)
+    parser.add_argument('--gpu', type=int, default=-1)
+    parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
+    parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
+    parser.add_argument('--PAC_k', type=int, default=1)
+    parser.add_argument('--arch', type=str, default='FFSoftmax',
+                        choices=('FFSoftmax', 'FFMellowmax',
+                                 'FFGaussian'))
+    parser.add_argument('--bound-mean', action='store_true', default=False)  # only for FFGaussian
+    parser.add_argument('--seed', type=int, default=0,
+                        help='Random seed [0, 2 ** 32)')
+    #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
+    
+    parser.add_argument('--eval_episode_length', type=int, default=100)
+    parser.add_argument('--eval_interval', type=int, default=10000)
+    parser.add_argument('--eval-n-runs', type=int, default=10)
+    parser.add_argument('--reward-scale-factor', type=float, default=1e-2)  # does not make sense since we do not have any reward signal
+    parser.add_argument('--standardize-advantages', action='store_true', default=True)  # True is default in PPO
+    parser.add_argument('--render', action='store_true', default=False)
+    parser.add_argument('--lr', type=float, default=3e-4)
+    parser.add_argument('--weight-decay', type=float, default=0.0)
+    parser.add_argument('--demo', action='store_true', default=False)
+    parser.add_argument('--load', type=str, default='')
+    #parser.add_argument('--load_demo', type=str, default='')
+    parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
+    parser.add_argument('--monitor', action='store_true', default=False)
+    parser.add_argument('--update-interval', type=int, default=1024)
+    parser.add_argument('--batchsize', type=int, default=64)  # mini-batch size
+    parser.add_argument('--epochs', type=int, default=10)
+    parser.add_argument('--entropy-coef', type=float, default=0.01)
+    parser.add_argument('--n_processes', type=int, default=1)
+
+    args = parser.parse_args()
+    args.D_layers = tuple(args.D_layers)
+    args.G_layers = tuple(args.G_layers)
+    args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
+    args.env = get_env(args.case, args.n_experts)  
+    args.steps = args.n_training_episodes*args.episode_length
+
+    if args.n_processes > 1:
+        from stable_baselines.common.vec_env import SubprocVecEnv
+        train_env = SubprocVecEnv([make_par_env(args, i) for i in range(args.n_processes)])
+    else:
+        train_env = None
+
+    main(args, train_env)
 
