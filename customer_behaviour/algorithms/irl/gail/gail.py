@@ -1,4 +1,3 @@
-import copy
 import chainer
 import numpy as np
 import collections
@@ -8,19 +7,23 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
+from custom_gym.envs.discrete_buying_events import Case22
 
 
 class GAIL(PPO):
-    def __init__(self, case, discriminator, demonstrations, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, gamma=1, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
-        self.case = case
+        self.env = env
+        self.gamma = gamma
 
         self.discriminator = discriminator
 
         self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
         self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
+
+        self.expert_ratio = [get_purchase_ratio(i) for i in demonstrations['actions']]
 
         self.discriminator_loss_record = collections.deque(maxlen=discriminator_loss_stats_window)
         self.reward_mean_record = collections.deque(maxlen=discriminator_loss_stats_window)
@@ -40,9 +43,9 @@ class GAIL(PPO):
             states = self.batch_states([b['state'] for b in batch], xp, self.phi)
             actions = xp.array([b['action'] for b in batch])
 
-            demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
+            self.demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
 
-            demo_states, demo_actions = [d[demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
+            demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
 
             if self.obs_normalizer:
                 states = self.obs_normalizer(states, update=False)
@@ -74,13 +77,22 @@ class GAIL(PPO):
             
             self.reward_mean_record.append(float(np.mean(rewards)))
 
-            s_a = F.concat((np.array(states), np.array(actions))).data
+            
+            #s_a = np.concatenate((states, actions.reshape((-1,1))), axis=1)
+            #print(s_a.shape)
+            #quit()
 
             # mod_reward = lambda*reward-(1-lambda)*(get_purchase_ratio(expert) - get_purchase_ratio(agent))
             i = 0
             for episode in self.memory:
                 for transition in episode:
-                    transition['reward'] = float(rewards[i])
+                    
+                    if self.gamma != 1.0 and isinstance(self.env.case, Case22):
+                        #exp_idx = 
+                        transition['reward'] = self.gamma*rewards(i)-(1-self.gamma)*(self.expert_ratio[exp_idx] - get_purchase_ratio(agent))
+                    else:
+                        transition['reward'] = float(rewards[i])
+                    
                     i += 1
             dataset = _make_dataset(
                     episodes=self.memory,
@@ -106,9 +118,9 @@ class GAIL(PPO):
         if noise_scale:
             actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
 
-        if self.case == 22:
+        if isinstance(self.env.case, Case22):
             # Do not show dummy encoding to discriminator
-            temp_states = [s[10:] for s in states]
+            temp_states = [s[self.env.n_experts:] for s in states]
             return F.concat((xp.array(temp_states), xp.array(actions)))
 
         return F.concat((xp.array(states), xp.array(actions)))
@@ -136,11 +148,11 @@ def get_purchase_ratio(sequence):
 
 
 class PACGAIL(PPO):
-    def __init__(self, case, discriminator, demonstrations, PAC_k, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, PAC_k, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
-        self.case = case
+        self.env = env
         self.PAC_k = PAC_k
 
         self.discriminator = discriminator
@@ -228,9 +240,9 @@ class PACGAIL(PPO):
         if noise_scale:
             actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
         
-        if self.case == 22:
+        if isinstance(self.env.case, Case22):
             # Do not show dummy encoding to discriminator
-            states = [s[10:] for s in states]
+            states = [s[self.env.n_experts:] for s in states]
 
         if self.PAC_k > 1: #PACGAN
             # merge state and actions into s-a pairs
