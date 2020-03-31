@@ -1,14 +1,11 @@
 import chainer
 import chainer.functions as F
-from customer_behaviour.algorithms.irl.common.model import MLP
+from chainerrl import links
 
 
 class Discriminator:
-    def __init__(self, hidden_sizes=(64,64,64), loss_type='wgangp', gpu=-1):
-        n_layers = len(hidden_sizes)
-        n_units = hidden_sizes[0]
-
-        self.model = MLP(n_layers, n_units, 1)
+    def __init__(self, input_dim, hidden_sizes=(64,64,64), loss_type='wgangp', gpu=-1):
+        self.model = links.MLP(input_dim, 1, hidden_sizes=hidden_sizes)
 
         if gpu >= 0:
             self.model.to_gpu(gpu)
@@ -64,3 +61,4 @@ class Discriminator:
         if self.loss_type == 'gan':
             return - F.log(1 - self(x))
         return self.model(x)
+

@@ -73,6 +73,10 @@ class GAIL(PPO):
                 rewards = self.discriminator.get_rewards(self.convert_data_to_feed_discriminator(states, actions)).array
             
             self.reward_mean_record.append(float(np.mean(rewards)))
+
+            s_a = F.concat((np.array(states), np.array(actions))).data
+
+            # mod_reward = lambda*reward-(1-lambda)*(get_purchase_ratio(expert) - get_purchase_ratio(agent))
             i = 0
             for episode in self.memory:
                 for transition in episode:
@@ -121,6 +125,10 @@ def gailtype_constructor(rl_algo=TRPO):
                        and (not hasattr(_gail_parent, func)
                             or not getattr(GAIL, func) == getattr(_gail_parent, func))}
     return type("GAIL" + rl_algo.__name__.upper(), (rl_algo,), _gail_func_dict)
+
+
+def get_purchase_ratio(sequence):
+    return np.sum(sequence)/len(sequence)
 
 
 # GAILTRPO do not work because TRPO's interface is not compatible with PPO
