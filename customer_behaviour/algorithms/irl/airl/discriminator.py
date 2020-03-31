@@ -8,6 +8,9 @@ class Discriminator:
     def __init__(self, hidden_sizes = (64,64,64), gpu=-1):
         n_layers = len(hidden_sizes)
         n_units = hidden_sizes[0]
+        print(n_layers)
+        print(n_units)
+        quit()
 
         self.reward_net = MLP(n_layers, n_units, 1, hook=SpectralNormalization, hook_params=dict(factor=1))
         self.value_net = MLP(n_layers, n_units, 1)  # , hook=SpectralNormalization, hook_params=dict(factor=10))

@@ -1,3 +1,4 @@
+import copy
 import chainer
 import numpy as np
 import collections
@@ -123,4 +124,125 @@ def gailtype_constructor(rl_algo=TRPO):
 
 
 # GAILTRPO do not work because TRPO's interface is not compatible with PPO
-GAILTRPO = gailtype_constructor(rl_algo=TRPO)
+#GAILTRPO = gailtype_constructor(rl_algo=TRPO)
+
+
+class PACGAIL(PPO):
+    def __init__(self, case, discriminator, demonstrations, PAC_k, discriminator_loss_stats_window=1000, **kwargs):
+        # super take arguments for dynamic inheritance
+        super(self.__class__, self).__init__(**kwargs)
+
+        self.case = case
+        self.PAC_k = PAC_k
+
+        self.discriminator = discriminator
+
+        self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
+        self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
+
+        self.discriminator_loss_record = collections.deque(maxlen=discriminator_loss_stats_window)
+        self.reward_mean_record = collections.deque(maxlen=discriminator_loss_stats_window)
+
+
+    def _update(self, dataset):
+        # override func
+        if self.obs_normalizer:
+            self._update_obs_normalizer(dataset)
+        xp = self.xp
+
+        dataset_iter = chainer.iterators.SerialIterator(
+            dataset, self.minibatch_size, shuffle=True)
+        loss_mean = 0
+        while dataset_iter.epoch < self.epochs:
+            batch = dataset_iter.__next__()
+            states = self.batch_states([b['state'] for b in batch], xp, self.phi)
+            actions = xp.array([b['action'] for b in batch])
+
+            demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
+
+            demo_states, demo_actions = [d[demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
+
+            if self.obs_normalizer:
+                states = self.obs_normalizer(states, update=False)
+                demo_states = self.obs_normalizer(demo_states, update=False)
+
+
+            self.discriminator.train(self.convert_data_to_feed_discriminator(demo_states, demo_actions),
+                                     self.convert_data_to_feed_discriminator(states, actions))
+            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+
+            self.discriminator_loss_record.append(float(loss_mean.array))
+        super(self.__class__, self)._update(dataset)
+
+    def _update_if_dataset_is_ready(self):
+        # override func
+        dataset_size = (
+            sum(len(episode) for episode in self.memory)
+            + len(self.last_episode)
+            + (0 if self.batch_last_episode is None else
+               sum(len(episode) for episode in self.batch_last_episode)))
+        if dataset_size >= self.update_interval:
+            # update reward in self.memory
+            self._flush_last_episode()
+            transitions = list(chain.from_iterable(self.memory))
+            states = self.xp.asarray(np.concatenate([transition['state'][None] for transition in transitions]))
+            actions = self.xp.asarray(np.concatenate([transition['action'][None] for transition in transitions]))
+            with chainer.configuration.using_config('train', False), chainer.no_backprop_mode():
+                rewards = self.discriminator.get_rewards(self.convert_data_to_feed_discriminator(states, actions, flag='reward')).array
+            
+            self.reward_mean_record.append(float(np.mean(rewards)))
+            i = 0
+            for episode in self.memory:
+                for transition in episode:
+                    transition['reward'] = float(rewards[i])
+                    i += 1
+            dataset = _make_dataset(
+                    episodes=self.memory,
+                    model=self.model,
+                    phi=self.phi,
+                    batch_states=self.batch_states,
+                    obs_normalizer=self.obs_normalizer,
+                    gamma=self.gamma,
+                    lambd=self.lambd,
+                )
+            #dataset = self._make_dataset()
+            assert len(dataset) == dataset_size
+            self._update(dataset)
+            self.memory = []
+
+    def convert_data_to_feed_discriminator(self, states, actions, noise_scale=0.1, flag='loss'):
+
+        xp = self.model.xp
+
+        if isinstance(self.model.pi, SoftmaxPolicy):
+            # if discrete action
+            actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
+        if noise_scale:
+            actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
+        
+        if self.case == 22:
+            # Do not show dummy encoding to discriminator
+            states = [s[10:] for s in states]
+
+        if self.PAC_k > 1: #PACGAN
+            # merge state and actions into s-a pairs
+            s_a = F.concat((xp.array(states), xp.array(actions))).data
+            # if reward --> get rewards for the same sequence appended together 
+            if flag == 'reward':
+                s_a = s_a.tolist()
+                stacked_sa = [i*self.PAC_k for i in s_a]
+                
+                return chainer.Variable(np.asarray(stacked_sa, dtype=np.float32))
+            else:
+                #Update D
+                n_sa = s_a.shape[0]
+                assert n_sa % self.PAC_k == 0
+                stacks = np.split(s_a, int(n_sa/self.PAC_k), axis=0)
+                stacked = [np.concatenate(i) for i in stacks]
+
+                return chainer.Variable(np.asarray(stacked, dtype=np.float32))
+        return F.concat((xp.array(states), xp.array(actions)))
+    
+    def get_statistics(self):
+        return [('average_discriminator_loss', mean_or_nan(self.discriminator_loss_record)),
+                ('average_rewards', mean_or_nan(self.reward_mean_record))] + super().get_statistics()

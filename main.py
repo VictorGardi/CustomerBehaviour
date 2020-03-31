@@ -118,7 +118,7 @@ def main():
     import logging
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('algo', default='gail', choices=['gail', 'gail2', 'airl'], type=str)
+    parser.add_argument('algo', default='gail', choices=['gail', 'gail2', 'pacgail', 'airl'], type=str)
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=1)
     parser.add_argument('--n_demos_per_expert', type=int, default=10)
@@ -138,6 +138,7 @@ def main():
     parser.add_argument('--gpu', type=int, default=-1)
     parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
+    parser.add_argument('--PAC_k', type=int, default=1)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))
@@ -279,6 +280,12 @@ def main():
 
     opt = chainer.optimizers.Adam(alpha=args.lr, eps=1e-5)
     opt.setup(model)
+
+    if args.state_rep == 22:
+       input_dim_D = obs_dim + action_space.n - args.n_experts
+    else:
+       input_dim_D = obs_dim + action_space.n
+
     if args.weight_decay > 0:
         opt.add_hook(NonbiasWeightDecay(args.weight_decay))
     if args.algo == 'ppo':
@@ -292,13 +299,13 @@ def main():
                     )
     elif args.algo == 'gail':
         import numpy as np
-        from customer_behaviour.algorithms.irl.gail import GAIL
-        from customer_behaviour.algorithms.irl.gail import Discriminator
+        from customer_behaviour.algorithms.irl.gail import GAIL as G
+        from customer_behaviour.algorithms.irl.gail import Discriminator as D
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu, hidden_sizes=args.D_layers)
+        D = D(gpu=args.gpu, input_dim = input_dim_D, hidden_sizes=args.D_layers)
         
-        agent = GAIL(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
+        agent = G(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
                      obs_normalizer=obs_normalizer,
                      gpu=args.gpu,
@@ -306,6 +313,26 @@ def main():
                      minibatch_size=args.batchsize, epochs=args.epochs,
                      clip_eps_vf=None, entropy_coef=args.entropy_coef,
                      standardize_advantages=args.standardize_advantages,)
+
+    elif args.algo == 'pacgail':
+        import numpy as np
+        from customer_behaviour.algorithms.irl.gail.gail import PACGAIL as G
+        from customer_behaviour.algorithms.irl.gail.discriminator import Discriminator as D
+        
+        demonstrations = np.load(dst + '/expert_trajectories.npz')
+        
+        D = D(gpu=args.gpu, input_dim = (input_dim_D)*args.PAC_k, hidden_sizes=args.D_layers)
+        
+        agent = G(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
+                     model=model, optimizer=opt,
+                     obs_normalizer=obs_normalizer,
+                     gpu=args.gpu,
+                     update_interval=args.update_interval,
+                     minibatch_size=args.batchsize, epochs=args.epochs,
+                     clip_eps_vf=None, entropy_coef=args.entropy_coef,
+                     standardize_advantages=args.standardize_advantages,
+                     PAC_k = args.PAC_k,)
+
         
     elif args.algo == 'gail2':
         import numpy as np
