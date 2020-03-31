@@ -254,7 +254,8 @@ def main(args, train_env):
                      update_interval=args.update_interval,
                      minibatch_size=args.batchsize, epochs=args.epochs,
                      clip_eps_vf=None, entropy_coef=args.entropy_coef,
-                     standardize_advantages=args.standardize_advantages,)
+                     standardize_advantages=args.standardize_advantages,
+                     gamma = args.gamma)
 
     elif args.algo == 'pacgail':
         from customer_behaviour.algorithms.irl.gail.gail import PACGAIL as G
@@ -426,6 +427,7 @@ if __name__ == '__main__':
     parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--PAC_k', type=int, default=1)
+    parser.add_argument('--gamma', type=float, default=1.0)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))
