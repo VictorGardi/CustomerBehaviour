@@ -122,7 +122,7 @@ def train_agent_batch(agent, env, steps, outdir,
             
             # obss = env.reset(not_end)  # Uses Stable-Baselines vecenv which does not support extra argument  --> assume all espisode end at same time
             if np.all(dones):
-                print(episode_len)
+                #print(episode_len)
                 obss = env.reset()
            
 

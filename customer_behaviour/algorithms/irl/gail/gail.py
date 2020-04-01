@@ -7,7 +7,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22
+from custom_gym.envs.discrete_buying_events import Case22, Case23
 
 
 class GAIL(PPO):
@@ -78,18 +78,22 @@ class GAIL(PPO):
             self.reward_mean_record.append(float(np.mean(rewards)))
 
             
-            #s_a = np.concatenate((states, actions.reshape((-1,1))), axis=1)
-            #print(s_a.shape)
-            #quit()
+            s_a = np.concatenate((states, actions.reshape((-1,1))), axis=1)
 
             # mod_reward = lambda*reward-(1-lambda)*(get_purchase_ratio(expert) - get_purchase_ratio(agent))
+            self.mod_rewards = []
+            self.D_outputs = []
             i = 0
             for episode in self.memory:
                 for transition in episode:
-                    
-                    if self.gamma != 1.0 and isinstance(self.env.case, Case22):
-                        #exp_idx = 
-                        transition['reward'] = self.gamma*rewards(i)-(1-self.gamma)*(self.expert_ratio[exp_idx] - get_purchase_ratio(agent))
+                    if self.gamma != 1.0 and isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):              
+                        # get which expert a s_a pair belongs to from dummy variables which are placed in beginning of each s_a pair          
+                        exp_idx = s_a[i,:self.env.n_experts].tolist().index(1)
+                        mod_reward = (1-self.gamma)*abs((self.expert_ratio[exp_idx] - get_purchase_ratio(s_a[i,self.env.n_experts:])))
+
+                        transition['reward'] = float(rewards[i])-mod_reward
+                        self.mod_rewards.append(mod_reward)
+                        self.D_outputs.append(float(rewards[i]))
                     else:
                         transition['reward'] = float(rewards[i])
                     
@@ -108,22 +112,23 @@ class GAIL(PPO):
             self._update(dataset)
             self.memory = []
 
-    def convert_data_to_feed_discriminator(self, states, actions, noise_scale=0.1):
+    def convert_data_to_feed_discriminator(self, states, actions, noise_scale=None):
 
         xp = self.model.xp
 
-        if isinstance(self.model.pi, SoftmaxPolicy):
+        #if isinstance(self.model.pi, SoftmaxPolicy):
             # if discrete action
-            actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
+        #    actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
         if noise_scale:
+            actions = actions.astype(xp.float32)
             actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
 
-        if isinstance(self.env.case, Case22):
+        if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
-            temp_states = [s[self.env.n_experts:] for s in states]
-            return F.concat((xp.array(temp_states), xp.array(actions)))
+            states = [s[self.env.n_experts:] for s in states]
+            return F.concat((xp.array(states), xp.array(actions, dtype=np.float32).reshape((-1,1))))
 
-        return F.concat((xp.array(states), xp.array(actions)))
+        return F.concat((xp.array(states), xp.array(actions, dtype=np.float32).reshape((-1,1))))
     
     def get_statistics(self):
         return [('average_discriminator_loss', mean_or_nan(self.discriminator_loss_record)),
@@ -230,23 +235,25 @@ class PACGAIL(PPO):
             self._update(dataset)
             self.memory = []
 
-    def convert_data_to_feed_discriminator(self, states, actions, noise_scale=0.1, flag='loss'):
+    def convert_data_to_feed_discriminator(self, states, actions, noise_scale=None, flag='loss'):
 
         xp = self.model.xp
 
-        if isinstance(self.model.pi, SoftmaxPolicy):
+        #if isinstance(self.model.pi, SoftmaxPolicy):
             # if discrete action
-            actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
+        #    actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
         if noise_scale:
+            actions = actions.astype(xp.float32)
             actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
         
-        if isinstance(self.env.case, Case22):
+        if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
             states = [s[self.env.n_experts:] for s in states]
 
         if self.PAC_k > 1: #PACGAN
             # merge state and actions into s-a pairs
-            s_a = F.concat((xp.array(states), xp.array(actions))).data
+            s_a = np.concatenate((xp.array(states), xp.array(actions).reshape((-1,1))), axis=1) #4096*101
+
             # if reward --> get rewards for the same sequence appended together 
             if flag == 'reward':
                 s_a = s_a.tolist()
@@ -261,7 +268,7 @@ class PACGAIL(PPO):
                 stacked = [np.concatenate(i) for i in stacks]
 
                 return chainer.Variable(np.asarray(stacked, dtype=np.float32))
-        return F.concat((xp.array(states), xp.array(actions)))
+        return F.concat((xp.array(states), xp.array(actions, dtype=np.float32).reshape((-1,1))))
     
     def get_statistics(self):
         return [('average_discriminator_loss', mean_or_nan(self.discriminator_loss_record)),
