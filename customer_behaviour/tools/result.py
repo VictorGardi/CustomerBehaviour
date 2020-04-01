@@ -1,6 +1,4 @@
-import os
-import re
-import json
+import os, re, json
 from customer_behaviour.tools.time_series_analysis import FeatureExtraction
 from customer_behaviour.tools.validation_states import get_features_from_counts
 import numpy as np
@@ -11,14 +9,14 @@ from mpl_toolkits.mplot3d import Axes3D
 
 class Result():
     def __init__(self, dir_path):
-        self.expert_data = os.getcwd() + dir_path + '/eval_expert_trajectories.npz' # change to eval_expert_trajectories.npz
-        self.learner_data = os.getcwd() + dir_path + '/trajectories.npz'
-        self.action_probs_path = os.getcwd() + dir_path + '/action_probs.npz'
-        self.scores_path = os.getcwd() + dir_path + '/scores.txt'
-        self.cluster_data_path = os.getcwd() + dir_path + '/cluster.txt'
-        self.args_path = os.getcwd() + dir_path + '/args.txt'
-        self.kl_no_purchase_path = os.getcwd() + dir_path + '/kl_div_no_purchase.txt'
-        self.kl_purchase_path = os.getcwd() + dir_path + '/kl_div_purchase.txt'
+        self.expert_data = os.getcwd() + '/' + dir_path + '/eval_expert_trajectories.npz' # change to eval_expert_trajectories.npz
+        self.learner_data = os.getcwd() + '/' +dir_path + '/trajectories.npz'
+        self.action_probs_path = os.getcwd() + '/' +dir_path + '/action_probs.npz'
+        self.scores_path = os.getcwd() + '/' +dir_path + '/scores.txt'
+        self.cluster_data_path = os.getcwd() + '/' +dir_path + '/cluster.txt'
+        self.args_path = os.getcwd() + '/' +dir_path + '/args.txt'
+        self.kl_no_purchase_path = os.getcwd() + '/' +dir_path + '/kl_div_no_purchase.txt'
+        self.kl_purchase_path = os.getcwd() + '/' +dir_path + '/kl_div_purchase.txt'
 
         self.episodes = self.read_episodes()
 

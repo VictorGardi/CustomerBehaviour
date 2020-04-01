@@ -17,11 +17,12 @@ from scipy.spatial.distance import jensenshannon
 from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png, sample_from_policy,\
     get_cond_val_states, reduce_dimensionality, sort_possible_val_states, get_counts
 
-policy_directories = ['ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_21-07-57', \
-    'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_07-49-19', \
-        'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_07-47-01', \
-            'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_07-44-24', \
-                'ozzy_results/airl/discrete_events/1_expert(s)/case_21/2020-03-15_21-08-30']
+policy_directories = ['ozzy_results/discrete_events/1_expert(s)/case_21/2020-03-16_19-17-38', \
+    'ozzy_results/discrete_events/1_expert(s)/case_21/2020-03-16_19-17-54', \
+        'ozzy_results/discrete_events/1_expert(s)/case_21/2020-03-16_20-28-44', \
+            'ozzy_results/discrete_events/1_expert(s)/case_21/2020-03-16_20-29-53', \
+                'ozzy_results/discrete_events/1_expert(s)/case_21/2020-03-17_20-17-00', \
+                    'ozzy_results/discrete_events/1_expert(s)/case_21/2020-03-18_06-42-19']
 
 sample_length = 10000
 normalize_counts = True
@@ -29,7 +30,7 @@ normalize_counts = True
 n_last_days = 7
 max_n_purchases_per_n_last_days = 2
 alpha = 0.01  # significance level
-parameter_to_plot = 'n_historical_events'
+parameter_to_plot = 'length_expert_TS'
 
 def main():
     saved_w_purchase = []

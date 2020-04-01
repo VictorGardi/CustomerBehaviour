@@ -245,7 +245,7 @@ def main(args, train_env):
         from customer_behaviour.algorithms.irl.gail import Discriminator as D
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = D(gpu=args.gpu, input_dim = input_dim_D, hidden_sizes=args.D_layers)
+        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers)
         
         agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
@@ -255,26 +255,8 @@ def main(args, train_env):
                      minibatch_size=args.batchsize, epochs=args.epochs,
                      clip_eps_vf=None, entropy_coef=args.entropy_coef,
                      standardize_advantages=args.standardize_advantages,
-                     gamma = args.gamma)
-
-    elif args.algo == 'pacgail':
-        from customer_behaviour.algorithms.irl.gail.gail import PACGAIL as G
-        from customer_behaviour.algorithms.irl.gail.discriminator import Discriminator as D
-        
-        demonstrations = np.load(dst + '/expert_trajectories.npz')
-        
-        D = D(gpu=args.gpu, input_dim = (input_dim_D)*args.PAC_k, hidden_sizes=args.D_layers)
-        
-        agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
-                     model=model, optimizer=opt,
-                     obs_normalizer=obs_normalizer,
-                     gpu=args.gpu,
-                     update_interval=args.update_interval,
-                     minibatch_size=args.batchsize, epochs=args.epochs,
-                     clip_eps_vf=None, entropy_coef=args.entropy_coef,
-                     standardize_advantages=args.standardize_advantages,
-                     PAC_k = args.PAC_k,)
-
+                     gamma = args.gamma,
+                     PAC_k = args.PAC_k)
         
     elif args.algo == 'gail2':
         from customer_behaviour.algorithms.irl.gail import GAIL2
@@ -408,7 +390,7 @@ def make_par_env(args, rank, seed=0):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('algo', default='gail', choices=['gail', 'gail2', 'pacgail', 'airl'], type=str)
+    parser.add_argument('algo', default='gail', choices=['gail', 'gail2', 'airl'], type=str)
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=1)
     parser.add_argument('--n_demos_per_expert', type=int, default=10)
