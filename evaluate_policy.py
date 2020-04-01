@@ -4,6 +4,7 @@ import custom_gym
 import chainer
 import chainerrl
 import json
+import random
 import itertools
 import seaborn
 import time
@@ -14,16 +15,17 @@ import customer_behaviour.tools.policy_evaluation as pe
 from os.path import join
 from sklearn.decomposition import PCA
 from scipy.spatial.distance import pdist, squareform
+from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
 from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png
 
-# dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
+dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
 # dir_path = 'results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | length_expert_TS = 256  | 10 000 episodes
 # dir_path = 'results_anton/2020-03-16_20-13-19'  # 10 experts | 256 historical events | length_expert_TS = 1024 | 15 000 episodes
 # dir_path = 'results_anton/2020-03-18_14-01-33'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
 # dir_path = 'results_anton/2020-03-17_11-59-59'  # 10 experts | state_rep = 11
 # dir_path = 'results_anton/2020-03-19_09-56-34'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 10 000 episodes
-dir_path = 'results_anton/2020-03-20_12-52-09'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 15 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-20_12-52-09'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 15 000 episodes | norm_obs = False
 # dir_path = 'results_anton/2020-03-20_12-47-08'  # 10 experts | state_rep = 22 | 50 historical events | length_expert_TS = 256  | 15 000 episodes  | norm_obs = True
 # dir_path = 'results_anton/2020-03-20_12-51-37'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 15 000 episodes  | norm_obs = True
 
@@ -32,7 +34,7 @@ normalize = True
 n_demos_per_expert = 10
 n_last_days = 7
 max_n_purchases_per_n_last_days = 2
-show_info = True
+show_info = False
 save_plots = True
 
 def main():
@@ -51,8 +53,8 @@ def main():
     ending_png = '_normalize.png' if normalize else '.png'
 
     # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
-    evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
-    # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
+    # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
+    compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
 ############################
@@ -126,8 +128,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
                 [a], 
                 n_last_days, 
                 max_n_purchases_per_n_last_days, 
-                normalize,
-                case=args['state_rep']
+                normalize
                 )
             purchases.append(temp_purchase)
             no_purchases.append(temp_no_purchase)
@@ -137,8 +138,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
             actions, 
             n_last_days, 
             max_n_purchases_per_n_last_days, 
-            normalize,
-            case=args['state_rep']
+            normalize
             )
 
         experts.append(Expert(purchases, no_purchases, avg_purchase, avg_no_purchase))
@@ -153,9 +153,22 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         expert_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize,
-        case=args['state_rep']
+        normalize
         )
+
+    # Cluster expert data (purcase)
+    X = np.array([e.avg_purchase for e in experts])
+    T_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
+    T_purchase = pe.get_cluster_labels(T_purchase)
+
+    # Cluster expert data (purcase)
+    X = np.array([e.avg_no_purchase for e in experts])
+    T_no_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
+    T_no_purchase = pe.get_cluster_labels(T_no_purchase)
+
+    assert np.array_equal(T_purchase, T_no_purchase)
+
+    cluster_indices = [np.argwhere(T_purchase == i) for i in [1, 2, 3]]
 
     distances_purchase = []
     distances_no_purchase = []
@@ -172,8 +185,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
             [agent_actions], 
             n_last_days, 
             max_n_purchases_per_n_last_days, 
-            normalize,
-            case=args['state_rep']
+            normalize
             )
 
         e = experts[i]
@@ -182,6 +194,11 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         temp = [e.avg_dist_purchase]
         temp.append(pe.get_wd(e.avg_purchase, agent_purchase, normalize))
         temp.append(pe.get_wd(avg_expert_purchase, agent_purchase, normalize))
+        
+        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[0]]))
+        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[1]]))
+        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[2]]))
+        
         distances_purchase.append(temp)
 
         temp = [pe.get_wd(e.avg_purchase, agent_purchase, normalize) for e in experts]
@@ -192,6 +209,11 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         temp = [e.avg_dist_no_purchase]
         temp.append(pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize))
         temp.append(pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
+
+        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[0]]))
+        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[1]]))
+        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[2]]))
+
         distances_no_purchase.append(temp)
 
         temp = [pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize) for e in experts]
@@ -199,8 +221,8 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         all_distances_no_purchase.append(temp)
 
     ##### Plot distance to one expert #####
-    columns = ['Var. in expert cluster', 'Dist. to expert', 'Dist. to avg. expert']
-    index = ['E{}'.format(i + 1) for i in range(n_experts)]
+    columns = ['Var. in expert cluster', 'Dist. to expert', 'Dist. to avg. expert', 'Dist. to 1st cluster 1', 'Dist. to 2nd cluster', 'Dist. to 3rd cluster']
+    index = ['E{}\n({})'.format(i + 1, int(T_purchase[i])) for i in range(n_experts)]
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.subplots_adjust(bottom=0.30)
@@ -218,7 +240,6 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
     if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'heatmap' + ending_png))
 
     ##### Plot distance to all experts #####
-
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey='row')
     fig.subplots_adjust(bottom=0.25)
 
@@ -238,8 +259,25 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
 
     if show_info: fig.text(0.5, 0.025, info, ha='center')
     if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'heatmap_all' + ending_png))
+    
+    plt.show()
+
+    '''
+    ##### Plot distance to all experts (no purchase) #####
+    fig, ax = plt.subplots()
+    fig.subplots_adjust(bottom=0.25)
+    fig.subplots_adjust(left=0.25)
+
+    columns = ['Customer {}'.format(i + 1) for i in range(n_experts)]
+    columns.append('Avg. customer')
+    index = ['Agent {}'.format(i + 1) for i in range(n_experts)]
+
+    all_distances_no_purchase = pd.DataFrame(all_distances_no_purchase, columns=columns, index=index)
+    seaborn.heatmap(all_distances_no_purchase, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': "Earth mover's distance"})
+    fig.suptitle('Comparison at individual level')
 
     plt.show()
+    '''
 
 ############################
 ############################
@@ -282,8 +320,7 @@ def visualize_experts(n_experts=10):
                 [a], 
                 n_last_days, 
                 max_n_purchases_per_n_last_days, 
-                normalize,
-                case=args['state_rep']
+                normalize
                 )
             purchases.append(temp_purchase)
             no_purchases.append(temp_no_purchase)
@@ -293,8 +330,7 @@ def visualize_experts(n_experts=10):
             actions, 
             n_last_days, 
             max_n_purchases_per_n_last_days, 
-            normalize,
-            case=args['state_rep']
+            normalize
             )
 
         purchase_ratio = n_shopping_days / sample_length
@@ -311,20 +347,50 @@ def visualize_experts(n_experts=10):
         expert_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize,
-        case=args['state_rep']
+        normalize
         )
+
+    # Cluster expert data (purcase)
+    X = np.array([e.avg_purchase for e in experts])
+    T_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
+    print(pe.get_cluster_labels(T_purchase))
+
+    # Cluster expert data (purcase)
+    X = np.array([e.avg_no_purchase for e in experts])
+    T_no_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
+    print(pe.get_cluster_labels(T_no_purchase))
+    quit()
 
     ##### Plot distributions #####
 
+    # Expert 1–6
     fig1, axes1 = plt.subplots(2, 3, sharex='col')
     fig2, axes2 = plt.subplots(2, 3, sharex='col')
 
     for i, (ax1, ax2) in enumerate(zip(axes1.flat, axes2.flat)):
         e = experts[i]
 
-        ax1.set_title('{} | Age {} | Purchase ratio: {:.3f}'.format(sex[i], age[i], e.purchase_ratio))
-        ax2.set_title('{} | Age {} | Purchase ratio: {:.3f}'.format(sex[i], age[i], e.purchase_ratio))
+        ax1.set_title('Expert {}: {}, age {} | Purchase ratio: {:.3f}'.format(i+1, sex[i], age[i], e.purchase_ratio))
+        ax2.set_title('Expert {}: {}, age {} | Purchase ratio: {:.3f}'.format(i+1, sex[i], age[i], e.purchase_ratio))
+
+        data = {'': e.avg_purchase}
+        pe.bar_plot(ax1, data, colors=None, total_width=0.7, legend=False)
+
+        data = {'': e.avg_no_purchase}
+        pe.bar_plot(ax2, data, colors=None, total_width=0.7, legend=False)
+
+    fig1.suptitle('Purchase')
+    fig2.suptitle('No purchase')
+
+    # Expert 7-10
+    fig1, axes1 = plt.subplots(2, 2, sharex='col')
+    fig2, axes2 = plt.subplots(2, 2, sharex='col')
+
+    for i, (ax1, ax2) in enumerate(zip(axes1.flat, axes2.flat), start=6):
+        e = experts[i]
+
+        ax1.set_title('Expert {}: {}, age {} | Purchase ratio: {:.3f}'.format(i+1, sex[i], age[i], e.purchase_ratio))
+        ax2.set_title('Expert {}: {}, age {} | Purchase ratio: {:.3f}'.format(i+1, sex[i], age[i], e.purchase_ratio))
 
         data = {'': e.avg_purchase}
         pe.bar_plot(ax1, data, colors=None, total_width=0.7, legend=False)
@@ -389,8 +455,7 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
         expert_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize,
-        case=args['state_rep']
+        normalize
         )
     n_experts = args['n_experts']
     avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (sample_length *  n_experts), '.2f')
@@ -398,10 +463,9 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
     for j, expert_indices in enumerate([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]):
         fig1, axes1 = plt.subplots(2, 2, sharex='col')
         fig2, axes2 = plt.subplots(2, 2, sharex='col')
-    # expert_indices = np.random.choice(range(n_experts), 4, replace=False)  # Choose 4 experts
         for i, ax1, ax2 in zip(expert_indices, axes1.flat, axes2.flat):
             # Sample agent data starting with expert's history
-            initial_state = expert_states[i][0].copy()
+            initial_state = random.choice(expert_states[i])
             agent_states, agent_actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
 
             agent_purchase, agent_no_purchase, agent_n_shopping_days = pe.get_cond_distribs(
@@ -409,8 +473,7 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
                 [agent_actions], 
                 n_last_days, 
                 max_n_purchases_per_n_last_days, 
-                normalize,
-                case=args['state_rep']
+                normalize
                 )
             agent_shopping_ratio = format(agent_n_shopping_days / sample_length, '.3f')
 
@@ -419,8 +482,7 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
                 [expert_actions[i]], 
                 n_last_days, 
                 max_n_purchases_per_n_last_days, 
-                normalize,
-                case=args['state_rep']
+                normalize
                 )
             expert_shopping_ratio = format(expert_n_shopping_days / sample_length, '.3f')
 
@@ -490,8 +552,7 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
         agent_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize,
-        case=args['state_rep']
+        normalize
         )
 
     # Sample expert data
@@ -504,8 +565,7 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
         expert_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize,
-        case=args['state_rep']
+        normalize
         )
 
     # Calculate Wasserstein distances
@@ -526,12 +586,16 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
     pe.bar_plot(ax1, data, colors=None, total_width=0.7)
     ax1.set_xticks([], [])
     ax1.set_title('Purchase | EMD: {:.5f}'.format(wd_purchase))
+    # ax1.set_title('Last week | Purchase today')
+    ax1.set_ylabel('Probability')
 
     # Plot (no purchase)
     data = {expert_str: expert_no_purchase, agent_str: agent_no_purchase}
     pe.bar_plot(ax2, data, colors=None, total_width=0.7)
     ax2.set_xticks([], [])
     ax2.set_title('No purchase | EMD: {:.5f}'.format(wd_no_purchase))
+    # ax2.set_title('Last week | No purchase today')
+    ax2.set_ylabel('Probability')
     
     if show_info: fig.text(0.5, 0.025, info, ha='center')
     if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'population' + ending_png))
