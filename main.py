@@ -354,6 +354,7 @@ def main(args, train_env):
                 lr_decay_hook,
                 clip_eps_decay_hook,
             ],
+            checkpoint_freq=args.eval_interval
             )
         else:    
             experiments.train_agent_batch_with_evaluation(
@@ -368,7 +369,8 @@ def main(args, train_env):
                 eval_max_episode_len=None,
                 eval_env=make_env(True),
                 step_hooks=[lr_decay_hook, clip_eps_decay_hook,],
-                save_best_so_far_agent=False
+                save_best_so_far_agent=False,
+                checkpoint_freq=args.eval_interval
                 )
 
         save_agent_demo(make_env(True), agent, args.outdir, 10 * args.eval_episode_length)  # originally it was make_env(test=False) which seems strange
