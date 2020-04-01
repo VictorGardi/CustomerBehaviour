@@ -195,7 +195,7 @@ def main(args, train_env):
         obs_dim = obs_space.low.size
     elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22:
         obs_dim = obs_space.n
-    elif args.state_rep == 3 or args.state_rep == 11:
+    elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23:
         obs_dim = obs_space.nvec.size
     else:
         raise NotImplementedError
@@ -211,7 +211,7 @@ def main(args, train_env):
             model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=args.G_layers)
         elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22:
             model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=args.G_layers)
-        elif args.state_rep == 3 or args.state_rep == 11:
+        elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23:
             model = A3CFFSoftmax(obs_space.nvec.size, action_space.n, hidden_sizes=args.G_layers)
         else:
             raise NotImplementedError
@@ -224,10 +224,10 @@ def main(args, train_env):
     opt = chainer.optimizers.Adam(alpha=args.lr, eps=1e-5)
     opt.setup(model)
 
-    if args.state_rep == 22:
-       input_dim_D = obs_dim + action_space.n - args.n_experts
+    if args.state_rep == 22 or args.state_rep == 23:
+       input_dim_D = obs_dim + 1 - args.n_experts  # + 1 since we want to feed discriminator with state + today's action
     else:
-       input_dim_D = obs_dim + action_space.n
+       input_dim_D = obs_dim + 1
 
     if args.weight_decay > 0:
         opt.add_hook(NonbiasWeightDecay(args.weight_decay))
@@ -370,7 +370,8 @@ def main(args, train_env):
                 eval_env=make_env(True),
                 step_hooks=[lr_decay_hook, clip_eps_decay_hook,],
                 save_best_so_far_agent=False,
-                checkpoint_freq=args.eval_interval
+                checkpoint_freq=args.eval_interval,
+                log_interval=args.update_interval
                 )
 
         save_agent_demo(make_env(True), agent, args.outdir, 10 * args.eval_episode_length)  # originally it was make_env(test=False) which seems strange
@@ -381,7 +382,6 @@ def main(args, train_env):
 
 
 def make_par_env(args, rank, seed=0):
-    from stable_baselines.common import set_global_seeds
     def _init():
         env = gym.make(args.env)
 
@@ -466,6 +466,7 @@ if __name__ == '__main__':
 
     if args.n_processes > 1:
         from stable_baselines.common.vec_env import SubprocVecEnv
+        from stable_baselines.common import set_global_seeds
         train_env = SubprocVecEnv([make_par_env(args, i) for i in range(args.n_processes)])
     else:
         train_env = None

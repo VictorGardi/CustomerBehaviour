@@ -21,6 +21,31 @@ def categorize_age2(age):
     elif 60 <= age < 70: return 4
     elif 70 <= age: return 5
 
+def categorize_amount(amount):
+    if amount == 0: 
+        return 0
+    elif 0 < amount < 100: 
+        return 1
+    elif 100 <= amount < 200: 
+        return 2
+    elif 200 <= amount < 300: 
+        return 3
+    elif 300 <= amount < 400: 
+        return 4
+    elif 400 <= amount < 500: 
+        return 5
+    elif 500 <= amount < 600: 
+        return 6
+    elif 600 <= amount < 700: 
+        return 7
+    elif 700 <= amount < 800: 
+        return 8
+    elif 800 <= amount < 900: 
+        return 9
+    else:
+        # Amount > 900
+        return 10
+
 class Case1():
     def __init__(self, model, n_experts=None):
         self.model = model
@@ -229,15 +254,15 @@ class Case22():
         return new_state
 
 
-class Case23():
+class Case23():  # Consider purchase amounts
     def __init__(self, model, n_experts=None):
         self.model = model
         self.n_experts = n_experts
 
     def get_spaces(self, n_historical_events):
-        observation_space = spaces.MultiBinary(self.n_experts + n_historical_events)
+        observation_space = spaces.MultiDiscrete(self.n_experts * [2] + n_historical_events * [11])
 
-        action_space = spaces.Discrete(2)
+        action_space = spaces.Discrete(11)
 
         return observation_space, action_space
 
@@ -251,13 +276,13 @@ class Case23():
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.any(np.nonzero(receipt)) else 0
+        action = categorize_amount(np.sum(receipt))
         return action
 
     def get_initial_state(self, history, seed):
         temp = np.sum(history, axis=0)
 
-        temp[temp > 0] = 1
+        temp = [categorize_amount(x) for x in temp]
 
         dummy = np.zeros(self.n_experts)
         dummy[seed] = 1
@@ -327,6 +352,7 @@ def define_case(case):
         2: Case2,
         21: Case21,
         22: Case22,
+        23: Case23,
         3: Case3
     }
     return switcher.get(case)
