@@ -11,13 +11,14 @@ from custom_gym.envs.discrete_buying_events import Case22, Case23
 
 
 class GAIL(PPO):
-    def __init__(self, env, discriminator, demonstrations, gamma=1, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, noise = 0.1, gamma=1, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
         self.env = env
         self.gamma = gamma
         self.PAC_k = PAC_k
+        self.noise = noise
 
         self.discriminator = discriminator
 
@@ -115,16 +116,21 @@ class GAIL(PPO):
             self.mod_rewards.append(float(np.mean(mod_rewards_temp)))
             self.rewards.append(float(np.mean(rewards_temp)))
 
-    def convert_data_to_feed_discriminator(self, states, actions, noise_scale=None, flag='loss'):
+    def convert_data_to_feed_discriminator(self, states, actions, flag='loss'):
 
         xp = self.model.xp
 
         #if isinstance(self.model.pi, SoftmaxPolicy):
             # if discrete action
         #    actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
-        if noise_scale:
+        if self.noise:
+            states = states.astype(xp.float32)
+            states += xp.random.normal(loc=0., scale=self.noise, size=states.shape)
             actions = actions.astype(xp.float32)
-            actions += xp.random.normal(loc=0., scale=noise_scale, size=actions.shape)
+            actions += xp.random.normal(loc=0., scale=self.noise, size=actions.shape)
+            print(actions)
+            print(states)
+            quit()
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator

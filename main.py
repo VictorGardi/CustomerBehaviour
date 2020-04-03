@@ -255,8 +255,9 @@ def main(args, train_env):
                      minibatch_size=args.batchsize, epochs=args.epochs,
                      clip_eps_vf=None, entropy_coef=args.entropy_coef,
                      standardize_advantages=args.standardize_advantages,
-                     gamma = args.gamma,
-                     PAC_k = args.PAC_k)
+                     gamma=args.gamma,
+                     PAC_k=args.PAC_k,
+                     noise=args.noise)
         
     elif args.algo == 'gail2':
         from customer_behaviour.algorithms.irl.gail import GAIL2
@@ -418,6 +419,7 @@ if __name__ == '__main__':
     parser.add_argument('--bound-mean', action='store_true', default=False)  # only for FFGaussian
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed [0, 2 ** 32)')
+    parser.add_argument('--noise', type=float, default=0.1)
     #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
     
     parser.add_argument('--eval_episode_length', type=int, default=100)
