@@ -245,7 +245,7 @@ def main(args, train_env):
         from customer_behaviour.algorithms.irl.gail import Discriminator as D
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers, PAC_K=args.PAC_k)
+        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers, PAC_k=args.PAC_k)
         
         agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
@@ -419,7 +419,7 @@ if __name__ == '__main__':
     parser.add_argument('--bound-mean', action='store_true', default=False)  # only for FFGaussian
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed [0, 2 ** 32)')
-    parser.add_argument('--noise', type=float, default=0.1)
+    parser.add_argument('--noise', type=float, default=0)
     #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
     
     parser.add_argument('--eval_episode_length', type=int, default=100)

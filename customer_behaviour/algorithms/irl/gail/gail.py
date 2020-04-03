@@ -123,7 +123,7 @@ class GAIL(PPO):
         #if isinstance(self.model.pi, SoftmaxPolicy):
             # if discrete action
         #    actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
-        if self.noise:
+        if self.noise > 0:
             states = states.astype(xp.float32)
             states += xp.random.normal(loc=0., scale=self.noise, size=states.shape)
             actions = actions.astype(xp.float32)
