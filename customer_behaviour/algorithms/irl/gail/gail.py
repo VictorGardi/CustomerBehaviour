@@ -128,9 +128,6 @@ class GAIL(PPO):
             states += xp.random.normal(loc=0., scale=self.noise, size=states.shape)
             actions = actions.astype(xp.float32)
             actions += xp.random.normal(loc=0., scale=self.noise, size=actions.shape)
-            print(actions)
-            print(states)
-            quit()
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
