@@ -179,7 +179,7 @@ def gailtype_constructor(rl_algo=TRPO):
 
 
 def get_purchase_ratio(sequence):
-    return np.sum(sequence)/len(sequence)
+    return np.count_nonzero(sequence)/len(sequence)
 
 
 # GAILTRPO do not work because TRPO's interface is not compatible with PPO
