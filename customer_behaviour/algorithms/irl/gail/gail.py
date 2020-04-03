@@ -11,7 +11,7 @@ from custom_gym.envs.discrete_buying_events import Case22, Case23
 
 
 class GAIL(PPO):
-    def __init__(self, env, discriminator, demonstrations, noise = 0.1, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
@@ -46,7 +46,7 @@ class GAIL(PPO):
             states = self.batch_states([b['state'] for b in batch], xp, self.phi)
             actions = xp.array([b['action'] for b in batch])
 
-            self.demonstrations_indexes = np.random.permutation(len(self.demo_states))[:len(states)]
+            self.demonstrations_indexes = xp.random.permutation(len(self.demo_states))[:len(states)]
 
             demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
 
@@ -88,7 +88,7 @@ class GAIL(PPO):
             i = 0
             for episode in self.memory:
                 for transition in episode:
-                    if self.gamma > 0 and isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):              
+                    if self.gamma > 0 and (isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23)):              
                         # get which expert a s_a pair belongs to from dummy variables which are placed in beginning of each s_a pair          
                         exp_idx = s_a[i,:self.env.n_experts].tolist().index(1)
                         mod_reward = self.gamma*abs((self.expert_ratio[exp_idx] - get_purchase_ratio(s_a[i,self.env.n_experts:])))
@@ -97,6 +97,7 @@ class GAIL(PPO):
                         rewards_temp.append(transition['reward'])
                     else:
                         transition['reward'] = float(D_outputs[i])
+                        rewards_temp.append(transition['reward'])
                     
                     i += 1
             dataset = _make_dataset(
@@ -119,7 +120,6 @@ class GAIL(PPO):
     def convert_data_to_feed_discriminator(self, states, actions, flag='loss'):
 
         xp = self.model.xp
-
         #if isinstance(self.model.pi, SoftmaxPolicy):
             # if discrete action
         #    actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
@@ -128,6 +128,9 @@ class GAIL(PPO):
             states += xp.random.normal(loc=0., scale=self.noise, size=states.shape)
             actions = actions.astype(xp.float32)
             actions += xp.random.normal(loc=0., scale=self.noise, size=actions.shape)
+        #print('convert_data')
+        #print(len(actions))
+        #print(len(states))
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
@@ -135,23 +138,29 @@ class GAIL(PPO):
 
         if self.PAC_k > 1: #PACGAIL
             # merge state and actions into s-a pairs
-            s_a = np.concatenate((xp.array(states), xp.array(actions).reshape((-1,1))), axis=1) #4096*101
+            s_a = xp.concatenate((xp.array(states), xp.array(actions).reshape((-1,1))), axis=1) #4096*101
+            #print('pac_k')
+            #print(s_a.shape)
 
             # if reward --> get rewards for the same sequence appended together 
             if flag == 'reward':
                 s_a = s_a.tolist()
                 stacked_sa = [i*self.PAC_k for i in s_a]
+                #print('reward')
+                #print(np.asarray(stacked_sa).shape)
                 
-                return chainer.Variable(np.asarray(stacked_sa, dtype=np.float32))
+                return chainer.Variable(xp.asarray(stacked_sa, dtype=xp.float32))
             else:
                 #Update D
                 n_sa = s_a.shape[0]
                 assert n_sa % self.PAC_k == 0
-                stacks = np.split(s_a, int(n_sa/self.PAC_k), axis=0)
-                stacked = [np.concatenate(i) for i in stacks]
-
-                return chainer.Variable(np.asarray(stacked, dtype=np.float32))
-        return F.concat((xp.array(states), xp.array(actions, dtype=np.float32).reshape((-1,1))))
+                stacks = xp.split(s_a, int(n_sa/self.PAC_k), axis=0)
+                stacked = [xp.concatenate(i) for i in stacks]
+                #print('update D')
+                #print(np.asarray(stacked).shape)
+                #quit()
+                return chainer.Variable(xp.asarray(stacked, dtype=xp.float32))
+        return F.concat((xp.array(states), xp.array(actions, dtype=xp.float32).reshape((-1,1))))
     
     def get_statistics(self):
         return [('average_discriminator_loss', mean_or_nan(self.discriminator_loss_record)),

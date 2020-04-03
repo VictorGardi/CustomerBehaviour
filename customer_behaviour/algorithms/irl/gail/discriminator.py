@@ -4,13 +4,15 @@ from chainerrl import links
 
 
 class Discriminator:
-    def __init__(self, input_dim, hidden_sizes=(64,64,64), loss_type='wgangp', gpu=-1):
+    def __init__(self, input_dim, hidden_sizes=(64,64,64), loss_type='wgangp', PAC_k=1, gpu=-1):
         self.model = links.MLP(input_dim, 1, hidden_sizes=hidden_sizes)
 
         if gpu >= 0:
             self.model.to_gpu(gpu)
-
-        self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=1e-5)
+        if PAC_k > 1:
+            self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=1e-1) #PACGAIL needs a larger epsilon to prevent divison by zero when gradient is small
+        else:
+            self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=1e-5)
         self.optimizer.setup(self.model)
         self.loss_type = loss_type
         self.loss = None
@@ -48,6 +50,10 @@ class Discriminator:
             loss_gan = F.mean(self.model(fake_data) - self.model(expert_data))
             # discriminator is trained to predict a p(expert|x)
             self.loss = loss_gan + loss_grad
+
+        elif self.loss_type == 'presgan':
+            pass
+
         else:
             raise NotImplementedError
 
