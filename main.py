@@ -245,7 +245,7 @@ def main(args, train_env):
         from customer_behaviour.algorithms.irl.gail import Discriminator as D
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers, PAC_k=args.PAC_k)
+        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers, PAC_k=args.PAC_k, PAC_eps=args.PAC_eps)
         
         agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
@@ -413,6 +413,7 @@ if __name__ == '__main__':
     parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--PAC_k', type=int, default=1)
     parser.add_argument('--gamma', type=float, default=0)
+    parser.add_argument('--PAC_eps', type=float, default=1)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))

@@ -4,7 +4,7 @@ from chainerrl import links
 
 
 class Discriminator:
-    def __init__(self, input_dim, hidden_sizes=(64,64,64), loss_type='wgangp', PAC_k=1, gpu=-1):
+    def __init__(self, input_dim, hidden_sizes=(64,64,64), loss_type='wgangp', PAC_k=1, PAC_eps=1, gpu=-1):
         self.model = links.MLP(input_dim, 1, hidden_sizes=hidden_sizes)
 
         if gpu >= 0:
