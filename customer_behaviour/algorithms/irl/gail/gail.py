@@ -11,7 +11,7 @@ from custom_gym.envs.discrete_buying_events import Case22, Case23
 
 
 class GAIL(PPO):
-    def __init__(self, env, discriminator, demonstrations, noise = 0.1, gamma=None, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, noise = 0.1, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
@@ -88,7 +88,7 @@ class GAIL(PPO):
             i = 0
             for episode in self.memory:
                 for transition in episode:
-                    if self.gamma and isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):              
+                    if self.gamma > 0 and isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):              
                         # get which expert a s_a pair belongs to from dummy variables which are placed in beginning of each s_a pair          
                         exp_idx = s_a[i,:self.env.n_experts].tolist().index(1)
                         mod_reward = self.gamma*abs((self.expert_ratio[exp_idx] - get_purchase_ratio(s_a[i,self.env.n_experts:])))

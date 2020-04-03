@@ -412,7 +412,7 @@ if __name__ == '__main__':
     parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--PAC_k', type=int, default=1)
-    parser.add_argument('--gamma', type=float, default=1.0)
+    parser.add_argument('--gamma', type=float, default=0)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian'))
@@ -447,6 +447,7 @@ if __name__ == '__main__':
     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
     args.env = get_env(args.case, args.n_experts)  
     args.steps = args.n_training_episodes*args.episode_length
+    assert args.eval_interval > args.steps/15 #to avoid saving too much eval info on ozzy
 
     if args.n_processes > 1:
         from stable_baselines.common.vec_env import SubprocVecEnv
