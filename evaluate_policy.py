@@ -39,9 +39,10 @@ from scipy.stats import wasserstein_distance
 
 # dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_08-09-52'
 # dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_12-51-38'
-dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_23/2020-04-03_08-12-22'
+# dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_23/2020-04-03_08-12-22'
+dir_path = 'results/gail/discrete_events/2_expert(s)/case_23/2020-04-06_14-53-51'
 
-sample_length = 10000
+sample_length = 20
 normalize = True
 n_demos_per_expert = 10
 n_last_days = 7
@@ -66,14 +67,14 @@ def main():
 
     # purchase_ratio(args, model_dir_path)
 
-    # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
     # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
-    fig_stats = plot_statistics(dir_path)
-    fig_path = os.getcwd() + '/' + dir_path + '/figs'
-    save_plt_as_png(fig_stats, fig_path + '/stats.png')
+    #fig_stats = plot_statistics(dir_path)
+    #fig_path = os.getcwd() + '/' + dir_path + '/figs'
+    #save_plt_as_png(fig_stats, fig_path + '/stats.png')
 
 ############################
 ############################
@@ -547,6 +548,10 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
                 )
             expert_shopping_ratio = format(expert_n_shopping_days / sample_length, '.3f')
 
+            if args['state_rep'] == 23:
+                expert_histo = np.histogram(expert_actions[i], bins=range(11))[0]
+                agent_histo = np.histogram(agent_actions, bins=range(11))[0]
+
             # Calculate Wasserstein distances
             wd_purchase = pe.get_wd(expert_purchase, agent_purchase, normalize)
             wd_purchase_avg = pe.get_wd(avg_expert_purchase, agent_purchase, normalize)
@@ -644,6 +649,7 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
 
     # Plot (purchase)
     data = {expert_str: expert_purchase, agent_str: agent_purchase}
+
     pe.bar_plot(ax1, data, colors=None, total_width=0.7)
     ax1.set_xticks([], [])
     ax1.set_title('Purchase | EMD: {:.5f}'.format(wd_purchase))
@@ -657,6 +663,13 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
     ax2.set_title('No purchase | EMD: {:.5f}'.format(wd_no_purchase))
     # ax2.set_title('Last week | No purchase today')
     ax2.set_ylabel('Probability')
+    if args['state_rep'] == 23:
+        histo_agents = pe.get_mean_purchase_histo(agent_actions)
+        histo_experts = pe.get_mean_purchase_histo(expert_actions)
+
+        #hist(histo_agents, density=False, bins=10)
+        #hist(histo_experts, density=False, bins=10)
+
     
     if show_info: fig.text(0.5, 0.025, info, ha='center')
     if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'population' + ending_png))

@@ -229,6 +229,13 @@ def get_wd(u, v, uv_normalized):
         wd = wasserstein_distance(uu / np.sum(uu), vv / np.sum(vv))
     return wd
 
+def get_mean_purchase_histo(actions):
+    n_samples = len(actions)
+    hist = np.zeros((10,))
+    for sample in range(n_samples):
+        hist += np.histogram(actions[sample], bins=range(11))[0]
+    return hist/n_samples
+
 ##############################
 ##### Plot distributions #####
 ##############################
