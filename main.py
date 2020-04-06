@@ -221,7 +221,7 @@ def main(args, train_env):
         model = A3CFFGaussian(obs_space.low.size, action_space,
                               bound_mean=args.bound_mean)
 
-    opt = chainer.optimizers.Adam(alpha=args.lr, eps=1e-5)
+    opt = chainer.optimizers.Adam(alpha=args.lr, eps=10e-1)
     opt.setup(model)
 
     if args.state_rep == 22 or args.state_rep == 23:
@@ -405,7 +405,7 @@ if __name__ == '__main__':
     # parser.add_argument('--agent_seed', type=int, default=None)
     parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
 
-    parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=True)
+    parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=False)
     
     parser.add_argument('--n_historical_events', type=int, default=20)
     parser.add_argument('--gpu', type=int, default=-1)

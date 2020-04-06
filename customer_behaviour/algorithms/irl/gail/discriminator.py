@@ -10,7 +10,7 @@ class Discriminator:
         if gpu >= 0:
             self.model.to_gpu(gpu)
         if PAC_k > 1:
-            self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=1e-1) #PACGAIL needs a larger epsilon to prevent divison by zero when gradient is small
+            self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=PAC_eps) #PACGAIL needs a larger epsilon to prevent divison by zero when gradient is small
         else:
             self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=1e-5)
         self.optimizer.setup(self.model)
