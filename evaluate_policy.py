@@ -1,4 +1,4 @@
-import os, json, random, itertools, time
+import os, re, json, random, itertools, time
 from os.path import join
 import customer_behaviour.tools.policy_evaluation as pe
 from customer_behaviour.tools.result import Result
@@ -17,7 +17,7 @@ from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
 
 
-#dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
+# dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
 # dir_path = 'results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | length_expert_TS = 256  | 10 000 episodes
 # dir_path = 'results_anton/2020-03-16_20-13-19'  # 10 experts | 256 historical events | length_expert_TS = 1024 | 15 000 episodes
 # dir_path = 'results_anton/2020-03-18_14-01-33'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
@@ -26,6 +26,9 @@ from scipy.stats import wasserstein_distance
 # dir_path = 'results_anton/2020-03-20_12-52-09'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 15 000 episodes | norm_obs = False
 # dir_path = 'results_anton/2020-03-20_12-47-08'  # 10 experts | state_rep = 22 | 50 historical events | length_expert_TS = 256  | 15 000 episodes  | norm_obs = True
 # dir_path = 'results_anton/2020-03-20_12-51-37'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 15 000 episodes  | norm_obs = True
+# dir_path = 'results_anton/2020-03-27_09-37-13'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 20 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-27_09-38-46'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 512  | 20 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-27_09-39-34'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 1024 | 20 000 episodes | norm_obs = False
 
 #dir_path = 'ozzy_results/airl/discrete_events/10_expert(s)/case_21/2020-03-12_14-24-08' # AIRL 10 experts | state_rep = 21 | 192 historical events | length_expert_TS = 256 | 10 000 episodes
 #dir_path = 'ozzy_results/airl/discrete_events/10_expert(s)/case_21/2020-03-18_14-02-45' # AIRL 10 experts | state_rep = 21 | 96 historical events | length_expert_TS = 256 | 5 000 episodes
@@ -34,12 +37,16 @@ from scipy.stats import wasserstein_distance
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-44' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-34' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = True
 
+# dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_08-09-52'
+# dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_12-51-38'
+dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_23/2020-04-03_08-12-22'
+
 sample_length = 10000
 normalize = True
 n_demos_per_expert = 10
 n_last_days = 7
 max_n_purchases_per_n_last_days = 2
-show_info = False
+show_info = True
 save_plots = True
 
 def main():
@@ -48,7 +55,6 @@ def main():
     args = json.loads(open(args_path, 'r').read())
 
     info = pe.get_info(args)
-    result = Case2(dir_path)
 
     # Get path of model 
     model_dir_path = next((d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('finish')), None)
@@ -58,38 +64,16 @@ def main():
     ending_eps = '_normalize.eps' if normalize else '.eps'
     ending_png = '_normalize.png' if normalize else '.png'
 
+    # purchase_ratio(args, model_dir_path)
+
     # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
-    #compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
+    # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
-    # fig_traj = result.plot_trajectories(n_trajectories = 1)
-    fig_cluster = result.plot_clusters(n_dim = 3, show_benchmark = True)
-    #fig_stats = result.plot_statistics()
-    # fig_stats_cluster = result.plot_cluster_data()
-    # fig_kl = result.plot_kl_div()
-
-    # Save plots
-    root_path = os.getcwd() + dir_path
-    fig_path = root_path + '/figs'
-    os.makedirs(fig_path, exist_ok=True)
-    try:
-        save_plt_as_eps(fig_traj, fig_path + '/trajectories.eps')
-    except NameError:
-        print('Could not save trajectory plot.')
-    try:
-        save_plt_as_eps(fig_stats, fig_path + '/stats.eps')
-        save_plt_as_png(fig_stats, fig_path + '/stats.png')
-    except NameError:
-        print('Could not save plot of statistics.')
-    try:
-        save_plt_as_eps(fig_stats_cluster, fig_path + '/cluster_stats.eps')
-    except NameError:
-        print('Could not save plot of cluster statistics.')
-    try:
-        save_plt_as_eps(fig_kl, fig_path + '/kl_div.eps')
-    except:
-        print('Could not save plot KL distance.')
+    fig_stats = plot_statistics(dir_path)
+    fig_path = os.getcwd() + '/' + dir_path + '/figs'
+    save_plt_as_png(fig_stats, fig_path + '/stats.png')
 
 ############################
 ############################
@@ -316,6 +300,52 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
 ############################
 ############################
 
+def get_pr(sequence, n=None):
+    s = sequence if n is None else sequence[:n]
+    pr = np.count_nonzero(s) / n
+    return pr
+
+def purchase_ratio(args, model_dir_path):
+    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length=10000)
+
+    expert_trajectories = env.generate_expert_trajectories(out_dir=None, n_demos_per_expert=1, n_expert_time_steps=sample_length)
+    expert_states = expert_trajectories['states']
+    expert_actions = expert_trajectories['actions']
+    sex = ['F' if s == 1 else 'M' for s in expert_trajectories['sex']]
+    age = [int(a) for a in expert_trajectories['age']]
+
+    for i, (e_states, e_actions) in enumerate(zip(expert_states, expert_actions)):  # Loop over experts
+        print('Expert %d' % (i+1))
+
+        # Sample data from agent
+        initial_state = e_states[0]  # random.choice(e_states)
+        _, agent_actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
+
+        temp1 = []
+        temp2 = []
+
+        for n in [100, 500, 1000, 5000, 10000]:
+            e_pr = get_pr(e_actions, n)
+            a_pr = get_pr(agent_actions, n)
+
+            temp1.append(e_pr)
+            temp2.append(a_pr)
+
+        fig, ax = plt.subplots()
+        ax.plot([100, 500, 1000, 5000, 10000], temp1, label='Expert')
+        ax.plot([100, 500, 1000, 5000, 10000], temp2, label='Agent')
+        ax.legend()
+
+    plt.show()
+
+        # print(n)
+        # print("Expert's purchase ratio: %f" % e_pr)
+        # print("Agent's purchase ratio: %f" % a_pr)
+         #print('---------------')
+
+############################
+############################
+
 def visualize_experts(n_experts=10):
     env = gym.make('discrete-buying-events-v0')
     env.initialize_environment(
@@ -391,7 +421,6 @@ def visualize_experts(n_experts=10):
     # Cluster expert data (purcase)
     X = np.array([e.avg_no_purchase for e in experts])
     T_no_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
-
 
     ##### Plot distributions #####
 
@@ -637,41 +666,91 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
 ############################
 ############################
 
-############################
-########## Case 2 ##########
-############################ 
+def plot_statistics(dir_path):
+    discriminator_loss, policy_loss, average_rewards, value_loss, value, n_updates, episodes, average_entropy = read_scores_txt(dir_path)
 
-class Case2(Result):
-    # There is only one expert
-    # State representation: [historical purchases]
+    fig = plt.figure()
+    plt.subplot(2,3,1)
+    plt.plot(episodes, discriminator_loss)
+    plt.xlabel('Episode')
+    plt.ylabel('Average discriminator loss')
+
+    plt.subplot(2,3,2)
+    plt.plot(episodes, policy_loss)
+    plt.xlabel('Episode')
+    plt.ylabel('Average policy loss')
+
+    plt.subplot(2,3,3)
+    plt.plot(episodes, value)
+    plt.xlabel('Episode')
+    plt.ylabel('Average value')
+
+    plt.subplot(2,3,4)
+    plt.plot(episodes, average_rewards)
+    plt.xlabel('Episode')
+    plt.ylabel('Average reward')
+
+    plt.subplot(2,3,5)
+    plt.plot(episodes, value_loss)
+    plt.xlabel('Episode')
+    plt.ylabel('Average value loss')
+
+    plt.subplot(2,3,6)
+    plt.plot(episodes, average_entropy)
+    plt.xlabel('Episode')
+    plt.ylabel('Average entropy')
     
-    def __init__(self, dir_path):
-        Result.__init__(self, dir_path)
-        self.dir_path = dir_path
-        self.n_historical_events = self.learner_states.shape[2]
-        
-    def plot_trajectories(self, n_trajectories=None):
-        expert_states = self.expert_states[0]
-        expert_actions = self.expert_actions[0]
-        expert_history = expert_states[0][:]
-        
-        if n_trajectories is None: n_trajectories = self.n_learner_trajectories
-        
-        for i in range(n_trajectories):
-            states = self.learner_states[i]
-            actions = self.learner_actions[i]
-            history = states[0][:]
-            cluster = Cluster(self.learner_features[i], self.expert_features)
-            self.mean_dist, self.min_dist, self.max_dist = cluster.get_dist_between_clusters()
-                
-            fig = self.plot(expert_history, expert_actions, history, actions)  
+    plt.tight_layout()
+    plt.show()
+    
+    return fig
+
+def read_scores_txt(dir_path):
+    path = os.getcwd() + '/' + dir_path + '/scores.txt'
+    file_obj = open(path, 'r') 
+    lines = file_obj.readlines()
+    
+    discriminator_loss = []
+    policy_loss = []
+    average_rewards = []
+    value_loss = []
+    value = []
+    n_updates = []
+    episodes = []
+    average_entropy = []
+    
+    for idx, line in enumerate(lines):
+        if idx == 0:
+            line1 = line.split(' ')[0]
+            columns = re.split(r'\t+', line1)
+            columns = [x.rstrip('\n\r') for x in columns]
+
+            i_dl = columns.index('average_discriminator_loss')
+            i_pl = columns.index('average_policy_loss')
+            i_r = columns.index('average_rewards')
+            i_v = columns.index('average_value')
+            i_vl = columns.index('average_value_loss')
+            i_u = columns.index('n_updates')
+            i_e = columns.index('episodes')
+            i_ae = columns.index('average_entropy')
+
+        if idx > 0:  # We do not want the column names
+            line1 = line.split(' ')[0]
+            line2 = re.split(r'\t+', line1)
             
-            fig.suptitle('mean_dist: %.1f, min_dist: %.1f, max_dist: %.1f, var_expert_cluster: %.1f' 
-                % (self.mean_dist, self.min_dist, self.max_dist, cluster.expert_within_SS))
-                         
-        fig.tight_layout()
-        plt.show()
-        return fig
+            discriminator_loss.append(float(line2[i_dl].rstrip('\n\r')))
+            policy_loss.append(float(line2[i_pl].rstrip('\n\r')))     
+            average_rewards.append(float(line2[i_r].rstrip('\n\r')))
+            value_loss.append(float(line2[i_vl].rstrip('\n\r')))
+            value.append(float(line2[i_v].rstrip('\n\r')))
+            n_updates.append(float(line2[i_u].rstrip('\n\r')))
+            episodes.append(float(line2[i_e].rstrip('\n\r')))
+            average_entropy.append(float(line2[i_ae].rstrip('\n\r')))
+
+    file_obj.close()
+
+    return discriminator_loss, policy_loss, average_rewards, value_loss, value, n_updates, episodes, average_entropy
+
 ############################
 ############################
 

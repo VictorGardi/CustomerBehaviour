@@ -65,15 +65,23 @@ def get_env_and_model(args, model_dir_path, sample_length):
             )
 
     # Initialize model and observation normalizer
+    if 'G_layers' in args:
+        hidden_sizes = args['G_layers']
+    else:
+        hidden_sizes = (64, 64)
+
     if args['state_rep'] == 21:
-        model = A3CFFSoftmax(args['n_historical_events'], 2, hidden_sizes=(64, 64))
+        model = A3CFFSoftmax(args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_historical_events'], clip_threshold=5)
     elif args['state_rep'] == 11:
-        model = A3CFFSoftmax(2 + args['n_historical_events'], 2, hidden_sizes=(64, 64))
+        model = A3CFFSoftmax(2 + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(2 + args['n_historical_events'], clip_threshold=5)
     elif args['state_rep'] == 22:
-        model = A3CFFSoftmax(10 + args['n_historical_events'], 2, hidden_sizes=(64, 64))
-        obs_normalizer = chainerrl.links.EmpiricalNormalization(10 +args['n_historical_events'], clip_threshold=5)
+        model = A3CFFSoftmax(args['n_experts'] + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_experts'] + args['n_historical_events'], clip_threshold=5)
+    elif args['state_rep'] == 23:
+        model = A3CFFSoftmax(args['n_experts'] + args['n_historical_events'], 11, hidden_sizes=hidden_sizes)
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_experts'] + args['n_historical_events'], clip_threshold=5)
     else:
         raise NotImplementedError
     
@@ -137,8 +145,8 @@ def get_cond_val_states(states, actions, n):
         for temp_state, temp_action in zip(states[i], actions[i]):
             # Extract the n last days
             n_last_days = temp_state[-n:]
-            val_state = [int(x) for x in n_last_days]
-            if temp_action == 1:
+            val_state = [1 if x > 0 else 0 for x in n_last_days]
+            if temp_action > 0:
                 purchase.append(val_state)
             else:
                 no_purchase.append(val_state)
@@ -232,13 +240,30 @@ def get_info(args):
     episode_length = args['episode_length']
     n_training_episodes = args['n_training_episodes']
     n_historical_events = args['n_historical_events']
+    state_rep = args['state_rep']
+    D_layers = args['D_layers']
+    G_layers = args['G_layers']
+    PAC_k = args['PAC_k']
+    gamma = args['gamma']
+    noise = args['noise']
+    batchsize = args['batchsize']
+    n_processes = args['n_processes']
+    normalize_obs = args['normalize_obs']
 
-    info = 'Algorithm: ' + algorithm + ' | ' \
-         + 'Number of training episodes: ' + str(n_training_episodes) + ' | ' \
-         + 'Episode length: ' + str(episode_length) + ' | ' \
-         + 'Number of experts: ' + str(n_experts) + ' | ' \
-         + 'Length of expert trajectory: ' + str(expert_length) + ' | ' \
-         + 'Length of purchase history: ' + str(n_historical_events)
+    info = 'algo: ' + algorithm + ' | ' \
+         + 'n_training_episodes: ' + str(n_training_episodes) + ' | ' \
+         + 'episode_length: ' + str(episode_length) + ' | ' \
+         + 'n_experts: ' + str(n_experts) + ' | ' \
+         + 'length_expert_TS: ' + str(expert_length) + ' | ' \
+         + 'n_historical_events: ' + str(n_historical_events)  + ' | ' \
+         + 'state_rep: ' + str(state_rep) + '\n' \
+         + 'D_layers: ' + str(D_layers) + ' | ' \
+         + 'G_layers: ' + str(G_layers) + ' | ' \
+         + 'PAC_k: ' + str(PAC_k) + ' | ' \
+         + 'noise: ' + str(noise) + ' | ' \
+         + 'batchsize: ' + str(batchsize) + ' | ' \
+         + 'n_processes: ' + str(n_processes) + ' | ' \
+         + 'normalize_obs: ' + str(normalize_obs)
 
     return info
 

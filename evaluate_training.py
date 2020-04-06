@@ -1,12 +1,17 @@
 import os
 import json
+import seaborn
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import customer_behaviour.tools.policy_evaluation as pe
 from os.path import join
 from customer_behaviour.tools.tools import save_plt_as_png
+from evaluate_policy import Expert
 
-dir_path = 'results_anton/2020-03-18_14-01-33'
+dir_path = 'results_anton/2020-03-27_09-37-13'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 20 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-27_09-38-46'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 512  | 20 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-27_09-39-34'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 1024 | 20 000 episodes | norm_obs = False
 
 normalize = True
 n_last_days = 7
@@ -29,6 +34,33 @@ def main():
     expert_data_path = join(dir_path, 'eval_expert_trajectories.npz')
     expert_states, expert_actions = load_data(expert_data_path)
 
+    n_experts = args['n_experts']
+    experts = []
+    for states, actions in zip(np.split(expert_states, n_experts), np.split(expert_actions, n_experts)):  # Loop over experts
+        purchases = []
+        no_purchases = []
+
+        for s, a in zip(states, actions):  # Loop over demonstrations       
+            temp_purchase, temp_no_purchase, _ = pe.get_cond_distribs(
+                [s], 
+                [a], 
+                n_last_days, 
+                max_n_purchases_per_n_last_days, 
+                normalize
+                )
+            purchases.append(temp_purchase)
+            no_purchases.append(temp_no_purchase)
+
+        avg_purchase, avg_no_purchase, _ = pe.get_cond_distribs(
+            states, 
+            actions, 
+            n_last_days, 
+            max_n_purchases_per_n_last_days, 
+            normalize
+            )
+
+        experts.append(Expert(purchases, no_purchases, avg_purchase, avg_no_purchase))
+
     expert_purchase, expert_no_purchase, expert_n_shopping_days = pe.get_cond_distribs(
         expert_states, 
         expert_actions, 
@@ -50,8 +82,10 @@ def main():
         n_updates = get_key_from_path(adp)
         agent_states, agent_actions = load_data(adp)
 
+        ##### Comparison at population level #####
+
         agent_purchase, agent_no_purchase, agent_n_shopping_days = pe.get_cond_distribs(
-        agent_states, 
+            agent_states, 
             agent_actions, 
             n_last_days, 
             max_n_purchases_per_n_last_days, 
@@ -65,7 +99,6 @@ def main():
         training_purchase.append(wd_purchase)
         training_no_purcahse.append(wd_no_purchase)
         
-        '''
         agent_shopping_ratio = format(agent_n_shopping_days / n_sampled_days, '.3f')
         expert_shopping_ratio = format(expert_n_shopping_days / n_sampled_days, '.3f')
         expert_str = 'Expert (p.r.: ' + str(expert_shopping_ratio) + ')'
@@ -87,10 +120,43 @@ def main():
         ax2.set_title('No purchase | EMD: {:.5f}'.format(wd_no_purchase))
         
         if show_info: fig.text(0.5, 0.025, info, ha='center')
-        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', str(n_updates) + ending_png))
+        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'pop_' + str(n_updates) + ending_png))
 
-        plt.show()
-        '''
+        plt.close(fig)
+
+        ##### Comparison at individual level #####
+
+        all_distances_no_purchase = []
+        
+        for i in range(n_experts):
+            agent_purchase, agent_no_purchase, agent_n_shopping_days = pe.get_cond_distribs(
+                [agent_states[i]], 
+                [agent_actions[i]], 
+                n_last_days, 
+                max_n_purchases_per_n_last_days, 
+                normalize
+                )
+
+            temp = [pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize) for e in experts]
+            temp.append(pe.get_wd(expert_no_purchase, agent_no_purchase, normalize))
+            all_distances_no_purchase.append(temp)
+
+        fig, ax = plt.subplots()
+        fig.subplots_adjust(bottom=0.25)
+        fig.subplots_adjust(left=0.25)
+
+        columns = ['Customer {}'.format(i + 1) for i in range(n_experts)]
+        columns.append('Avg. customer')
+        index = ['Agent {}'.format(i + 1) for i in range(n_experts)]
+
+        all_distances_no_purchase = pd.DataFrame(all_distances_no_purchase, columns=columns, index=index)
+        seaborn.heatmap(all_distances_no_purchase, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': "Earth mover's distance"})
+        fig.suptitle('Comparison at individual level')
+
+        if show_info: fig.text(0.5, 0.025, info, ha='center')
+        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'ind_' + str(n_updates) + ending_png))
+
+        plt.close(fig)
 
     fig, (ax1, ax2) = plt.subplots(1, 2)
     fig.subplots_adjust(bottom=0.20)
