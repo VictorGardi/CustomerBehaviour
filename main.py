@@ -193,7 +193,7 @@ def main(args, train_env):
     # Normalize observations based on their empirical mean and variance
     if args.state_rep == 1:
         obs_dim = obs_space.low.size
-    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22:
+    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24:
         obs_dim = obs_space.n
     elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23:
         obs_dim = obs_space.nvec.size
@@ -209,7 +209,7 @@ def main(args, train_env):
     if args.arch == 'FFSoftmax':
         if args.state_rep == 1:
             model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=args.G_layers)
-        elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22:
+        elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24:
             model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=args.G_layers)
         elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23:
             model = A3CFFSoftmax(obs_space.nvec.size, action_space.n, hidden_sizes=args.G_layers)
@@ -226,6 +226,8 @@ def main(args, train_env):
 
     if args.state_rep == 22 or args.state_rep == 23:
        input_dim_D = obs_dim + 1 - args.n_experts  # + 1 since we want to feed discriminator with state + today's action
+    elif args.state_rep == 24:
+        input_dim_D = obs_dim + 1 - 10
     else:
        input_dim_D = obs_dim + 1
 

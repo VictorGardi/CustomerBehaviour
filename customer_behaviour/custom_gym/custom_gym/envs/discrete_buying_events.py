@@ -210,7 +210,7 @@ class Case21():
         return new_state
 
 
-class Case22():
+class Case22():  # dummy encoding (dynamic)
     def __init__(self, model, n_experts=None):
         self.model = model
         self.n_experts = n_experts
@@ -298,6 +298,50 @@ class Case23():  # Consider purchase amounts
         return new_state
 
 
+class Case24():  # dummy encoding (fixed)
+    def __init__(self, model, n_experts=None):
+        self.model = model
+        self.n_experts = n_experts
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(10 + n_historical_events) 
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.any(np.nonzero(receipt)) else 0
+        return action
+
+    def get_initial_state(self, history, seed):
+        temp = np.sum(history, axis=0)
+
+        temp[temp > 0] = 1
+
+        dummy = np.zeros(10)
+        dummy[seed] = 1
+
+        initial_state = np.concatenate((dummy, temp))
+
+        return initial_state
+
+    def get_step(self, state, action):
+        dummy = state[:10]
+        history = state[10:]
+        new_state = [*dummy, *history[1:], action]
+        return new_state
+
+
 class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT ENDAST [1, 1, ..., 1, 1]
     def __init__(self, model, n_experts=None):
         self.model = model
@@ -353,6 +397,7 @@ def define_case(case):
         21: Case21,
         22: Case22,
         23: Case23,
+        24: Case24,
         3: Case3
     }
     return switcher.get(case)
@@ -400,7 +445,9 @@ class DiscreteBuyingEvents(gym.Env):
         sex = []
         age = []
 
-        for i_expert in range(n_experts):
+        experts = [1, 5] if isinstance(self.case, Case24) else range(n_experts)
+
+        for i_expert in experts:
             self.model.spawn_new_customer(i_expert) if seed_expert else self.model.spawn_new_customer()
             
             sex.append(self.model.sex)
@@ -456,6 +503,8 @@ class DiscreteBuyingEvents(gym.Env):
 
 
     def step(self, action):
+        print(self.state)
+
         new_state = self.case.get_step(self.state, action)
         self.state = new_state
         self.n_time_steps += 1
@@ -469,7 +518,11 @@ class DiscreteBuyingEvents(gym.Env):
 
         if self.seed_agent:
             assert self.seed_expert, 'It only makes sense to seed agent if expert(s) are seeded'
-            seed = np.random.randint(0, self.n_experts)
+            if isinstance(self.case, Case24):
+                # Choose between Expert 2 and Expert 6
+                seed = np.random.choice([1, 5])
+            else:
+                seed = np.random.randint(0, self.n_experts)
         else:
             seed = None
 
