@@ -7,7 +7,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22, Case23
+from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24
 
 
 class GAIL(PPO):
@@ -135,6 +135,10 @@ class GAIL(PPO):
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
             states = [s[self.env.n_experts:] for s in states]
+
+        if isinstance(self.env.case, Case24):
+            # Do not show dummy encoding to discriminator
+            states = [s[10:] for s in states]
 
         if self.PAC_k > 1: #PACGAIL
             # merge state and actions into s-a pairs
