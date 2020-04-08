@@ -37,17 +37,6 @@ from scipy.stats import wasserstein_distance
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-44' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-34' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = True
 
-# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_22/2020-04-06_07-52-40'
-dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_22/2020-04-06_12-11-28'
-
-# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-53-01'
-# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-54-31'
-# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-56-05'
-# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-56-46'
-# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_08-00-18'
-
-# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_24/2020-04-06_14-35-25'
-
 sample_length = 10000
 normalize = True
 n_demos_per_expert = 10
@@ -78,9 +67,9 @@ def main():
     # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
-    fig_stats = plot_statistics(dir_path)
-    fig_path = os.getcwd() + '/' + dir_path + '/figs'
-    save_plt_as_png(fig_stats, fig_path + '/stats.png')
+    # fig_stats = plot_statistics(dir_path)
+    # fig_path = os.getcwd() + '/' + dir_path + '/figs'
+    # save_plt_as_png(fig_stats, fig_path + '/stats.png')
 
 ############################
 ############################

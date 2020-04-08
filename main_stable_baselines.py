@@ -57,7 +57,6 @@ def save_experts(n_experts, seed = 0, episode_length = 256, n_historical_events 
     episode_starts = np.zeros_like(actions)
     episode_starts[0] = 1
     n_episodes = int(np.sum(episode_starts))
-    print(n_episodes)
     episode_returns = np.array(n_episodes*[0])
     
 
