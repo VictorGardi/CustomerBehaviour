@@ -40,7 +40,8 @@ from scipy.stats import wasserstein_distance
 # dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_08-09-52'
 # dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_12-51-38'
 # dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_23/2020-04-03_08-12-22'
-dir_path = 'results/gail/discrete_events/2_expert(s)/case_23/2020-04-06_14-53-51'
+#dir_path = 'results/gail/discrete_events/2_expert(s)/case_23/2020-04-06_14-53-51'
+#dir_path = 'results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_10-44-28'
 
 sample_length = 20
 normalize = True
@@ -67,12 +68,12 @@ def main():
 
     # purchase_ratio(args, model_dir_path)
 
-    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    #evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
     # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
-    #fig_stats = plot_statistics(dir_path)
+    fig_stats = plot_statistics(dir_path)
     #fig_path = os.getcwd() + '/' + dir_path + '/figs'
     #save_plt_as_png(fig_stats, fig_path + '/stats.png')
 
@@ -680,39 +681,49 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
 ############################
 
 def plot_statistics(dir_path):
-    discriminator_loss, policy_loss, average_rewards, value_loss, value, n_updates, episodes, average_entropy = read_scores_txt(dir_path)
+    discriminator_loss, policy_loss, average_rewards, average_D_output, average_mod_rewards, value_loss, value, n_updates, episodes, average_entropy = read_scores_txt(dir_path)
 
     fig = plt.figure()
-    plt.subplot(2,3,1)
+    plt.subplot(2,4,1)
     plt.plot(episodes, discriminator_loss)
     plt.xlabel('Episode')
     plt.ylabel('Average discriminator loss')
 
-    plt.subplot(2,3,2)
+    plt.subplot(2,4,2)
     plt.plot(episodes, policy_loss)
     plt.xlabel('Episode')
     plt.ylabel('Average policy loss')
 
-    plt.subplot(2,3,3)
+    plt.subplot(2,4,3)
     plt.plot(episodes, value)
     plt.xlabel('Episode')
     plt.ylabel('Average value')
 
-    plt.subplot(2,3,4)
-    plt.plot(episodes, average_rewards)
-    plt.xlabel('Episode')
-    plt.ylabel('Average reward')
-
-    plt.subplot(2,3,5)
+    plt.subplot(2,4,4)
     plt.plot(episodes, value_loss)
     plt.xlabel('Episode')
     plt.ylabel('Average value loss')
 
-    plt.subplot(2,3,6)
+    plt.subplot(2,4,5)
     plt.plot(episodes, average_entropy)
     plt.xlabel('Episode')
     plt.ylabel('Average entropy')
-    
+
+    plt.subplot(2,4,6)
+    plt.plot(episodes, average_D_output)
+    plt.xlabel('Episode')
+    plt.ylabel('Average D output')
+
+    plt.subplot(2,4,7)
+    plt.plot(episodes, average_mod_rewards)
+    plt.xlabel('Episode')
+    plt.ylabel('Average mod reward')
+
+    plt.subplot(2,4,8)
+    plt.plot(episodes, average_rewards)
+    plt.xlabel('Episode')
+    plt.ylabel('Average reward')
+
     plt.tight_layout()
     plt.show()
     
@@ -726,6 +737,8 @@ def read_scores_txt(dir_path):
     discriminator_loss = []
     policy_loss = []
     average_rewards = []
+    average_D_output = []
+    average_mod_rewards = []
     value_loss = []
     value = []
     n_updates = []
@@ -740,6 +753,8 @@ def read_scores_txt(dir_path):
 
             i_dl = columns.index('average_discriminator_loss')
             i_pl = columns.index('average_policy_loss')
+            i_D = columns.index('average_D_output')
+            i_m_r = columns.index('average_mod_rewards')
             i_r = columns.index('average_rewards')
             i_v = columns.index('average_value')
             i_vl = columns.index('average_value_loss')
@@ -754,6 +769,8 @@ def read_scores_txt(dir_path):
             discriminator_loss.append(float(line2[i_dl].rstrip('\n\r')))
             policy_loss.append(float(line2[i_pl].rstrip('\n\r')))     
             average_rewards.append(float(line2[i_r].rstrip('\n\r')))
+            average_D_output.append(float(line2[i_D].rstrip('\n\r')))
+            average_mod_rewards.append(float(line2[i_m_r].rstrip('\n\r')))
             value_loss.append(float(line2[i_vl].rstrip('\n\r')))
             value.append(float(line2[i_v].rstrip('\n\r')))
             n_updates.append(float(line2[i_u].rstrip('\n\r')))
@@ -762,7 +779,7 @@ def read_scores_txt(dir_path):
 
     file_obj.close()
 
-    return discriminator_loss, policy_loss, average_rewards, value_loss, value, n_updates, episodes, average_entropy
+    return discriminator_loss, policy_loss, average_rewards, average_D_output, average_mod_rewards, value_loss, value, n_updates, episodes, average_entropy
 
 ############################
 ############################

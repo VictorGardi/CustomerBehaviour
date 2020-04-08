@@ -455,7 +455,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
 
             advs = xp.array([b['adv'] for b in batch], dtype=xp.float32)
             if self.standardize_advantages:
-                advs = (advs - mean_advs) / (std_advs + 1e-8)
+                advs = (advs - mean_advs) / (std_advs + 10e-8)
 
             log_probs_old = xp.array([b['log_prob']
                                       for b in batch], dtype=xp.float32)
@@ -466,6 +466,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
             # Same shape as vs_pred: (batch_size, 1)
             vs_pred_old = vs_pred_old[..., None]
             vs_teacher = vs_teacher[..., None]
+            #print(vs_pred_old)
 
             self.optimizer.update(
                     self._lossfun,
