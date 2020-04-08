@@ -138,7 +138,8 @@ class GAIL(PPO):
 
         if isinstance(self.env.case, Case24):
             # Do not show dummy encoding to discriminator
-            states = [s[10:] for s in states]
+            # states = [s[10:] for s in states]
+            pass  # Let discriminator see dummy encoding
 
         if self.PAC_k > 1: #PACGAIL
             # merge state and actions into s-a pairs

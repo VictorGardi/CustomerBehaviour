@@ -227,7 +227,7 @@ def main(args, train_env):
     if args.state_rep == 22 or args.state_rep == 23:
        input_dim_D = obs_dim + 1 - args.n_experts  # + 1 since we want to feed discriminator with state + today's action
     elif args.state_rep == 24:
-        input_dim_D = obs_dim + 1 - 10
+        input_dim_D = obs_dim + 1 # - 10  # Let discriminator see dummy encoding
     else:
        input_dim_D = obs_dim + 1
 
