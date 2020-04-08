@@ -112,7 +112,7 @@ class Case11():
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.any(np.nonzero(receipt)) else 0
+        action = 1 if np.count_nonzero(receipt) else 0
         return action
 
     def get_initial_state(self, history, seed=None):
@@ -192,7 +192,7 @@ class Case21():
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.any(np.nonzero(receipt)) else 0
+        action = 1 if np.count_nonzero(receipt) else 0
         return action
 
     def get_initial_state(self, history, seed=None):
@@ -232,7 +232,7 @@ class Case22():  # dummy encoding (dynamic)
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.any(np.nonzero(receipt)) else 0
+        action = 1 if np.count_nonzero(receipt) else 0
         return action
 
     def get_initial_state(self, history, seed):
@@ -320,7 +320,7 @@ class Case24():  # dummy encoding (fixed)
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.any(np.nonzero(receipt)) else 0
+        action = 1 if np.count_nonzero(receipt) else 0
         return action
 
     def get_initial_state(self, history, seed):
@@ -388,6 +388,88 @@ class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT 
             new_state[1] += 1
         return new_state
 
+class Case31():
+    def __init__(self, model, n_experts=None):
+        self.model = model
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiDiscrete(10 * [1] + n_historical_events * [10000])
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        sample = self.model.sample3(n_demos_per_expert, n_historical_events, n_time_steps)
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.count_nonzero(receipt) else 0
+        return action
+
+    def get_initial_state(self, history, seed=None):
+        # Extract number of elapsed days between purchases
+
+        temp = np.sum(history, axis=0)  # We only consider the first item
+        temp[temp > 0] = 1
+
+        assert temp[-1] > 0
+
+        initial_state = []
+        i = 0
+        for h in reversed(temp):
+            if h > 0:
+                initial_state.append(i)
+                i = 1
+            else:
+                i += 1
+        initial_state[0] = 1
+
+        dummy = np.zeros(10)
+        dummy[seed] = 1
+
+        initial_state = np.concatenate((initial_state, dummy))
+
+        return initial_state
+
+    def get_step(self, state, action):
+        dummy = state[-10:]
+        history = state[:-10].copy()
+
+        if action == 0:
+            # no purchase
+            new_history = history
+            new_history[0] += 1          
+        else:
+            # purchase
+            new_history = [1, *history[:-1]]
+            # new_history[1] += 1
+
+        new_state = [*new_history, *dummy]
+
+        return new_state
+
+'''
+class Case4():
+     def __init__(self, model, n_experts=None):
+        self.model = model
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(10 + 2 * n_historical_events) 
+
+        action_space = spaces.MultiBinary(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+'''
 
 def define_case(case):
     switcher = {
@@ -398,7 +480,8 @@ def define_case(case):
         22: Case22,
         23: Case23,
         24: Case24,
-        3: Case3
+        3: Case3,
+        31: Case31
     }
     return switcher.get(case)
 
@@ -445,7 +528,7 @@ class DiscreteBuyingEvents(gym.Env):
         sex = []
         age = []
 
-        experts = [1, 5] if isinstance(self.case, Case24) else range(n_experts)
+        experts = [1, 5] if (isinstance(self.case, Case24) or isinstance(self.case, Case31)) else range(n_experts)
 
         for i_expert in experts:
             self.model.spawn_new_customer(i_expert) if seed_expert else self.model.spawn_new_customer()
@@ -466,7 +549,7 @@ class DiscreteBuyingEvents(gym.Env):
 
                 self.state = initial_state
 
-                temp_states.append(np.array(initial_state))  # the function step(action) returns the state as an np.array
+                temp_states.append(initial_state)
 
                 for i, receipt in enumerate(data.T, start=1):  # transpose since the receipts are columns in data
                     action = self.case.get_action(receipt)
@@ -516,7 +599,7 @@ class DiscreteBuyingEvents(gym.Env):
 
         if self.seed_agent:
             assert self.seed_expert, 'It only makes sense to seed agent if expert(s) are seeded'
-            if isinstance(self.case, Case24):
+            if isinstance(self.case, Case24) or isinstance(self.case, Case31):
                 # Choose between Expert 2 and Expert 6
                 seed = np.random.choice([1, 5])
             else:
@@ -527,21 +610,33 @@ class DiscreteBuyingEvents(gym.Env):
         self.model.spawn_new_customer(seed)
 
         # Sample expert trajectory
-        sample = self.case.get_sample(
-            n_demos_per_expert=1, 
-            n_historical_events=self.n_historical_events, 
-            n_time_steps=self.n_expert_time_steps
-            )
+        if isinstance(self.case, Case31):
+            # Using days between purchases -> cannot choose sequence of fixed length
+            sample = self.case.get_sample(
+                n_demos_per_expert=10, 
+                n_historical_events=self.n_historical_events, 
+                n_time_steps=self.n_expert_time_steps
+                )
 
-        history, data = sample[0]
+            i = np.random.randint(0, 10)
 
-        all_data = np.hstack((history, data))
+            history, _ = sample[i]
 
-        _, n = all_data.shape
+        else:
+            sample = self.case.get_sample(
+                n_demos_per_expert=1, 
+                n_historical_events=self.n_historical_events, 
+                n_time_steps=self.n_expert_time_steps
+                )
 
-        i = np.random.randint(0, n-self.n_historical_events)
+            history, data = sample[0]
 
-        history = all_data[:, i:i+self.n_historical_events]
+            all_data = np.hstack((history, data))
+            _, n = all_data.shape
+
+            i = np.random.randint(0, n-self.n_historical_events)
+
+            history = all_data[:, i:i+self.n_historical_events]
         
         self.state = self.case.get_initial_state(history, seed)
         self.n_time_steps = 0

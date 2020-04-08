@@ -63,6 +63,36 @@ class DGM:
             purchase = np.zeros((self.N,1))
         return purchase
 
+    def sample3(self, n_demos, n_historical_events, n_time_steps):
+        self.inventory = np.divide(np.random.gamma(self.lambd), self.lambd)
+
+        sample = []
+        l = 0
+
+        for _ in range(n_demos):
+            # Sample history for initial state
+            history = np.zeros((self.N, 0))
+            n_purchases = 0
+            while n_purchases < n_historical_events:
+                purchase = self._update(day = np.mod(l, 7))
+                history = np.column_stack((history, purchase))
+                if np.count_nonzero(purchase):
+                    n_purchases += 1
+                l += 1
+
+            # Sample data
+            data = np.zeros((self.N, n_time_steps))
+            for i in range(n_time_steps):
+                purchase = self._update(day = np.mod(l, 7))
+                data[:, [i]] = purchase
+                l += 1
+            sample.append((history, data))
+
+        np.random.seed(None)
+
+        return sample
+
+
     def sample2(self, n_demos, n_historical_events, n_time_steps, n_product_groups=6):
         self.inventory = np.divide(np.random.gamma(self.lambd),self.lambd)
 
