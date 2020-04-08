@@ -37,12 +37,18 @@ from scipy.stats import wasserstein_distance
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-44' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-34' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = True
 
-# dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_08-09-52'
-# dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_22/2020-04-03_12-51-38'
-# dir_path = 'results_anton/results/gail/discrete_events/10_expert(s)/case_23/2020-04-03_08-12-22'
-dir_path = 'results/gail/discrete_events/2_expert(s)/case_23/2020-04-06_14-53-51'
+# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_22/2020-04-06_07-52-40'
+dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_22/2020-04-06_12-11-28'
 
-sample_length = 20
+# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-53-01'
+# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-54-31'
+# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-56-05'
+# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_07-56-46'
+# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_23/2020-04-06_08-00-18'
+
+# dir_path = 'results_anton/results2/gail/discrete_events/10_expert(s)/case_24/2020-04-06_14-35-25'
+
+sample_length = 10000
 normalize = True
 n_demos_per_expert = 10
 n_last_days = 7
@@ -67,14 +73,14 @@ def main():
 
     # purchase_ratio(args, model_dir_path)
 
-    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
     # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
-    #fig_stats = plot_statistics(dir_path)
-    #fig_path = os.getcwd() + '/' + dir_path + '/figs'
-    #save_plt_as_png(fig_stats, fig_path + '/stats.png')
+    fig_stats = plot_statistics(dir_path)
+    fig_path = os.getcwd() + '/' + dir_path + '/figs'
+    save_plt_as_png(fig_stats, fig_path + '/stats.png')
 
 ############################
 ############################
@@ -339,11 +345,6 @@ def purchase_ratio(args, model_dir_path):
 
     plt.show()
 
-        # print(n)
-        # print("Expert's purchase ratio: %f" % e_pr)
-        # print("Agent's purchase ratio: %f" % a_pr)
-         #print('---------------')
-
 ############################
 ############################
 
@@ -519,15 +520,23 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
         max_n_purchases_per_n_last_days, 
         normalize
         )
-    n_experts = args['n_experts']
-    avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (sample_length *  n_experts), '.2f')
+    
+    if args['state_rep'] == 24:
+        expert_indices_list = [[0, 1]]
+        avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (2 * sample_length), '.2f')
+    else:
+        expert_indices_list = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
+        n_experts = args['n_experts']
+        avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (sample_length *  n_experts), '.2f')
 
-    for j, expert_indices in enumerate([[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]):
+    for j, expert_indices in enumerate(expert_indices_list):
         fig1, axes1 = plt.subplots(2, 2, sharex='col')
         fig2, axes2 = plt.subplots(2, 2, sharex='col')
+        
         for i, ax1, ax2 in zip(expert_indices, axes1.flat, axes2.flat):
             # Sample agent data starting with expert's history
             initial_state = random.choice(expert_states[i])
+
             agent_states, agent_actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
 
             agent_purchase, agent_no_purchase, agent_n_shopping_days = pe.get_cond_distribs(
@@ -549,8 +558,8 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
             expert_shopping_ratio = format(expert_n_shopping_days / sample_length, '.3f')
 
             if args['state_rep'] == 23:
-                expert_histo = np.histogram(expert_actions[i], bins=range(11))[0]
-                agent_histo = np.histogram(agent_actions, bins=range(11))[0]
+                expert_histo, _ = np.histogram(expert_actions[i], bins=range(11))
+                agent_histo, _ = np.histogram(agent_actions, bins=range(11))
 
             # Calculate Wasserstein distances
             wd_purchase = pe.get_wd(expert_purchase, agent_purchase, normalize)
@@ -663,16 +672,22 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
     ax2.set_title('No purchase | EMD: {:.5f}'.format(wd_no_purchase))
     # ax2.set_title('Last week | No purchase today')
     ax2.set_ylabel('Probability')
-    if args['state_rep'] == 23:
-        histo_agents = pe.get_mean_purchase_histo(agent_actions)
-        histo_experts = pe.get_mean_purchase_histo(expert_actions)
-
-        #hist(histo_agents, density=False, bins=10)
-        #hist(histo_experts, density=False, bins=10)
-
     
     if show_info: fig.text(0.5, 0.025, info, ha='center')
     if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'population' + ending_png))
+
+    if args['state_rep'] == 23:
+        # Plot histogram of purchase amounts
+        expert_amounts = np.ravel(expert_actions)[np.flatnonzero(expert_actions)]
+        agent_amounts = np.ravel(agent_actions)[np.flatnonzero(agent_actions)]
+
+        fig, ax = plt.subplots()
+        ax.hist(expert_amounts, bins=np.arange(1, 11), alpha=0.8, density=True, label='Expert')
+        ax.hist(agent_amounts, bins=np.arange(1, 11), alpha=0.8, density=True, label='Agent')
+        ax.legend()
+
+        if show_info: fig.text(0.5, 0.025, info, ha='center')
+        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'population_amounts' + ending_png))
 
     plt.show()
 
@@ -680,39 +695,49 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
 ############################
 
 def plot_statistics(dir_path):
-    discriminator_loss, policy_loss, average_rewards, value_loss, value, n_updates, episodes, average_entropy = read_scores_txt(dir_path)
+    discriminator_loss, policy_loss, average_rewards, average_D_output, average_mod_rewards, value_loss, value, n_updates, episodes, average_entropy = read_scores_txt(dir_path)
 
     fig = plt.figure()
-    plt.subplot(2,3,1)
+    plt.subplot(2,4,1)
     plt.plot(episodes, discriminator_loss)
     plt.xlabel('Episode')
     plt.ylabel('Average discriminator loss')
 
-    plt.subplot(2,3,2)
+    plt.subplot(2,4,2)
     plt.plot(episodes, policy_loss)
     plt.xlabel('Episode')
     plt.ylabel('Average policy loss')
 
-    plt.subplot(2,3,3)
+    plt.subplot(2,4,3)
     plt.plot(episodes, value)
     plt.xlabel('Episode')
     plt.ylabel('Average value')
 
-    plt.subplot(2,3,4)
-    plt.plot(episodes, average_rewards)
-    plt.xlabel('Episode')
-    plt.ylabel('Average reward')
-
-    plt.subplot(2,3,5)
+    plt.subplot(2,4,4)
     plt.plot(episodes, value_loss)
     plt.xlabel('Episode')
     plt.ylabel('Average value loss')
 
-    plt.subplot(2,3,6)
+    plt.subplot(2,4,5)
     plt.plot(episodes, average_entropy)
     plt.xlabel('Episode')
     plt.ylabel('Average entropy')
-    
+
+    plt.subplot(2,4,6)
+    plt.plot(episodes, average_D_output)
+    plt.xlabel('Episode')
+    plt.ylabel('Average D output')
+
+    plt.subplot(2,4,7)
+    plt.plot(episodes, average_mod_rewards)
+    plt.xlabel('Episode')
+    plt.ylabel('Average mod reward')
+
+    plt.subplot(2,4,8)
+    plt.plot(episodes, average_rewards)
+    plt.xlabel('Episode')
+    plt.ylabel('Average reward')
+
     plt.tight_layout()
     plt.show()
     
@@ -726,6 +751,8 @@ def read_scores_txt(dir_path):
     discriminator_loss = []
     policy_loss = []
     average_rewards = []
+    average_D_output = []
+    average_mod_rewards = []
     value_loss = []
     value = []
     n_updates = []
@@ -740,6 +767,8 @@ def read_scores_txt(dir_path):
 
             i_dl = columns.index('average_discriminator_loss')
             i_pl = columns.index('average_policy_loss')
+            i_D = columns.index('average_D_output')
+            i_m_r = columns.index('average_mod_rewards')
             i_r = columns.index('average_rewards')
             i_v = columns.index('average_value')
             i_vl = columns.index('average_value_loss')
@@ -754,6 +783,8 @@ def read_scores_txt(dir_path):
             discriminator_loss.append(float(line2[i_dl].rstrip('\n\r')))
             policy_loss.append(float(line2[i_pl].rstrip('\n\r')))     
             average_rewards.append(float(line2[i_r].rstrip('\n\r')))
+            average_D_output.append(float(line2[i_D].rstrip('\n\r')))
+            average_mod_rewards.append(float(line2[i_m_r].rstrip('\n\r')))
             value_loss.append(float(line2[i_vl].rstrip('\n\r')))
             value.append(float(line2[i_v].rstrip('\n\r')))
             n_updates.append(float(line2[i_u].rstrip('\n\r')))
@@ -762,7 +793,7 @@ def read_scores_txt(dir_path):
 
     file_obj.close()
 
-    return discriminator_loss, policy_loss, average_rewards, value_loss, value, n_updates, episodes, average_entropy
+    return discriminator_loss, policy_loss, average_rewards, average_D_output, average_mod_rewards, value_loss, value, n_updates, episodes, average_entropy
 
 ############################
 ############################

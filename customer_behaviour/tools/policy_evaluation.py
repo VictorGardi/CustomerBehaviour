@@ -82,6 +82,9 @@ def get_env_and_model(args, model_dir_path, sample_length):
     elif args['state_rep'] == 23:
         model = A3CFFSoftmax(args['n_experts'] + args['n_historical_events'], 11, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_experts'] + args['n_historical_events'], clip_threshold=5)
+    elif args['state_rep'] == 24:
+        model = A3CFFSoftmax(10 + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(10 + args['n_historical_events'], clip_threshold=5)
     else:
         raise NotImplementedError
     
@@ -231,7 +234,7 @@ def get_wd(u, v, uv_normalized):
 
 def get_mean_purchase_histo(actions):
     n_samples = len(actions)
-    hist = np.zeros((10,))
+    hist = np.zeros(10)
     for sample in range(n_samples):
         hist += np.histogram(actions[sample], bins=range(11))[0]
     return hist/n_samples
@@ -267,10 +270,12 @@ def get_info(args):
          + 'D_layers: ' + str(D_layers) + ' | ' \
          + 'G_layers: ' + str(G_layers) + ' | ' \
          + 'PAC_k: ' + str(PAC_k) + ' | ' \
+         + 'gamma: ' + str(gamma) + ' | ' \
          + 'noise: ' + str(noise) + ' | ' \
          + 'batchsize: ' + str(batchsize) + ' | ' \
          + 'n_processes: ' + str(n_processes) + ' | ' \
          + 'normalize_obs: ' + str(normalize_obs)
+
 
     return info
 
