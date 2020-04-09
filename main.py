@@ -193,7 +193,7 @@ def main(args, train_env):
     # Normalize observations based on their empirical mean and variance
     if args.state_rep == 1:
         obs_dim = obs_space.low.size
-    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24:
+    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4:
         obs_dim = obs_space.n
     elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23 or args.state_rep == 31:
         obs_dim = obs_space.nvec.size
@@ -207,14 +207,7 @@ def main(args, train_env):
 
     # Switch policy types accordingly to action space types
     if args.arch == 'FFSoftmax':
-        if args.state_rep == 1:
-            model = A3CFFSoftmax(obs_space.low.size, action_space.n, hidden_sizes=args.G_layers)
-        elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24:
-            model = A3CFFSoftmax(obs_space.n, action_space.n, hidden_sizes=args.G_layers)
-        elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23 or args.state_rep == 31:
-            model = A3CFFSoftmax(obs_space.nvec.size, action_space.n, hidden_sizes=args.G_layers)
-        else:
-            raise NotImplementedError
+        model = A3CFFSoftmax(obs_dim, action_space.n, hidden_sizes=args.G_layers)
     elif args.arch == 'FFMellowmax':
         model = A3CFFMellowmax(obs_space.low.size, action_space.n)
     elif args.arch == 'FFGaussian':

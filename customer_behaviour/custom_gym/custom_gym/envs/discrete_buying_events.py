@@ -112,7 +112,7 @@ class Case11():
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.count_nonzero(receipt) else 0
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
         return action
 
     def get_initial_state(self, history, seed=None):
@@ -192,7 +192,7 @@ class Case21():
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.count_nonzero(receipt) else 0
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
         return action
 
     def get_initial_state(self, history, seed=None):
@@ -232,7 +232,7 @@ class Case22():  # dummy encoding (dynamic)
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.count_nonzero(receipt) else 0
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
         return action
 
     def get_initial_state(self, history, seed):
@@ -320,7 +320,7 @@ class Case24():  # dummy encoding (fixed)
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.count_nonzero(receipt) else 0
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
         return action
 
     def get_initial_state(self, history, seed):
@@ -404,7 +404,7 @@ class Case31():
         return sample
 
     def get_action(self, receipt):
-        action = 1 if np.count_nonzero(receipt) else 0
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
         return action
 
     def get_initial_state(self, history, seed=None):
@@ -449,15 +449,15 @@ class Case31():
 
         return new_state
 
-'''
-class Case4():
-     def __init__(self, model, n_experts=None):
+class Case4():  # [dummy + product 1 + product 2]
+    def __init__(self, model, n_experts=None):
         self.model = model
+        self.n_experts = n_experts
 
     def get_spaces(self, n_historical_events):
-        observation_space = spaces.MultiBinary(10 + 2 * n_historical_events) 
+        observation_space = spaces.MultiBinary(self.n_experts + 2 * n_historical_events) 
 
-        action_space = spaces.MultiBinary(2)
+        action_space = spaces.Discrete(4)
 
         return observation_space, action_space
 
@@ -469,7 +469,57 @@ class Case4():
             data = subsample[:, n_historical_events:]
             sample.append((history, data))
         return sample
-'''
+
+    def get_action(self, receipt):
+        purchase_product1 = np.count_nonzero(receipt[:3]) > 0
+        purchase_product2 = np.count_nonzero(receipt[3:]) > 0
+
+        if purchase_product1 and purchase_product2:
+            action = 0
+        elif purchase_product1 and not purchase_product2:
+            action = 1
+        elif not purchase_product1 and purchase_product2:
+            action = 2
+        else:
+            action = 3
+
+        return action
+
+    def get_initial_state(self, history, seed):
+        temp1 = np.sum(history[:3, :], axis=0)
+        temp2 = np.sum(history[3:, :], axis=0)
+
+        temp1[temp1 > 0] = 1
+        temp2[temp2 > 0] = 1
+
+        dummy = np.zeros(10)
+        dummy[seed] = 1
+
+        initial_state = np.concatenate((dummy, temp1, temp2))
+
+        return initial_state
+
+    def get_step(self, state, action):
+        dummy = state[:self.n_experts]
+        history = np.split(np.array(state[self.n_experts:]), 2)
+        history1 = history[0]
+        history2 = history[1]
+
+        if action == 0:
+            a1 = 1
+            a2 = 1
+        elif action == 1:
+            a1 = 1
+            a2 = 0
+        elif action == 2:
+            a1 = 0
+            a2 = 1
+        else:
+            a1 = 0
+            a2 = 0
+
+        new_state = [*dummy, *history1[1:], a1, *history2[1:], a2]
+        return new_state
 
 def define_case(case):
     switcher = {
@@ -481,7 +531,8 @@ def define_case(case):
         23: Case23,
         24: Case24,
         3: Case3,
-        31: Case31
+        31: Case31,
+        4: Case4
     }
     return switcher.get(case)
 
