@@ -7,7 +7,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24
+from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31
 
 
 class GAIL(PPO):
@@ -131,10 +131,28 @@ class GAIL(PPO):
         #print('convert_data')
         #print(len(actions))
         #print(len(states))
+
+        if isinstance(self.env.case, Case31):
+            temp = []
+            for s in states:
+                history = s[:-10]
+                dummy = s[-10:]
+
+                new_h = []
+                for x in history:
+                    while x > 1:
+                        new_h.append(0)
+                        x -= 1
+                    new_h.append(1)
+                new_h.reverse()
+
+                temp.append(np.concatenate((dummy, new_h[-self.env.n_historical_events:])).astype(xp.float32))
+            states = temp
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
-            states = [s[self.env.n_experts:] for s in states]
+            # states = [s[self.env.n_experts:] for s in states]
+            pass
 
         if isinstance(self.env.case, Case24):
             # Do not show dummy encoding to discriminator
