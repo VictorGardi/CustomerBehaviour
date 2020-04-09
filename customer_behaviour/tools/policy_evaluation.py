@@ -85,6 +85,9 @@ def get_env_and_model(args, model_dir_path, sample_length):
     elif args['state_rep'] == 24:
         model = A3CFFSoftmax(10 + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(10 + args['n_historical_events'], clip_threshold=5)
+    elif args['state_rep'] == 31:
+        model = A3CFFSoftmax(10 + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(10 + args['n_historical_events'], clip_threshold=5)
     else:
         raise NotImplementedError
     
@@ -200,7 +203,34 @@ def sort_possible_val_states(possible_val_states):
 ##### Conditional distributions #####
 #####################################
 
-def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize):
+def extract_time_series(states, n_last_days, n_dummies=10):
+    n_trajectories = len(states)
+
+    extracted = []
+
+    for i in range(n_trajectories):
+        temp = []
+        for s in states[i]:
+            history = s[:-n_dummies]
+
+            new_s = []
+            for x in history:
+                while x > 1:
+                    new_s.append(0)
+                    x -= 1
+                new_s.append(1)
+            new_s.reverse()
+
+            temp.append(new_s[-n_last_days:])
+
+        extracted.append(temp)
+
+    return extracted
+
+
+def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize, case):
+    if case == 31: states = extract_time_series(states, n_last_days, n_dummies=10)
+
     purchase, no_purchase = get_cond_val_states(states, actions, n_last_days)
 
     # Reduce dimensionality by merging all validation states with more than max_n_purchases purchases to a single state

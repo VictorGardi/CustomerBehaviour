@@ -37,6 +37,19 @@ from scipy.stats import wasserstein_distance
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-44' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-34' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = True
 
+# dir_path = 'temp/2020-04-07_09-24-54'
+# dir_path = 'temp/2020-04-07_09-24-37'
+# dir_path = 'temp/2020-04-07_09-25-12'
+
+# dir_path = 'temp/2020-04-07_21-11-34'
+# dir_path = 'temp/2020-04-07_21-13-26'
+# dir_path = 'temp/2020-04-07_21-13-59'
+
+# dir_path = 'temp2/2020-04-08_09-39-53'
+# dir_path = 'temp2/2020-04-08_09-40-34'
+
+dir_path = 'temp3/2020-04-08_14-47-28'
+
 sample_length = 10000
 normalize = True
 n_demos_per_expert = 10
@@ -64,7 +77,7 @@ def main():
 
     # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
-    # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
+    compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
     # fig_stats = plot_statistics(dir_path)
@@ -128,10 +141,9 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
     sex = ['F' if s == 1 else 'M' for s in expert_trajectories['sex']]
     age = [int(a) for a in expert_trajectories['age']]
 
-    n_experts = args['n_experts']
-
+    n_experts = 2 if (args['state_rep'] == 24 or args['state_rep'] == 31) else args['n_experts']
+    
     experts = []
-
     for states, actions in zip(np.split(expert_states, n_experts), np.split(expert_actions, n_experts)):  # Loop over experts
         purchases = []
         no_purchases = []
@@ -142,7 +154,8 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
                 [a], 
                 n_last_days, 
                 max_n_purchases_per_n_last_days, 
-                normalize
+                normalize,
+                case=args['state_rep']
                 )
             purchases.append(temp_purchase)
             no_purchases.append(temp_no_purchase)
@@ -152,7 +165,8 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
             actions, 
             n_last_days, 
             max_n_purchases_per_n_last_days, 
-            normalize
+            normalize,
+            case=args['state_rep']
             )
 
         experts.append(Expert(purchases, no_purchases, avg_purchase, avg_no_purchase))
@@ -167,31 +181,33 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         expert_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize
+        normalize,
+        case=args['state_rep']
         )
 
-    # Cluster expert data (purcase)
-    X = np.array([e.avg_purchase for e in experts])
-    T_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
-    T_purchase = pe.get_cluster_labels(T_purchase)
+    if args['state_rep'] != 24 or args['state_rep'] != 31:
+        # Cluster expert data (purcase)
+        X = np.array([e.avg_purchase for e in experts])
+        T_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
+        T_purchase = pe.get_cluster_labels(T_purchase)
 
-    # Cluster expert data (purcase)
-    X = np.array([e.avg_no_purchase for e in experts])
-    T_no_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
-    T_no_purchase = pe.get_cluster_labels(T_no_purchase)
+        # Cluster expert data (purcase)
+        X = np.array([e.avg_no_purchase for e in experts])
+        T_no_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
+        T_no_purchase = pe.get_cluster_labels(T_no_purchase)
 
-    assert np.array_equal(T_purchase, T_no_purchase)
+        assert np.array_equal(T_purchase, T_no_purchase)
+        cluster_indices = [np.argwhere(T_purchase == i) for i in [1, 2, 3]]
 
-    cluster_indices = [np.argwhere(T_purchase == i) for i in [1, 2, 3]]
-
-    distances_purchase = []
-    distances_no_purchase = []
+        distances_purchase = []
+        distances_no_purchase = []
+    
     all_distances_purchase = []
     all_distances_no_purchase = []
 
     for i in range(n_experts):
         # Sample agent data starting with expert's history
-        initial_state = expert_states[i][0].copy()
+        initial_state = expert_states[i][0]
         agent_states, agent_actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
 
         agent_purchase, agent_no_purchase, _ = pe.get_cond_distribs(
@@ -199,59 +215,59 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
             [agent_actions], 
             n_last_days, 
             max_n_purchases_per_n_last_days, 
-            normalize
+            normalize,
+            case=args['state_rep']
             )
 
         e = experts[i]
 
         # Compare distributions (purchase)
-        temp = [e.avg_dist_purchase]
-        temp.append(pe.get_wd(e.avg_purchase, agent_purchase, normalize))
-        temp.append(pe.get_wd(avg_expert_purchase, agent_purchase, normalize))
-        
-        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[0]]))
-        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[1]]))
-        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[2]]))
-        
-        distances_purchase.append(temp)
+        if args['state_rep'] != 24 or args['state_rep'] != 31:
+            temp = [e.avg_dist_purchase]
+            temp.append(pe.get_wd(e.avg_purchase, agent_purchase, normalize))
+            temp.append(pe.get_wd(avg_expert_purchase, agent_purchase, normalize))
+            temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[0]]))
+            temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[1]]))
+            temp.append(np.mean([pe.get_wd(experts[j[0]].avg_purchase, agent_purchase, normalize) for j in cluster_indices[2]]))
+            distances_purchase.append(temp)
 
         temp = [pe.get_wd(e.avg_purchase, agent_purchase, normalize) for e in experts]
         temp.append(pe.get_wd(avg_expert_purchase, agent_purchase, normalize))
         all_distances_purchase.append(temp)
 
         # Compare distributions (no purchase)
-        temp = [e.avg_dist_no_purchase]
-        temp.append(pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize))
-        temp.append(pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
-
-        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[0]]))
-        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[1]]))
-        temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[2]]))
-
-        distances_no_purchase.append(temp)
+        if args['state_rep'] != 24 or args['state_rep'] != 31:
+            temp = [e.avg_dist_no_purchase]
+            temp.append(pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize))
+            temp.append(pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
+            temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[0]]))
+            temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[1]]))
+            temp.append(np.mean([pe.get_wd(experts[j[0]].avg_no_purchase, agent_no_purchase, normalize) for j in cluster_indices[2]]))
+            distances_no_purchase.append(temp)
 
         temp = [pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize) for e in experts]
         temp.append(pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
         all_distances_no_purchase.append(temp)
 
-    ##### Plot distance to one expert #####
-    columns = ['Var. in expert cluster', 'Dist. to expert', 'Dist. to avg. expert', 'Dist. to 1st cluster 1', 'Dist. to 2nd cluster', 'Dist. to 3rd cluster']
-    index = ['E{}\n({})'.format(i + 1, int(T_purchase[i])) for i in range(n_experts)]
+    if args['state_rep'] != 24 or args['state_rep'] != 31:
+        ##### Plot distance to one expert #####
+        columns = ['Var. in expert cluster', 'Dist. to expert', 'Dist. to avg. expert', 'Dist. to 1st cluster 1', 'Dist. to 2nd cluster', 'Dist. to 3rd cluster']
+        index = ['E{}\n({})'.format(i + 1, int(T_purchase[i])) for i in range(n_experts)]
 
-    fig, (ax1, ax2) = plt.subplots(1, 2)
-    fig.subplots_adjust(bottom=0.30)
+        fig, (ax1, ax2) = plt.subplots(1, 2)
+        fig.subplots_adjust(bottom=0.30)
 
-    # Plot distance (purchase)
-    distances_purchase = pd.DataFrame(distances_purchase, columns=columns, index=index)
-    seaborn.heatmap(distances_purchase, cmap='BuPu', ax=ax1, linewidth=1, cbar_kws={'label': 'EMD'})
-    ax1.set_title('Purchase')
+        # Plot distance (purchase)
+        distances_purchase = pd.DataFrame(distances_purchase, columns=columns, index=index)
+        seaborn.heatmap(distances_purchase, cmap='BuPu', ax=ax1, linewidth=1, cbar_kws={'label': 'EMD'})
+        ax1.set_title('Purchase')
 
-    distances_no_purchase = pd.DataFrame(distances_no_purchase, columns=columns, index=index)
-    seaborn.heatmap(distances_no_purchase, cmap='BuPu', ax=ax2, linewidth=1, cbar_kws={'label': 'EMD'})
-    ax2.set_title('No purchase')
+        distances_no_purchase = pd.DataFrame(distances_no_purchase, columns=columns, index=index)
+        seaborn.heatmap(distances_no_purchase, cmap='BuPu', ax=ax2, linewidth=1, cbar_kws={'label': 'EMD'})
+        ax2.set_title('No purchase')
 
-    if show_info: fig.text(0.5, 0.025, info, ha='center')
-    if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'heatmap' + ending_png))
+        if show_info: fig.text(0.5, 0.025, info, ha='center')
+        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'heatmap' + ending_png))
 
     ##### Plot distance to all experts #####
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey='row')
@@ -507,16 +523,13 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
         expert_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize
+        normalize,
+        case=args['state_rep']
         )
-    
-    if args['state_rep'] == 24:
-        expert_indices_list = [[0, 1]]
-        avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (2 * sample_length), '.2f')
-    else:
-        expert_indices_list = [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
-        n_experts = args['n_experts']
-        avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (sample_length *  n_experts), '.2f')
+    n_experts = 2 if (args['state_rep'] == 24 or args['state_rep'] == 31) else args['n_experts']
+    avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (n_experts * sample_length), '.2f')
+
+    expert_indices_list = [[0, 1]] if (args['state_rep'] == 24 or args['state_rep'] == 31) else [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
 
     for j, expert_indices in enumerate(expert_indices_list):
         fig1, axes1 = plt.subplots(2, 2, sharex='col')
@@ -533,7 +546,8 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
                 [agent_actions], 
                 n_last_days, 
                 max_n_purchases_per_n_last_days, 
-                normalize
+                normalize,
+                case=args['state_rep']
                 )
             agent_shopping_ratio = format(agent_n_shopping_days / sample_length, '.3f')
 
@@ -542,7 +556,8 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
                 [expert_actions[i]], 
                 n_last_days, 
                 max_n_purchases_per_n_last_days, 
-                normalize
+                normalize,
+                case=args['state_rep']
                 )
             expert_shopping_ratio = format(expert_n_shopping_days / sample_length, '.3f')
 
@@ -604,7 +619,8 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
     # Sample agent data
     agent_states = []
     agent_actions = []
-    for i in range(args['n_experts']):
+    N = 10
+    for i in range(N):
         # What happens if the agent is repeatedly initialized with history from expert with unique behavior?
         # Should we collect more than n_experts samples (especially if n_experts <= 10)?
         temp_states, temp_actions = pe.sample_from_policy(env, model, obs_normalizer)
@@ -616,7 +632,8 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
         agent_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize
+        normalize,
+        case=args['state_rep']
         )
 
     # Sample expert data
@@ -629,16 +646,17 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
         expert_actions, 
         n_last_days, 
         max_n_purchases_per_n_last_days, 
-        normalize
+        normalize,
+        case=args['state_rep']
         )
 
     # Calculate Wasserstein distances
     wd_purchase = pe.get_wd(expert_purchase, agent_purchase, normalize)
     wd_no_purchase = pe.get_wd(expert_no_purchase, agent_no_purchase, normalize)
     
-    n_sampled_days = sample_length * args['n_experts']
-    agent_shopping_ratio = format(agent_n_shopping_days / n_sampled_days, '.3f')
-    expert_shopping_ratio = format(expert_n_shopping_days / n_sampled_days, '.3f')
+    n_experts = 2 if (args['state_rep'] == 24 or args['state_rep'] == 31) else args['n_experts']
+    agent_shopping_ratio = format(agent_n_shopping_days / (N * sample_length), '.3f')
+    expert_shopping_ratio = format(expert_n_shopping_days / (n_experts * sample_length), '.3f')
     expert_str = 'Expert (p.r.: ' + str(expert_shopping_ratio) + ')'
     agent_str = 'Agent (p.r.: ' + str(agent_shopping_ratio) + ')'
 
@@ -673,6 +691,8 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
         fig, ax = plt.subplots()
         ax.hist(expert_amounts, bins=np.arange(1, 11), alpha=0.8, density=True, label='Expert')
         ax.hist(agent_amounts, bins=np.arange(1, 11), alpha=0.8, density=True, label='Agent')
+        ax.set_xlabel('Purchase amount')
+        ax.set_ylabel('Normalized frequency')
         ax.legend()
 
         if show_info: fig.text(0.5, 0.025, info, ha='center')
