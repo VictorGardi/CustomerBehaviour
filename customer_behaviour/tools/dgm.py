@@ -76,7 +76,7 @@ class DGM:
             while n_purchases < n_historical_events:
                 purchase = self._update(day = np.mod(l, 7))
                 history = np.column_stack((history, purchase))
-                if np.count_nonzero(purchase):
+                if np.count_nonzero(purchase) > 0:
                     n_purchases += 1
                 l += 1
 
