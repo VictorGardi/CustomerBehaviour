@@ -47,8 +47,11 @@ from scipy.stats import wasserstein_distance
 
 # dir_path = 'temp2/2020-04-08_09-39-53'
 # dir_path = 'temp2/2020-04-08_09-40-34'
+# dir_path = 'temp2/2020-04-09_11-57-50'  # 3
+# dir_path = 'temp2/2020-04-09_11-58-13'  # 4
 
-dir_path = 'temp3/2020-04-08_14-47-28'
+# dir_path = 'temp3/2020-04-08_14-47-28'
+dir_path = 'temp3/2020-04-09_11-59-25'
 
 sample_length = 10000
 normalize = True
@@ -57,6 +60,7 @@ n_last_days = 7
 max_n_purchases_per_n_last_days = 2
 show_info = True
 save_plots = True
+cluster_comparison = False
 
 def main():
     # Load arguments
@@ -77,12 +81,12 @@ def main():
 
     # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
-    compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
+    # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
-    # fig_stats = plot_statistics(dir_path)
-    # fig_path = os.getcwd() + '/' + dir_path + '/figs'
-    # save_plt_as_png(fig_stats, fig_path + '/stats.png')
+    fig_stats = plot_statistics(dir_path)
+    fig_path = os.getcwd() + '/' + dir_path + '/figs'
+    save_plt_as_png(fig_stats, fig_path + '/stats.png')
 
 ############################
 ############################
@@ -185,7 +189,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         case=args['state_rep']
         )
 
-    if args['state_rep'] != 24 or args['state_rep'] != 31:
+    if cluster_comparison and (args['state_rep'] != 24 or args['state_rep'] != 31):
         # Cluster expert data (purcase)
         X = np.array([e.avg_purchase for e in experts])
         T_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
@@ -222,7 +226,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         e = experts[i]
 
         # Compare distributions (purchase)
-        if args['state_rep'] != 24 or args['state_rep'] != 31:
+        if cluster_comparison and (args['state_rep'] != 24 or args['state_rep'] != 31):
             temp = [e.avg_dist_purchase]
             temp.append(pe.get_wd(e.avg_purchase, agent_purchase, normalize))
             temp.append(pe.get_wd(avg_expert_purchase, agent_purchase, normalize))
@@ -236,7 +240,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         all_distances_purchase.append(temp)
 
         # Compare distributions (no purchase)
-        if args['state_rep'] != 24 or args['state_rep'] != 31:
+        if cluster_comparison and (args['state_rep'] != 24 or args['state_rep'] != 31):
             temp = [e.avg_dist_no_purchase]
             temp.append(pe.get_wd(e.avg_no_purchase, agent_no_purchase, normalize))
             temp.append(pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
@@ -249,7 +253,7 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
         temp.append(pe.get_wd(avg_expert_no_purchase, agent_no_purchase, normalize))
         all_distances_no_purchase.append(temp)
 
-    if args['state_rep'] != 24 or args['state_rep'] != 31:
+    if cluster_comparison and (args['state_rep'] != 24 or args['state_rep'] != 31):
         ##### Plot distance to one expert #####
         columns = ['Var. in expert cluster', 'Dist. to expert', 'Dist. to avg. expert', 'Dist. to 1st cluster 1', 'Dist. to 2nd cluster', 'Dist. to 3rd cluster']
         index = ['E{}\n({})'.format(i + 1, int(T_purchase[i])) for i in range(n_experts)]
@@ -273,9 +277,9 @@ def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
     fig, (ax1, ax2) = plt.subplots(1, 2, sharey='row')
     fig.subplots_adjust(bottom=0.25)
 
-    columns = ['E{}'.format(i + 1) for i in range(n_experts)]
+    columns = ['Expert {}'.format(i + 1) for i in range(n_experts)]
     columns.append('Avg. expert')
-    index = ['E{}'.format(i + 1) for i in range(n_experts)]
+    index = ['Agent {}'.format(i + 1) for i in range(n_experts)]
 
     # Plot the distance between each expert cluster (purcahse)
     all_distances_purchase = pd.DataFrame(all_distances_purchase, columns=columns, index=index)
@@ -529,7 +533,7 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
     n_experts = 2 if (args['state_rep'] == 24 or args['state_rep'] == 31) else args['n_experts']
     avg_expert_shopping_ratio = format(avg_expert_n_shopping_days / (n_experts * sample_length), '.2f')
 
-    expert_indices_list = [[0, 1]] if (args['state_rep'] == 24 or args['state_rep'] == 31) else [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
+    expert_indices_list = [[0, 1]] if (args['state_rep'] == 24 or args['state_rep'] == 31) else [[0, 1, 2, 3]] # [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9]]
 
     for j, expert_indices in enumerate(expert_indices_list):
         fig1, axes1 = plt.subplots(2, 2, sharex='col')
