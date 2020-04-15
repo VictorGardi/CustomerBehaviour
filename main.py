@@ -443,7 +443,7 @@ if __name__ == '__main__':
     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
     args.env = get_env(args.case, args.n_experts)  
     args.steps = args.n_training_episodes*args.episode_length
-    assert args.eval_interval > args.steps/15 #to avoid saving too much eval info on ozzy
+    assert args.eval_interval > args.steps/50 #to avoid saving too much eval info on ozzy
 
     if args.n_processes > 1:
         from stable_baselines.common.vec_env import SubprocVecEnv

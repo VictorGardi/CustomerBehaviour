@@ -52,6 +52,9 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     Returns:
         List of returns of evaluation runs.
     """
+
+    '''
+
     assert (n_steps is None) != (n_episodes is None)
 
     logger = logger or logging.getLogger(__name__)
@@ -65,7 +68,7 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     assert sorted(data.files) == sorted(['states', 'actions'])
     
     expert_states = data['states']
-    expert_actions = data['actions']
+    # expert_actions = data['actions']
     # expert_features = []
     # for states, actions in zip(expert_states, expert_actions):
     #     if isinstance(env.env, custom_gym.envs.DiscreteBuyingEvents):
@@ -177,9 +180,9 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
     #     print('\t'.join(str(x) for x in values), file=f)
 
     # Save agent states and actions for later validation of the training process
-    states_actions_file = 'states_actions_' + str(agent.optimizer.t) + '.npz'
-    np.savez(os.path.join(outdir, 'states_actions', states_actions_file), states=np.array(agent_states, dtype=object),
-             actions=np.array(agent_actions, dtype=object))
+    # states_actions_file = 'states_actions_' + str(agent.optimizer.t) + '.npz'
+    # np.savez(os.path.join(outdir, 'states_actions', states_actions_file), states=np.array(agent_states, dtype=object),
+    #          actions=np.array(agent_actions, dtype=object))
 
     # Print KL divergences
     # with open(os.path.join(outdir, 'kl_div_purchase.txt'), 'a+') as f:
@@ -193,6 +196,10 @@ def run_evaluation_episodes(env, agent, n_steps, n_episodes, outdir,
         scores.append(float(test_r))
         logger.info('evaluation episode %s length:%s R:%s',
                     len(scores), episode_len, test_r)
+    '''
+
+    scores = [0]
+    
     return scores
 
 

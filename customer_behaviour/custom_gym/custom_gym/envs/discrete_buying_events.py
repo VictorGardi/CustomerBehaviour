@@ -492,7 +492,7 @@ class Case4():  # [dummy + product 1 + product 2]
         temp1[temp1 > 0] = 1
         temp2[temp2 > 0] = 1
 
-        dummy = np.zeros(10)
+        dummy = np.zeros(self.n_experts)
         dummy[seed] = 1
 
         initial_state = np.concatenate((dummy, temp1, temp2))
