@@ -30,7 +30,7 @@ def get_cluster_labels(T):
 ##### Sample generators #####
 #############################
 
-def get_env_and_model(args, model_dir_path, sample_length):
+def get_env_and_model(args, model_dir_path, sample_length, model_path=None):
     '''
     Creates and returns
         - the environment specified by the the parameters in args
@@ -38,6 +38,8 @@ def get_env_and_model(args, model_dir_path, sample_length):
         - the observation normalizer stored in model_dir_path.
     '''
     
+    if model_path is None: model_path = join(model_dir_path, 'model.npz')
+
     # Create environment
     env = gym.make('discrete-buying-events-v0')
     try:
@@ -88,11 +90,14 @@ def get_env_and_model(args, model_dir_path, sample_length):
     elif args['state_rep'] == 31:
         model = A3CFFSoftmax(10 + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(10 + args['n_historical_events'], clip_threshold=5)
+    elif args['state_rep'] == 4:
+        model = A3CFFSoftmax(args['n_experts'] + 2*args['n_historical_events'], 4, hidden_sizes=hidden_sizes)
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_experts'] + 2*args['n_historical_events'], clip_threshold=5)
     else:
         raise NotImplementedError
     
     # Load model and observation normalizer
-    chainer.serializers.load_npz(join(model_dir_path, 'model.npz'), model)
+    chainer.serializers.load_npz(model_path, model)
     try:
         if args['normalize_obs']:
             chainer.serializers.load_npz(join(model_dir_path, 'obs_normalizer.npz'), obs_normalizer)
@@ -274,38 +279,19 @@ def get_mean_purchase_histo(actions):
 ##############################
 
 def get_info(args):
-    algorithm = args['algo'].upper()
-    n_experts = args['n_experts']
-    expert_length = args['length_expert_TS']
-    episode_length = args['episode_length']
-    n_training_episodes = args['n_training_episodes']
-    n_historical_events = args['n_historical_events']
-    state_rep = args['state_rep']
-    D_layers = args['D_layers']
-    G_layers = args['G_layers']
-    PAC_k = args['PAC_k']
-    gamma = args['gamma']
-    noise = args['noise']
-    batchsize = args['batchsize']
-    n_processes = args['n_processes']
-    normalize_obs = args['normalize_obs']
+    info = ''
 
-    info = 'algo: ' + algorithm + ' | ' \
-         + 'n_training_episodes: ' + str(n_training_episodes) + ' | ' \
-         + 'episode_length: ' + str(episode_length) + ' | ' \
-         + 'n_experts: ' + str(n_experts) + ' | ' \
-         + 'length_expert_TS: ' + str(expert_length) + ' | ' \
-         + 'n_historical_events: ' + str(n_historical_events)  + ' | ' \
-         + 'state_rep: ' + str(state_rep) + '\n' \
-         + 'D_layers: ' + str(D_layers) + ' | ' \
-         + 'G_layers: ' + str(G_layers) + ' | ' \
-         + 'PAC_k: ' + str(PAC_k) + ' | ' \
-         + 'gamma: ' + str(gamma) + ' | ' \
-         + 'noise: ' + str(noise) + ' | ' \
-         + 'batchsize: ' + str(batchsize) + ' | ' \
-         + 'n_processes: ' + str(n_processes) + ' | ' \
-         + 'normalize_obs: ' + str(normalize_obs)
-
+    for a in ['algo', 'n_experts', 'length_expert_TS', 'episode_length', 'n_training_episodes', 'n_historical_events', \
+    'state_rep', 'D_layers', 'G_layers', 'PAC_k', 'gamma', 'noise', 'batchsize', 'n_processes', 'normalize_obs']:
+        try:
+            if a == 'state_rep':
+                info += a + ': ' + str(args[a]) + '\n'
+            elif a == 'normalize_obs':
+                info += a + ': ' + str(args[a])
+            else:
+                info += a + ': ' + str(args[a]) + ' | '
+        except KeyError:
+            pass
 
     return info
 

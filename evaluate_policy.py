@@ -16,18 +16,17 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
 
-
-# dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
-# dir_path = 'results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | length_expert_TS = 256  | 10 000 episodes
+# dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events | length_expert_TS = 256 | 5 000 episodes
+# dir_path = 'results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | length_expert_TS = 256 | 10 000 episodes
 # dir_path = 'results_anton/2020-03-16_20-13-19'  # 10 experts | 256 historical events | length_expert_TS = 1024 | 15 000 episodes
-# dir_path = 'results_anton/2020-03-18_14-01-33'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 5 000 episodes
+# dir_path = 'results_anton/2020-03-18_14-01-33'  # 10 experts | 96 historical events | length_expert_TS = 256 | 5 000 episodes
 # dir_path = 'results_anton/2020-03-17_11-59-59'  # 10 experts | state_rep = 11
-# dir_path = 'results_anton/2020-03-19_09-56-34'  # 10 experts | 96 historical events  | length_expert_TS = 256  | 10 000 episodes
-# dir_path = 'results_anton/2020-03-20_12-52-09'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 15 000 episodes | norm_obs = False
-# dir_path = 'results_anton/2020-03-20_12-47-08'  # 10 experts | state_rep = 22 | 50 historical events | length_expert_TS = 256  | 15 000 episodes  | norm_obs = True
-# dir_path = 'results_anton/2020-03-20_12-51-37'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 15 000 episodes  | norm_obs = True
-# dir_path = 'results_anton/2020-03-27_09-37-13'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256  | 20 000 episodes | norm_obs = False
-# dir_path = 'results_anton/2020-03-27_09-38-46'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 512  | 20 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-19_09-56-34'  # 10 experts | 96 historical events | length_expert_TS = 256 | 10 000 episodes
+# dir_path = 'results_anton/2020-03-20_12-52-09'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-20_12-47-08'  # 10 experts | state_rep = 22 | 50 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = True
+# dir_path = 'results_anton/2020-03-20_12-51-37'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = True
+# dir_path = 'results_anton/2020-03-27_09-37-13'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
+# dir_path = 'results_anton/2020-03-27_09-38-46'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 512 | 20 000 episodes | norm_obs = False
 # dir_path = 'results_anton/2020-03-27_09-39-34'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 1024 | 20 000 episodes | norm_obs = False
 
 #dir_path = 'ozzy_results/airl/discrete_events/10_expert(s)/case_21/2020-03-12_14-24-08' # AIRL 10 experts | state_rep = 21 | 192 historical events | length_expert_TS = 256 | 10 000 episodes
@@ -37,21 +36,30 @@ from scipy.stats import wasserstein_distance
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-44' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
 #dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-34' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = True
 
-# dir_path = 'temp/2020-04-07_09-24-54'
-# dir_path = 'temp/2020-04-07_09-24-37'
-# dir_path = 'temp/2020-04-07_09-25-12'
+# Mode collapse
+# dir_path = 'mode_collapse/2020-04-07_09-24-54'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = False
+# dir_path = 'mode_collapse/2020-04-07_09-24-37'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = False
+# dir_path = 'mode_collapse/2020-04-07_09-25-12'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = False
+# dir_path = 'mode_collapse/2020-04-08_09-39-53'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = True 
+# dir_path = 'mode_collapse/2020-04-08_09-40-34'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = True
+# dir_path = 'mode_collapse/2020-04-09_11-57-50'  # state_rep = 22 | n_experts = 3
+# dir_path = 'mode_collapse/2020-04-09_11-58-13'  # state_rep = 22 | n_experts = 4
+# dir_path = 'mode_collapse/2020-04-09_11-58-41'  # state_rep = 22 | n_experts = 5
 
-# dir_path = 'temp/2020-04-07_21-11-34'
-# dir_path = 'temp/2020-04-07_21-13-26'
-# dir_path = 'temp/2020-04-07_21-13-59'
+# Case 23
+# dir_path = 'case23/2020-04-07_21-13-59'  # PAC_k = 2 | gamma = 0.0 | 30000 episodes
+# dir_path = 'case23/2020-04-07_21-11-34'  # PAC_k = 1 | gamma = 0.0 | 20000 episodes
+dir_path = 'case23/2020-04-07_21-13-26'  # PAC_k = 2 | gamma = 0.0 | 20000 episodes
+# dir_path = 'case23/2020-04-07_21-12-43'  # PAC_k = 1 | gamma = 0.0 | 30000 episodes
+# dir_path = 'case23/2020-04-09_11-11-53'  # PAC_k = 1 | gamma = 0.0 | 40000 episodes | D = 4 * [64] | G = 4 * [64]
 
-# dir_path = 'temp2/2020-04-08_09-39-53'
-# dir_path = 'temp2/2020-04-08_09-40-34'
-# dir_path = 'temp2/2020-04-09_11-57-50'  # 3
-# dir_path = 'temp2/2020-04-09_11-58-13'  # 4
+# Case 31
+# dir_path = 'case31/2020-04-08_14-47-28'  # show_dummies_D = False
+# dir_path = 'case31/2020-04-09_11-59-25'  # show_dummies_D = True
+# dir_path = 'case31/2020-04-11_10-55-36'  # show_dummies_D = True
 
-# dir_path = 'temp3/2020-04-08_14-47-28'
-dir_path = 'temp3/2020-04-09_11-59-25'
+# Case 4
+# dir_path = 'case4/2020-04-09_12-00-51'
 
 sample_length = 10000
 normalize = True
@@ -61,6 +69,7 @@ max_n_purchases_per_n_last_days = 2
 show_info = True
 save_plots = True
 cluster_comparison = False
+model_path = join(os.getcwd(), dir_path, '12288000_checkpoint', 'model.npz')
 
 def main():
     # Load arguments
@@ -79,7 +88,8 @@ def main():
 
     # purchase_ratio(args, model_dir_path)
 
-    # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
     # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
@@ -128,7 +138,7 @@ class Expert():
 
 def compare_clusters(args, model_dir_path, ending_eps, ending_png, info):
     # Load environment, model and observation normalizer
-    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length)
+    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length, model_path=model_path)
 
     # Get possible validation states
     possible_val_states = pe.get_possible_val_states(n_last_days, max_n_purchases_per_n_last_days)
@@ -322,7 +332,7 @@ def get_pr(sequence, n=None):
     return pr
 
 def purchase_ratio(args, model_dir_path):
-    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length=10000)
+    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length=10000, model_path=model_path)
 
     expert_trajectories = env.generate_expert_trajectories(out_dir=None, n_demos_per_expert=1, n_expert_time_steps=sample_length)
     expert_states = expert_trajectories['states']
@@ -429,7 +439,7 @@ def visualize_experts(n_experts=10):
     X = np.array([e.avg_purchase for e in experts])
     T_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
 
-    # Cluster expert data (purcase)
+    # Cluster expert data (no purcase)
     X = np.array([e.avg_no_purchase for e in experts])
     T_no_purchase = fclusterdata(X, 3, 'maxclust', method='single', metric=lambda u, v: wasserstein_distance(u, v))
 
@@ -510,7 +520,7 @@ def visualize_experts(n_experts=10):
 
 def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info):
     # Load environment, model and observation normalizer
-    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length)
+    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length, model_path=model_path)
 
     # Get possible validation states
     possible_val_states = pe.get_possible_val_states(n_last_days, max_n_purchases_per_n_last_days)
@@ -615,7 +625,7 @@ def evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending
 
 def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info):
     # Load environment, model and observation normalizer
-    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length)
+    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length, model_path=model_path)
 
     # Get possible validation states
     possible_val_states = pe.get_possible_val_states(n_last_days, max_n_purchases_per_n_last_days)
@@ -702,6 +712,191 @@ def evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending
         if show_info: fig.text(0.5, 0.025, info, ha='center')
         if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'population_amounts' + ending_png))
 
+    plt.show()
+
+############################
+############################
+
+def convert_action(action):
+    if action == 0:
+        a1 = 1
+        a2 = 1
+    elif action == 1:
+        a1 = 1
+        a2 = 0
+    elif action == 2:
+        a1 = 0
+        a2 = 1
+    else:
+        a1 = 0
+        a2 = 0
+    return a1, a2
+
+def plot_distr_categories(args, info, ending_png, expert_actions, agent_actions, expert_purchase, agent_purchase, expert_no_purchase, agent_no_purchase, agent_n_shopping_days, expert_n_shopping_days, category=1):
+    # Calculate Wasserstein distances
+    wd_purchase = pe.get_wd(expert_purchase, agent_purchase, normalize)
+    wd_no_purchase = pe.get_wd(expert_no_purchase, agent_no_purchase, normalize)
+    
+    n_experts = 2 if (args['state_rep'] == 24 or args['state_rep'] == 31) else args['n_experts']
+    agent_shopping_ratio = format(agent_n_shopping_days / (args['n_experts'] * sample_length), '.3f')
+    expert_shopping_ratio = format(expert_n_shopping_days / (n_experts * sample_length), '.3f')
+    expert_str = 'Expert (p.r.: ' + str(expert_shopping_ratio) + ')'
+    agent_str = 'Agent (p.r.: ' + str(agent_shopping_ratio) + ')'
+
+    fig, (ax1, ax2) = plt.subplots(1, 2)
+    fig.suptitle('Comparison at population level for category ' + str(category))
+
+    # Plot (purchase)
+    data = {expert_str: expert_purchase, agent_str: agent_purchase}
+
+    pe.bar_plot(ax1, data, colors=None, total_width=0.7)
+    ax1.set_xticks([], [])
+    ax1.set_title('Purchase | EMD: {:.5f}'.format(wd_purchase))
+    # ax1.set_title('Last week | Purchase today')
+    ax1.set_ylabel('Probability')
+
+    # Plot (no purchase)
+    data = {expert_str: expert_no_purchase, agent_str: agent_no_purchase}
+    pe.bar_plot(ax2, data, colors=None, total_width=0.7)
+    ax2.set_xticks([], [])
+    ax2.set_title('No purchase | EMD: {:.5f}'.format(wd_no_purchase))
+    # ax2.set_title('Last week | No purchase today')
+    ax2.set_ylabel('Probability')
+    
+    if show_info: fig.text(0.5, 0.025, info, ha='center')
+    if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'population' + ending_png))
+
+    if args['state_rep'] == 23:
+        # Plot histogram of purchase amounts
+        expert_amounts = np.ravel(expert_actions)[np.flatnonzero(expert_actions)]
+        agent_amounts = np.ravel(agent_actions)[np.flatnonzero(agent_actions)]
+
+        fig, ax = plt.subplots()
+        ax.hist(expert_amounts, bins=np.arange(1, 11), alpha=0.8, density=True, label='Expert')
+        ax.hist(agent_amounts, bins=np.arange(1, 11), alpha=0.8, density=True, label='Agent')
+        ax.set_xlabel('Purchase amount')
+        ax.set_ylabel('Normalized frequency')
+        ax.legend()
+
+        if show_info: fig.text(0.5, 0.025, info, ha='center')
+        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'population_amounts' + ending_png))
+
+############################
+############################
+
+def evaluate_policy_at_population_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info):
+    # Load environment, model and observation normalizer
+    env, model, obs_normalizer = pe.get_env_and_model(args, model_dir_path, sample_length, model_path=model_path)
+
+    # Get possible validation states
+    possible_val_states = pe.get_possible_val_states(n_last_days, max_n_purchases_per_n_last_days)
+
+    # Sample agent data from both categories
+    agent_states_1 = []
+    agent_states_2 = []
+    agent_actions_1 = []
+    agent_actions_2 = []
+    #for i in range(args['n_experts']):
+    for i in range(args['n_experts']):
+        # What happens if the agent is repeatedly initialized with history from expert with unique behavior?
+        # Should we collect more than n_experts samples (especially if n_experts <= 10)?
+        temp_s_1 = []
+        temp_s_2 = []
+        temp_a_1 = []
+        temp_a_2 = []
+        temp_states, temp_actions = pe.sample_from_policy(env, model, obs_normalizer)
+        for state, action in zip(temp_states, temp_actions):
+            if len(state) == args['n_experts'] + 2*args['n_historical_events']: # if dummy variables == n_experts
+                s_1, s_2 = np.split(state[args['n_experts']:], 2)
+                #state_2 = state[args['n_historical_events']:]                
+
+            elif len(state) == 10 + 2*args['n_historical_events']: # if dummy variables == 10
+                s_1, s_2 = np.split(state[10:], 2)
+            temp_s_1.append(s_1)
+            temp_s_2.append(s_2)
+            a1, a2 = convert_action(action)
+            temp_a_1.append(a1)
+            temp_a_2.append(a2)
+
+        agent_states_1.append(temp_s_1)
+        agent_states_2.append(temp_s_2)
+        agent_actions_1.append(temp_a_1)
+        agent_actions_2.append(temp_a_2)
+
+    agent_purchase_1, agent_no_purchase_1, agent_n_shopping_days_1 = pe.get_cond_distribs(
+    agent_states_1, 
+    agent_actions_1, 
+    n_last_days, 
+    max_n_purchases_per_n_last_days, 
+    normalize,
+    case=args['state_rep']
+    )
+    agent_purchase_2, agent_no_purchase_2, agent_n_shopping_days_2 = pe.get_cond_distribs(
+    agent_states_1, 
+    agent_actions_1, 
+    n_last_days, 
+    max_n_purchases_per_n_last_days, 
+    normalize,
+    case=args['state_rep']
+    )
+
+        # Sample expert data
+    expert_trajectories = env.generate_expert_trajectories(out_dir=None)
+    expert_states = expert_trajectories['states']
+    expert_actions = expert_trajectories['actions']
+
+    expert_states_1 = []
+    expert_states_2 = []
+    expert_actions_1 = []
+    expert_actions_2 = []
+    #for i in range(args['n_experts']):
+    for i in range(args['n_experts']):
+        # What happens if the agent is repeatedly initialized with history from expert with unique behavior?
+        # Should we collect more than n_experts samples (especially if n_experts <= 10)?
+        temp_s_1 = []
+        temp_s_2 = []
+        temp_a_1 = []
+        temp_a_2 = []
+        temp_states = expert_states[i]
+        temp_actions = expert_actions[i]
+        for state, action in zip(temp_states, temp_actions):
+            if len(state) == args['n_experts'] + 2*args['n_historical_events']: # if dummy variables == n_experts
+                s_1, s_2 = np.split(state[args['n_experts']:], 2)
+                #state_2 = state[args['n_historical_events']:]                
+
+            elif len(state) == 10 + 2*args['n_historical_events']: # if dummy variables == 10
+                s_1, s_2 = np.split(state[10:], 2)
+            temp_s_1.append(s_1)
+            temp_s_2.append(s_2)
+            a1, a2 = convert_action(action)
+            temp_a_1.append(a1)
+            temp_a_2.append(a2)
+
+        expert_states_1.append(temp_s_1)
+        expert_states_2.append(temp_s_2)
+        expert_actions_1.append(temp_a_1)
+        expert_actions_2.append(temp_a_2)
+
+    expert_purchase_1, expert_no_purchase_1, expert_n_shopping_days_1 = pe.get_cond_distribs(
+        expert_states_1, 
+        expert_actions_1, 
+        n_last_days, 
+        max_n_purchases_per_n_last_days, 
+        normalize,
+        case=args['state_rep']
+        )
+
+    expert_purchase_2, expert_no_purchase_2, expert_n_shopping_days_2 = pe.get_cond_distribs(
+        expert_states_2, 
+        expert_actions_2, 
+        n_last_days, 
+        max_n_purchases_per_n_last_days, 
+        normalize,
+        case=args['state_rep']
+        )
+
+    plot_distr_categories(args, info, ending_png, expert_actions_1, agent_actions_1, expert_purchase_1, agent_purchase_1, expert_no_purchase_1, agent_no_purchase_1, agent_n_shopping_days_1, expert_n_shopping_days_1, category=1)
+    plot_distr_categories(args, info, ending_png, expert_actions_2, agent_actions_2, expert_purchase_2, agent_purchase_2, expert_no_purchase_2, agent_no_purchase_2, agent_n_shopping_days_2, expert_n_shopping_days_2, category=2)
     plt.show()
 
 ############################
