@@ -254,6 +254,50 @@ class Case22():  # dummy encoding (dynamic)
         return new_state
 
 
+class Case221():  # dummy encoding (dynamic) + let discriminator compare expert and discriminator from same class
+    def __init__(self, model, n_experts=None):
+        self.model = model
+        self.n_experts = n_experts
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(self.n_experts + n_historical_events) 
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
+        return action
+
+    def get_initial_state(self, history, seed):
+        temp = np.sum(history, axis=0)
+
+        temp[temp > 0] = 1
+
+        dummy = np.zeros(self.n_experts)
+        dummy[seed] = 1
+
+        initial_state = np.concatenate((dummy, temp))
+
+        return initial_state
+
+    def get_step(self, state, action):
+        dummy = state[:self.n_experts]
+        history = state[self.n_experts:]
+        new_state = [*dummy, *history[1:], action]
+        return new_state
+
+
 class Case23():  # Consider purchase amounts
     def __init__(self, model, n_experts=None):
         self.model = model
@@ -528,6 +572,7 @@ def define_case(case):
         2: Case2,
         21: Case21,
         22: Case22,
+        221: Case221,
         23: Case23,
         24: Case24,
         3: Case3,
@@ -553,7 +598,19 @@ class DiscreteBuyingEvents(gym.Env):
         self.state = None
 
 
-    def initialize_environment(self, case, n_historical_events, episode_length, n_experts, n_demos_per_expert, n_expert_time_steps, seed_agent=True, seed_expert=True):
+    def initialize_environment(
+            self, 
+            case, 
+            n_historical_events, 
+            episode_length, 
+            n_experts, 
+            n_demos_per_expert, 
+            n_expert_time_steps, 
+            seed_agent=True, 
+            seed_expert=True,
+            rank=None,
+            n_processes=None
+            ):
         temp = define_case(case)
         self.case = temp(self.model, n_experts)
 
@@ -565,7 +622,15 @@ class DiscreteBuyingEvents(gym.Env):
         self.seed_agent = seed_agent
         self.seed_expert = seed_expert
 
+        self.rank = rank
+        self.n_processes = n_processes
+
         self.observation_space, self.action_space = self.case.get_spaces(n_historical_events)
+
+        if rank:
+            self.i_reset = rank
+        else:
+            self.i_reset = 0
 
 
     def generate_expert_trajectories(self, out_dir, eval=False, seed_expert=None, n_experts=None, n_demos_per_expert=None, n_expert_time_steps=None):
@@ -653,6 +718,12 @@ class DiscreteBuyingEvents(gym.Env):
             if isinstance(self.case, Case24) or isinstance(self.case, Case31):
                 # Choose between Expert 2 and Expert 6
                 seed = np.random.choice([1, 5])
+            elif isinstance(self.case, Case221):
+                seed = self.i_reset % self.n_experts
+                if self.n_processes:
+                    self.i_reset += self.n_processes
+                else:
+                    self.i_reset += 1
             else:
                 seed = np.random.randint(0, self.n_experts)
         else:

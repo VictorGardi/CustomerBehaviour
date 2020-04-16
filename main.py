@@ -193,7 +193,7 @@ def main(args, train_env):
     # Normalize observations based on their empirical mean and variance
     if args.state_rep == 1:
         obs_dim = obs_space.low.size
-    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4:
+    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4 or args.state_rep == 221: 
         obs_dim = obs_space.n
     elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23 or args.state_rep == 31:
         obs_dim = obs_space.nvec.size
@@ -219,6 +219,8 @@ def main(args, train_env):
 
     if args.state_rep == 22 or args.state_rep == 23:
        input_dim_D = obs_dim + 1 # - args.n_experts  # Let discriminator see dummy encoding
+    elif args.state_rep == 221:
+        input_dim_D = obs_dim + 1 - args.n_experts  # Do not let discriminator see dummy encoding
     elif args.state_rep == 24 or args.state_rep == 31:
         input_dim_D = obs_dim + 1 # - 10  # Let discriminator see dummy encoding
     else:
@@ -252,7 +254,9 @@ def main(args, train_env):
                      standardize_advantages=args.standardize_advantages,
                      gamma=args.gamma,
                      PAC_k=args.PAC_k,
-                     noise=args.noise)
+                     noise=args.noise,
+                     n_experts=args.n_experts,
+                     episode_length=args.episode_length)
         
     elif args.algo == 'gail2':
         from customer_behaviour.algorithms.irl.gail import GAIL2
@@ -371,7 +375,9 @@ def make_par_env(args, rank, seed=0):
             n_demos_per_expert=1,
             n_expert_time_steps=args.length_expert_TS, 
             seed_agent=args.seed_agent,
-            seed_expert=args.seed_expert
+            seed_expert=args.seed_expert,
+            rank=rank,
+            n_processes=args.n_processes
             )
 
         env.seed(seed + rank)
@@ -451,6 +457,9 @@ if __name__ == '__main__':
         train_env = SubprocVecEnv([make_par_env(args, i) for i in range(args.n_processes)])
     else:
         train_env = None
+
+    assert args.n_experts % args.n_processes == 0
+    if args.state_rep == 221: assert args.update_interval == args.n_experts * args.episode_length
 
     main(args, train_env)
 
