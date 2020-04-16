@@ -1,3 +1,4 @@
+from sklearn.utils import shuffle
 import chainer
 import numpy as np
 import collections
@@ -7,11 +8,11 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31
+from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221
 
 
 class GAIL(PPO):
-    def __init__(self, env, discriminator, demonstrations, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, n_experts, episode_length, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
@@ -19,11 +20,15 @@ class GAIL(PPO):
         self.gamma = gamma
         self.PAC_k = PAC_k
         self.noise = noise
+        self.n_experts = n_experts
+        self.episode_length = episode_length
 
         self.discriminator = discriminator
 
-        self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
-        self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
+        #self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
+        #self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
+        self.demo_states = [*demonstrations['states']]
+        self.demo_actions = [*demonstrations['actions']]
 
         self.expert_ratio = [get_purchase_ratio(i) for i in demonstrations['actions']]
 
@@ -37,29 +42,45 @@ class GAIL(PPO):
         if self.obs_normalizer:
             self._update_obs_normalizer(dataset)
         xp = self.xp
+        #datasets_iter = [chainer.iterators.SerialIterator(
+        #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
+        dataset_states = []
+        dataset_actions = []
+        for expert in range(self.n_experts):
+            min_idx = expert*self.episode_length
+            max_idx = (expert + 1)*self.episode_length 
+            dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
+            dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
 
-        dataset_iter = chainer.iterators.SerialIterator(
-            dataset, self.minibatch_size, shuffle=True)
         loss_mean = 0
-        while dataset_iter.epoch < self.epochs:
-            batch = dataset_iter.__next__()
-            states = self.batch_states([b['state'] for b in batch], xp, self.phi)
-            actions = xp.array([b['action'] for b in batch])
+        n_mb = int(self.episode_length/self.minibatch_size)
+        for epoch in range(self.epochs):
 
-            self.demonstrations_indexes = xp.random.permutation(len(self.demo_states))[:len(states)]
+            for expert in range(self.n_experts):
+                demo_states = self.demo_states[expert]
+                demo_actions = self.demo_actions[expert]
+                states = dataset_states[expert]
+                actions = dataset_actions[expert]
+                states, actions = shuffle(np.array(states), np.array(actions))
+                demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
-            demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
+                for mb in range(n_mb):
+                    min_idx = mb*self.minibatch_size
+                    max_idx = (mb + 1)*self.minibatch_size
+                    mb_states = states[min_idx:max_idx,:]
+                    mb_actions = actions[min_idx:max_idx]
+                    mb_demo_states = states[min_idx:max_idx,:]
+                    mb_demo_actions = actions[min_idx:max_idx]
 
-            if self.obs_normalizer:
-                states = self.obs_normalizer(states, update=False)
-                demo_states = self.obs_normalizer(demo_states, update=False)
+                    if self.obs_normalizer:
+                        mb_states = self.obs_normalizer(mb_states, update=False)
+                        demo_states = self.obs_normalizer(mb_demo_states, update=False)
 
+                    self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
+                                            self.convert_data_to_feed_discriminator(mb_states, mb_actions))
+                    loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
 
-            self.discriminator.train(self.convert_data_to_feed_discriminator(demo_states, demo_actions),
-                                     self.convert_data_to_feed_discriminator(states, actions))
-            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
-
-            self.discriminator_loss_record.append(float(loss_mean.array))
+                    self.discriminator_loss_record.append(float(loss_mean.array))
         super(self.__class__, self)._update(dataset)
 
     def _update_if_dataset_is_ready(self):
@@ -82,7 +103,6 @@ class GAIL(PPO):
             
             s_a = np.concatenate((states, actions.reshape((-1,1))), axis=1)
 
-            # mod_reward = lambda*reward-(1-lambda)*(get_purchase_ratio(expert) - get_purchase_ratio(agent))
             mod_rewards_temp = []
             rewards_temp = []
             i = 0
@@ -148,15 +168,18 @@ class GAIL(PPO):
 
                 temp.append(np.concatenate((dummy, new_h[-self.env.n_historical_events:])).astype(xp.float32))
             states = temp
+
+        if isinstance(self.env.case, Case221):
+            states = [s[self.env.n_experts:] for s in states]
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
-            # states = [s[self.env.n_experts:] for s in states]
+            #states = [s[self.env.n_experts:] for s in states]
             pass
 
         if isinstance(self.env.case, Case24):
             # Do not show dummy encoding to discriminator
-            # states = [s[10:] for s in states]
+            #states = [s[10:] for s in states]
             pass  # Let discriminator see dummy encoding
 
         if self.PAC_k > 1: #PACGAIL
