@@ -25,13 +25,13 @@ show_info = True
 
 def main(
     a_dir_path=None, 
-    a_sample_length=None, 
-    a_normalize=None,
-    a_n_last_days=None,
-    a_max_n_purchases_per_n_last_days=None,
-    a_save_plots=None,
-    a_show_plots=None,
-    a_show_info=None
+    a_sample_length=10000, 
+    a_normalize=True,
+    a_n_last_days=7,
+    a_max_n_purchases_per_n_last_days=2,
+    a_save_plots=True,
+    a_show_plots=False,
+    a_show_info=True
     ):
     
     if a_dir_path:
