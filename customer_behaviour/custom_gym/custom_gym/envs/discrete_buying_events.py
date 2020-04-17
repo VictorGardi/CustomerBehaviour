@@ -1,4 +1,5 @@
 import gym
+import random
 import collections
 import numpy as np
 from gym import spaces
@@ -47,7 +48,7 @@ def categorize_amount(amount):
         return 10
 
 class Case1():
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -89,7 +90,7 @@ class Case1():
         return new_state
 
 class Case11():
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -133,8 +134,9 @@ class Case11():
 
         return new_state
 
+
 class Case2():
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -172,7 +174,7 @@ class Case2():
 
 
 class Case21():
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -211,7 +213,7 @@ class Case21():
 
 
 class Case22():  # dummy encoding (dynamic)
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
         self.n_experts = n_experts
 
@@ -256,7 +258,7 @@ class Case22():  # dummy encoding (dynamic)
 
 class Case221():  # dummy encoding (dynamic) for generator but no dummy for discrinator
     # + let discriminator compare expert and discriminator from same class
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
         self.n_experts = n_experts
 
@@ -301,7 +303,7 @@ class Case221():  # dummy encoding (dynamic) for generator but no dummy for disc
 
 class Case222(): # dummy encoding (dynamic) for generator but no dummy for discrinator
     # + let discriminator compare expert and discriminator from same class but not from one expert at a time
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
         self.n_experts = n_experts
 
@@ -343,10 +345,8 @@ class Case222(): # dummy encoding (dynamic) for generator but no dummy for discr
         new_state = [*dummy, *history[1:], action]
         return new_state
      
-
-
 class Case23():  # Consider purchase amounts
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
         self.n_experts = n_experts
 
@@ -390,7 +390,7 @@ class Case23():  # Consider purchase amounts
 
 
 class Case24():  # dummy encoding (fixed)
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
         self.n_experts = n_experts
 
@@ -434,7 +434,7 @@ class Case24():  # dummy encoding (fixed)
 
 
 class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT ENDAST [1, 1, ..., 1, 1]
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
 
     def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
@@ -480,7 +480,7 @@ class Case3():  # ÄR DET ETT PROBLEM ATT VI SÄTTER 50 SOM MAX? MINNS RESULTAT 
         return new_state
 
 class Case31():
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
 
     def get_spaces(self, n_historical_events):
@@ -501,7 +501,7 @@ class Case31():
     def get_initial_state(self, history, seed=None):
         # Extract number of elapsed days between purchases
 
-        temp = np.sum(history, axis=0)  # We only consider the first item
+        temp = np.sum(history, axis=0)
         temp[temp > 0] = 1
 
         assert temp[-1] > 0
@@ -540,8 +540,80 @@ class Case31():
 
         return new_state
 
+
+class Case7():
+    def __init__(self, model, n_experts=None, adam_days=None):
+        self.model = model
+        self.n_experts = n_experts
+        self.adam_days = adam_days
+
+        self.adam_baskets = []
+
+        self.N = 10  # items in basket
+
+        for i in range(n_experts):
+            self.model.spawn_new_customer(i)
+            sample = self.model.sample3(self.N, self.adam_days + 1, 0)
+
+            temp_basket = []
+
+            for s in sample:
+                temp = np.sum(s[0], axis=0)
+                temp[temp > 0] = 1
+                assert temp[-1] > 0
+
+                adam = []
+                j = 0
+                for t in reversed(temp):
+                    if t > 0:
+                        adam.append(j)
+                        j = 1
+                    else:
+                        j += 1
+                adam[0] = 1
+
+                temp_basket.append(adam[1:])
+
+            self.adam_baskets.append(temp_basket)
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(self.adam_days + n_historical_events) 
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
+        return action
+
+    def get_initial_state(self, history, adam):
+        temp = np.sum(history, axis=0)
+
+        temp[temp > 0] = 1
+
+        initial_state = np.concatenate((adam, temp))
+
+        return initial_state
+
+    def get_step(self, state, action):  # ska man byta till annan adam här??? initerar agent med random adam så måste måste finnas bland expertdemos?
+        adam = state[:self.adam_days]
+        history = state[self.adam_days:]
+        new_state = [*adam, *history[1:], action]
+        return new_state
+
+
 class Case4():  # [dummy + product 1 + product 2]
-    def __init__(self, model, n_experts=None):
+    def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
         self.n_experts = n_experts
 
@@ -625,7 +697,8 @@ def define_case(case):
         24: Case24,
         3: Case3,
         31: Case31,
-        4: Case4
+        4: Case4,
+        7: Case7
     }
     return switcher.get(case)
 
@@ -657,10 +730,11 @@ class DiscreteBuyingEvents(gym.Env):
             seed_agent=True, 
             seed_expert=True,
             rank=None,
-            n_processes=None
+            n_processes=None,
+            adam_days=None
             ):
         temp = define_case(case)
-        self.case = temp(self.model, n_experts)
+        self.case = temp(self.model, n_experts, adam_days)
 
         self.n_historical_events = n_historical_events
         self.episode_length = episode_length
@@ -709,7 +783,11 @@ class DiscreteBuyingEvents(gym.Env):
                 history = subsample[0]
                 data = subsample[1]
 
-                initial_state = self.case.get_initial_state(history, i_expert)
+                if isinstance(self.case, Case7):
+                    adam = random.sample(self.case.adam_baskets[i_expert], 1)
+                    initial_state = self.case.get_initial_state(history, adam[0])
+                else:
+                    initial_state = self.case.get_initial_state(history, i_expert)
 
                 self.state = initial_state
 
@@ -766,7 +844,7 @@ class DiscreteBuyingEvents(gym.Env):
             if isinstance(self.case, Case24) or isinstance(self.case, Case31):
                 # Choose between Expert 2 and Expert 6
                 seed = np.random.choice([1, 5])
-            elif isinstance(self.case, Case221) or isinstance(self.case, Case222):
+            elif isinstance(self.case, Case221) or isinstance(self.case, Case222) or isinstance(self.case, Case7):
                 seed = self.i_reset % self.n_experts
                 if self.n_processes:
                     self.i_reset += self.n_processes
@@ -791,7 +869,6 @@ class DiscreteBuyingEvents(gym.Env):
             i = np.random.randint(0, 10)
 
             history, _ = sample[i]
-
         else:
             sample = self.case.get_sample(
                 n_demos_per_expert=1, 
@@ -807,9 +884,15 @@ class DiscreteBuyingEvents(gym.Env):
             i = np.random.randint(0, n-self.n_historical_events)
 
             history = all_data[:, i:i+self.n_historical_events]
-        
-        self.state = self.case.get_initial_state(history, seed)
+
+        if isinstance(self.case, Case7):
+            adam = random.sample(self.case.adam_baskets[seed], 1)[0]
+            self.state = self.case.get_initial_state(history, adam)
+        else:
+            self.state = self.case.get_initial_state(history, seed)
+
         self.n_time_steps = 0
+        
         return np.array(self.state)
     
 

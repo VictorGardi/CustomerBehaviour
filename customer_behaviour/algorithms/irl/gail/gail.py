@@ -8,7 +8,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221, Case222
+from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221, Case222, Case7
 
 
 class GAIL(PPO):
@@ -26,7 +26,7 @@ class GAIL(PPO):
         self.discriminator = discriminator
         
         
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7):
             self.demo_states = [*demonstrations['states']]
             self.demo_actions = [*demonstrations['actions']]
         else:
@@ -48,7 +48,7 @@ class GAIL(PPO):
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
 
-        if isinstance(self.env.case, Case221):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7):
             dataset_states = []
             dataset_actions = []
             for expert in range(self.n_experts):
@@ -242,7 +242,7 @@ class GAIL(PPO):
                 temp.append(np.concatenate((dummy, new_h[-self.env.n_historical_events:])).astype(xp.float32))
             states = temp
 
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7):
             states = [s[self.env.n_experts:] for s in states]
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
