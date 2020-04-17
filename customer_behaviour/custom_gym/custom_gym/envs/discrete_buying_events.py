@@ -298,6 +298,11 @@ class Case221():  # dummy encoding (dynamic) + let discriminator compare expert 
         return new_state
 
 
+class Case222(Case221):
+    def __init__(self, model, n_experts=None)
+        super().__init__(model, n_experts) 
+
+
 class Case23():  # Consider purchase amounts
     def __init__(self, model, n_experts=None):
         self.model = model
@@ -573,6 +578,7 @@ def define_case(case):
         21: Case21,
         22: Case22,
         221: Case221,
+        222: Case222,
         23: Case23,
         24: Case24,
         3: Case3,
