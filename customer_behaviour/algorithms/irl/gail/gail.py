@@ -12,7 +12,7 @@ from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case3
 
 
 class GAIL(PPO):
-    def __init__(self, env, discriminator, demonstrations, n_experts, episode_length, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, n_experts, episode_length, adam_days, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
@@ -153,7 +153,7 @@ class GAIL(PPO):
                 loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
 
                 self.discriminator_loss_record.append(float(loss_mean.array))
-                
+
         super(self.__class__, self)._update(dataset)
 
     def _update_if_dataset_is_ready(self):

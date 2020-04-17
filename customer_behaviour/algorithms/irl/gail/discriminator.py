@@ -45,7 +45,7 @@ class Discriminator:
             x_hat = chainer.Variable((e * expert_data + (1 - e) * fake_data).array, requires_grad=True)
             grad, = chainer.grad([self.model(x_hat)], [x_hat], enable_double_backprop=True)
             grad = F.sqrt(F.batch_l2_norm_squared(grad))
-
+ 
             loss_grad = 1 * F.mean_squared_error(grad, xp.ones_like(grad.data))
             loss_gan = F.mean(self.model(fake_data) - self.model(expert_data))
             # discriminator is trained to predict a p(expert|x)

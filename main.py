@@ -9,6 +9,8 @@ To solve CartPole-v0, run:
 import os
 import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
+#from evaluate_policy import ozzy_main as eval_policy
+#from evaluate_training_sampling import main as eval_training
 import numpy as np
 import gym
 import custom_gym
@@ -140,7 +142,8 @@ def main(args, train_env):
             n_demos_per_expert=1,
             n_expert_time_steps=args.length_expert_TS, 
             seed_agent=args.seed_agent,
-            seed_expert=args.seed_expert
+            seed_expert=args.seed_expert,
+            adam_days=args.adam_days
             )
 
         # Use different random seeds for train and test envs
@@ -167,7 +170,8 @@ def main(args, train_env):
         n_demos_per_expert=1,
         n_expert_time_steps=args.length_expert_TS,
         seed_agent=args.seed_agent,
-        seed_expert=args.seed_expert
+        seed_expert=args.seed_expert,
+        adam_days=args.adam_days
         )
     demonstrations = sample_env.generate_expert_trajectories(out_dir=dst, eval=False)
     timestep_limit = None #sample_env.spec.tags.get('wrapper_config.TimeLimit.max_episode_steps')  # This value is None
@@ -183,7 +187,8 @@ def main(args, train_env):
         n_demos_per_expert=1,  # We do not perform any clustering right now
         # n_demos_per_expert=args.n_demos_per_expert,  # How large should the expert cluster be?
         n_expert_time_steps=args.eval_episode_length,  # How long should each expert trajectory be?
-        seed_expert=args.seed_expert
+        seed_expert=args.seed_expert,
+        adam_days=args.adam_days
     )
     temp_env.generate_expert_trajectories(out_dir=dst, eval=True)
 
@@ -194,7 +199,7 @@ def main(args, train_env):
     # Normalize observations based on their empirical mean and variance
     if args.state_rep == 1:
         obs_dim = obs_space.low.size
-    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4 or args.state_rep == 221 or args.state_rep == 222: 
+    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4 or args.state_rep == 221 or args.state_rep == 222 or args.state_rep == 7: 
         obs_dim = obs_space.n
     elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23 or args.state_rep == 31:
         obs_dim = obs_space.nvec.size
@@ -220,7 +225,7 @@ def main(args, train_env):
 
     if args.state_rep == 22 or args.state_rep == 23:
        input_dim_D = obs_dim + 1 # - args.n_experts  # Let discriminator see dummy encoding
-    elif args.state_rep == 221 or args.state_rep == 222:
+    elif args.state_rep == 221 or args.state_rep == 222 or args.state_rep == 7:
         input_dim_D = obs_dim + 1 - args.n_experts  # Do not let discriminator see dummy encoding
     elif args.state_rep == 24 or args.state_rep == 31:
         input_dim_D = obs_dim + 1 # - 10  # Let discriminator see dummy encoding
@@ -257,7 +262,8 @@ def main(args, train_env):
                      PAC_k=args.PAC_k,
                      noise=args.noise,
                      n_experts=args.n_experts,
-                     episode_length=args.episode_length)
+                     episode_length=args.episode_length,
+                     adam_days=args.adam_days)
         
     elif args.algo == 'gail2':
         from customer_behaviour.algorithms.irl.gail import GAIL2
@@ -362,6 +368,12 @@ def main(args, train_env):
     # Move result files to correct folder and remove empty folder
     move_dir(args.outdir, dst)
     os.rmdir(args.outdir)
+    #print('Running evaluate policy...')
+    #eval_policy(a_dir_path=dst)
+    #print('Running evaluate training...')
+    #eval_training(a_dir_path=dst)
+    #print('Done')
+    
 
 
 def make_par_env(args, rank, seed=0):
@@ -378,7 +390,8 @@ def make_par_env(args, rank, seed=0):
             seed_agent=args.seed_agent,
             seed_expert=args.seed_expert,
             rank=rank,
-            n_processes=args.n_processes
+            n_processes=args.n_processes,
+            adam_days=args.adam_days
             )
 
         env.seed(seed + rank)
@@ -403,7 +416,8 @@ def make_env(process_idx, test, args):
             seed_agent=args.seed_agent,
             seed_expert=args.seed_expert,
             rank=process_idx,
-            n_processes=args.n_processes
+            n_processes=args.n_processes,
+            adam_days=args.adam_days
             )
 
         # Use different random seeds for train and test envs
@@ -479,6 +493,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     parser.add_argument('--n_processes', type=int, default=1)
+    parser.add_argument('--adam_days', type=int, default=10)
 
     args = parser.parse_args()
     args.D_layers = tuple(args.D_layers)
