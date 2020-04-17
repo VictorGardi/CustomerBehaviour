@@ -91,14 +91,62 @@ def main():
     # purchase_ratio(args, model_dir_path)
 
     # evaluate_policy_at_population_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
-    # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
-    # compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
+    compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
     fig_stats = plot_statistics(dir_path)
     fig_path = os.getcwd() + '/' + dir_path + '/figs'
     save_plt_as_png(fig_stats, fig_path + '/stats.png')
+
+def main2(
+    a_dir_path,
+    a_sample_length = 10000, 
+    a_normalize = True,
+    a_n_demos_per_expert = 10,
+    a_n_last_days = 7,
+    a_max_n_purchases_per_n_last_days = 2,
+    a_show_info = True,
+    a_show_plots = False,
+    a_save_plots = True,
+    a_cluster_comparison = False
+    ):
+    
+    global dir_path, sample_length, normalize, n_demos_per_expert, n_last_days, max_n_purchases_per_n_last_days, show_info, show_plots, save_plots, cluster_comparison
+    dir_path = a_dir_path
+    sample_length = a_sample_length
+    normalize = a_normalize
+    n_demos_per_expert = a_n_demos_per_expert
+    n_last_days = a_n_last_days
+    max_n_purchases_per_n_last_days = a_max_n_purchases_per_n_last_days
+    show_info = a_show_info
+    show_plots = a_show_plots
+    save_plots = a_save_plots
+    cluster_comparison = a_cluster_comparison
+
+    # Load arguments
+    args_path = join(dir_path, 'args.txt')
+    args = json.loads(open(args_path, 'r').read())
+
+    info = pe.get_info(args)
+
+    # Get path of model 
+    model_dir_path = next((d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('finish')), None)
+
+    os.makedirs(join(dir_path, 'figs'), exist_ok=True)
+
+    ending_eps = '_normalize.eps' if normalize else '.eps'
+    ending_png = '_normalize.png' if normalize else '.png'
+
+    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
+    compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
+
+    fig_stats = plot_statistics(dir_path)
+    fig_path = os.getcwd() + '/' + dir_path + '/figs'
+    save_plt_as_png(fig_stats, fig_path + '/stats.png')
+    if not show_plots: plt.close(fig_stats)
 
 ############################
 ############################
@@ -805,7 +853,7 @@ def plot_statistics(dir_path):
     plt.ylabel('Average reward')
 
     plt.tight_layout()
-    plt.show()
+    if show_plots: plt.show()
     
     return fig
 
