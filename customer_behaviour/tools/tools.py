@@ -8,6 +8,41 @@ import itertools
 import chainerrl
 from chainerrl.misc.batch_states import batch_states
 
+class Expert():
+    def __init__(self, purchases, no_purchases, avg_purchase, avg_no_purchase, purchase_ratio=None):
+        self.purchases = purchases
+        self.no_purchases = no_purchases
+
+        self.avg_purchase = avg_purchase
+        self.avg_no_purchase = avg_no_purchase
+
+        self.purchase_ratio = purchase_ratio
+
+        self.calc_avg_dist_from_centroid()
+
+    def calc_avg_dist_from_centroid(self):
+        temp = []
+        for d in self.purchases:
+            temp.append(pe.get_wd(d, self.avg_purchase, normalize))
+        self.avg_dist_purchase = np.mean(temp)
+
+        temp = []
+        for d in self.no_purchases:
+            temp.append(pe.get_wd(d, self.avg_no_purchase, normalize))
+        self.avg_dist_no_purchase = np.mean(temp)
+
+    def calculate_pairwise_distances(self):
+        self.distances_purchase = []
+        for u, v in itertools.combinations(self.purchases, 2):
+            wd = pe.get_wd(u, v, normalize)
+            self.distances_purchase.append(wd)
+
+        self.distances_no_purchase = []
+        for u, v in itertools.combinations(self.no_purchases, 2):
+            wd = pe.get_wd(u, v, normalize)
+            self.distances_no_purchase.append(wd)
+
+
 
 def get_outdir(algo, case, n_experts, state_rep):
 

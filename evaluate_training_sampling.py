@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import customer_behaviour.tools.policy_evaluation as pe
 from os.path import join
 from customer_behaviour.tools.tools import save_plt_as_png
-from evaluate_policy import Expert
+#from evaluate_policy import Expert
 from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
 from matplotlib.ticker import MaxNLocator
@@ -23,7 +23,41 @@ save_plots = True
 show_plots = True
 show_info = True
 
-def main(
+class Expert():
+    def __init__(self, purchases, no_purchases, avg_purchase, avg_no_purchase, purchase_ratio=None):
+        self.purchases = purchases
+        self.no_purchases = no_purchases
+
+        self.avg_purchase = avg_purchase
+        self.avg_no_purchase = avg_no_purchase
+
+        self.purchase_ratio = purchase_ratio
+
+        self.calc_avg_dist_from_centroid()
+
+    def calc_avg_dist_from_centroid(self):
+        temp = []
+        for d in self.purchases:
+            temp.append(pe.get_wd(d, self.avg_purchase, normalize))
+        self.avg_dist_purchase = np.mean(temp)
+
+        temp = []
+        for d in self.no_purchases:
+            temp.append(pe.get_wd(d, self.avg_no_purchase, normalize))
+        self.avg_dist_no_purchase = np.mean(temp)
+
+    def calculate_pairwise_distances(self):
+        self.distances_purchase = []
+        for u, v in itertools.combinations(self.purchases, 2):
+            wd = pe.get_wd(u, v, normalize)
+            self.distances_purchase.append(wd)
+
+        self.distances_no_purchase = []
+        for u, v in itertools.combinations(self.no_purchases, 2):
+            wd = pe.get_wd(u, v, normalize)
+            self.distances_no_purchase.append(wd)
+
+def eval_training(
     a_dir_path=None, 
     a_sample_length=10000, 
     a_normalize=True,
@@ -204,7 +238,7 @@ def main(
         fig, ax = plt.subplots()
         fig.subplots_adjust(bottom=0.25)
         fig.subplots_adjust(left=0.25)
-        fig.suptitle('Number of traning steps: %d' % n_updates)
+        fig.suptitle('Number of training steps: %d' % n_steps)
 
         columns = ['Customer {}'.format(i + 1) for i in range(n_experts)]
         columns.append('Avg. customer')
@@ -215,7 +249,7 @@ def main(
         fig.suptitle('Comparison at individual level')
 
         if show_info: fig.text(0.5, 0.025, info, ha='center')
-        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'ind_' + str(n_updates) + ending_png))
+        if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'ind_' + str(n_steps) + ending_png))
 
         plt.close(fig)
 

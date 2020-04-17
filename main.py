@@ -9,8 +9,8 @@ To solve CartPole-v0, run:
 import os
 import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
-#from evaluate_policy import ozzy_main as eval_policy
-#from evaluate_training_sampling import main as eval_training
+from evaluate_policy import *
+from evaluate_training_sampling import *
 import numpy as np
 import gym
 import custom_gym
@@ -368,11 +368,11 @@ def main(args, train_env):
     # Move result files to correct folder and remove empty folder
     move_dir(args.outdir, dst)
     os.rmdir(args.outdir)
-    #print('Running evaluate policy...')
-    #eval_policy(a_dir_path=dst)
-    #print('Running evaluate training...')
-    #eval_training(a_dir_path=dst)
-    #print('Done')
+    print('Running evaluate policy...')
+    eval_policy(a_dir_path=dst)
+    print('Running evaluate training...')
+    eval_training(a_dir_path=dst)
+    print('Done')
     
 
 

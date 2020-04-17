@@ -100,7 +100,7 @@ def main():
     fig_path = os.getcwd() + '/' + dir_path + '/figs'
     save_plt_as_png(fig_stats, fig_path + '/stats.png')
 
-def main2(
+def eval_policy(
     a_dir_path,
     a_sample_length = 10000, 
     a_normalize = True,
