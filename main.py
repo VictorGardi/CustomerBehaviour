@@ -13,6 +13,7 @@ import numpy as np
 import gym
 import custom_gym
 import gym.wrappers
+import functools
 
 import chainer
 from chainer import functions as F
@@ -386,8 +387,44 @@ def make_par_env(args, rank, seed=0):
         
         return env
     
-    set_global_seeds(seed)
+    # set_global_seeds(seed)
     return _init
+
+def make_env(process_idx, test, args):
+        env = gym.make(args.env)
+
+        env.initialize_environment(
+            case=args.state_rep, 
+            n_historical_events=args.n_historical_events, 
+            episode_length=args.episode_length,
+            n_experts=args.n_experts,
+            n_demos_per_expert=1,
+            n_expert_time_steps=args.length_expert_TS, 
+            seed_agent=args.seed_agent,
+            seed_expert=args.seed_expert,
+            rank=process_idx,
+            n_processes=args.n_processes
+            )
+
+        # Use different random seeds for train and test envs
+        # process_seed = int(process_seeds[process_idx])
+        # env_seed = 2 ** 32 - 1 - process_seed if test else process_seed
+        # env.seed(env_seed)
+
+        # Cast observations to float32 because our model uses float32
+        env = chainerrl.wrappers.CastObservationToFloat32(env)
+        
+        # if args.monitor and process_idx == 0:
+        #     env = chainerrl.wrappers.Monitor(env, args.outdir)
+        
+        # Scale rewards observed by agents
+        if not test:
+            misc.env_modifiers.make_reward_filtered(
+                env, lambda x: x * args.reward_scale_factor)
+        
+        # if args.render and process_idx == 0 and not test:
+        #     env = chainerrl.wrappers.Render(env)
+        return env
 
 
 if __name__ == '__main__':
@@ -451,10 +488,18 @@ if __name__ == '__main__':
     args.steps = args.n_training_episodes*args.episode_length
     assert args.eval_interval > args.steps/50 #to avoid saving too much eval info on ozzy
 
+    '''
     if args.n_processes > 1:
         from stable_baselines.common.vec_env import SubprocVecEnv
         from stable_baselines.common import set_global_seeds
         train_env = SubprocVecEnv([make_par_env(args, i) for i in range(args.n_processes)])
+    else:
+        train_env = None
+    '''
+
+    if args.n_processes > 1:
+        from chainerrl.envs import MultiprocessVectorEnv
+        train_env = MultiprocessVectorEnv([functools.partial(make_env, idx, False, args) for idx, env in enumerate(range(args.n_processes))])
     else:
         train_env = None
 
