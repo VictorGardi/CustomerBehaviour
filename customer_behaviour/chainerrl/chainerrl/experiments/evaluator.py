@@ -228,6 +228,9 @@ def batch_run_evaluation_episodes(
     Returns:
         List of returns of evaluation runs.
     """
+
+    '''
+    
     assert (n_steps is None) != (n_episodes is None)
 
     logger = logger or logging.getLogger(__name__)
@@ -333,6 +336,11 @@ def batch_run_evaluation_episodes(
         logger.info('evaluation episode %s length: %s R: %s',
                     i, epi_len, epi_ret)
     return [float(r) for r in eval_episode_returns]
+
+    '''
+
+    scores = [0]
+    return scores
 
 
 def eval_performance(env, agent, n_steps, n_episodes, outdir, max_episode_len=None,
