@@ -1,5 +1,4 @@
 import gym
-import inspect
 import collections
 import numpy as np
 from gym import spaces
