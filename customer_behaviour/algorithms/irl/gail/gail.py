@@ -8,7 +8,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221
+from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221, Case222
 
 
 class GAIL(PPO):
@@ -26,7 +26,7 @@ class GAIL(PPO):
         self.discriminator = discriminator
         
         
-        if isinstance(self.env.case, Case221):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222):
             self.demo_states = [*demonstrations['states']]
             self.demo_actions = [*demonstrations['actions']]
         else:
@@ -90,45 +90,46 @@ class GAIL(PPO):
 
                         self.discriminator_loss_record.append(float(loss_mean.array))
 
-        # elif isinstance(self.env.case, Case222):
-        #     dataset_states = []
-        #     dataset_actions = []
-        #     for expert in range(self.n_experts):
-        #         min_idx = expert*self.episode_length
-        #         max_idx = (expert + 1)*self.episode_length 
-        #         dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
-        #         dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
+        elif isinstance(self.env.case, Case222):
+            dataset_states = []
+            dataset_actions = []
+            for expert in range(self.n_experts):
+                min_idx = expert*self.episode_length
+                max_idx = (expert + 1)*self.episode_length 
+                dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
+                dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
 
-        #     loss_mean = 0
-        #     n_mb = int(self.episode_length/self.minibatch_size)
-        #     for epoch in range(self.epochs):
+            loss_mean = 0
+            n_mb = int(self.episode_length/self.minibatch_size)
+            for epoch in range(self.epochs):
+                # shuffle states and actions in the same way for each expert's trajectory
+                shuffled_agent_states, shuffled_agent_actions = self.shuffle_dataset(dataset_states, dataset_actions)
+                shuffled_demo_states, shuffled_demo_actions = self.shuffle_dataset(self.demo_states, self.demo_actions)
+                
+                for mb in range(n_mb):
+                    min_idx = mb*self.minibatch_size
+                    max_idx = (mb + 1)*self.minibatch_size
+                    
+                    for i in range(self.n_experts):
+                        expert_states = shuffled_demo_states[i]
+                        expert_actions = shuffled_demo_actions[i]
+                        agent_states = np.array(shuffled_agent_states[i])
+                        agent_actions = np.array(shuffled_agent_actions[i])
 
-        #         for mb in range(n_mb):
-        #             min_idx = mb*self.minibatch_size
-        #             max_idx = (mb + 1)*self.minibatch_size
-        #             #mb_states = states[min_idx:max_idx,:]
-        #             #mb_actions = actions[min_idx:max_idx]
-        #             #mb_demo_states = states[min_idx:max_idx,:]
-        #             #mb_demo_actions = actions[min_idx:max_idx]
+                        mb_demo_states = expert_states[min_idx:max_idx,:]
+                        mb_demo_actions = expert_actions[min_idx:max_idx]
+                        mb_states = agent_states[min_idx:max_idx,:]
+                        mb_actions = agent_actions[min_idx:max_idx]
+                        
+                        if self.obs_normalizer:
+                            mb_states = self.obs_normalizer(mb_states, update=False)
+                            demo_states = self.obs_normalizer(mb_demo_states, update=False)
 
-        #             for expert in range(self.n_experts):
-        #                 mb_demo_states = self.demo_states[expert][min_idx:max_idx,:]
-        #                 mb_demo_actions = self.demo_actions[expert][min_idx:max_idx]
-        #                 mb_states = dataset_states[expert][min_idx:max_idx,:]
-        #                 mb_actions = dataset_actions[expert][min_idx:max_idx]
-        #                 states, actions = shuffle(np.array(states), np.array(actions))
-        #                 demo_states, demo_actions = shuffle(demo_states, demo_actions)
+                        self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
+                                                self.convert_data_to_feed_discriminator(mb_states, mb_actions))
+                        loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
 
-        #                 if self.obs_normalizer:
-        #                     mb_states = self.obs_normalizer(mb_states, update=False)
-        #                     demo_states = self.obs_normalizer(mb_demo_states, update=False)
-
-        #                 self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
-        #                                         self.convert_data_to_feed_discriminator(mb_states, mb_actions))
-        #                 loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
-
-        #                 self.discriminator_loss_record.append(float(loss_mean.array))
-
+                        self.discriminator_loss_record.append(float(loss_mean.array))
 
         else:
             dataset_iter = chainer.iterators.SerialIterator(
@@ -152,6 +153,7 @@ class GAIL(PPO):
                 loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
 
                 self.discriminator_loss_record.append(float(loss_mean.array))
+                
         super(self.__class__, self)._update(dataset)
 
     def _update_if_dataset_is_ready(self):
@@ -240,7 +242,7 @@ class GAIL(PPO):
                 temp.append(np.concatenate((dummy, new_h[-self.env.n_historical_events:])).astype(xp.float32))
             states = temp
 
-        if isinstance(self.env.case, Case221):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222):
             states = [s[self.env.n_experts:] for s in states]
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
@@ -285,7 +287,15 @@ class GAIL(PPO):
                 ('average_D_output', mean_or_nan(self.D_output_mean)), 
                 ('average_mod_rewards', mean_or_nan(self.mod_rewards)),
                 ('average_rewards', mean_or_nan(self.rewards))] + super().get_statistics()
-
+    
+    def shuffle_dataset(self, states, actions):
+        shuffled_states = []
+        shuffled_actions = []
+        for i in range(self.n_experts):
+            shuffled_s, shuffled_a = shuffle(states[i], actions[i])
+            shuffled_states.append(shuffled_s)
+            shuffled_actions.append(shuffled_a)
+        return shuffled_states, shuffled_actions
 
 def gailtype_constructor(rl_algo=TRPO):
     _gail_parent = GAIL.mro()[1]

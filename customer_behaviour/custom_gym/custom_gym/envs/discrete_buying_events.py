@@ -254,7 +254,8 @@ class Case22():  # dummy encoding (dynamic)
         return new_state
 
 
-class Case221():  # dummy encoding (dynamic) + let discriminator compare expert and discriminator from same class
+class Case221():  # dummy encoding (dynamic) for generator but no dummy for discrinator
+    # + let discriminator compare expert and discriminator from same class
     def __init__(self, model, n_experts=None):
         self.model = model
         self.n_experts = n_experts
@@ -298,9 +299,50 @@ class Case221():  # dummy encoding (dynamic) + let discriminator compare expert 
         return new_state
 
 
-class Case222(Case221):
-    def __init__(self, model, n_experts=None)
-        super().__init__(model, n_experts) 
+class Case222(): # dummy encoding (dynamic) for generator but no dummy for discrinator
+    # + let discriminator compare expert and discriminator from same class but not from one expert at a time
+    def __init__(self, model, n_experts=None):
+        self.model = model
+        self.n_experts = n_experts
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(self.n_experts + n_historical_events) 
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
+        return action
+
+    def get_initial_state(self, history, seed):
+        temp = np.sum(history, axis=0)
+
+        temp[temp > 0] = 1
+
+        dummy = np.zeros(self.n_experts)
+        dummy[seed] = 1
+
+        initial_state = np.concatenate((dummy, temp))
+
+        return initial_state
+
+    def get_step(self, state, action):
+        dummy = state[:self.n_experts]
+        history = state[self.n_experts:]
+        new_state = [*dummy, *history[1:], action]
+        return new_state
+     
 
 
 class Case23():  # Consider purchase amounts

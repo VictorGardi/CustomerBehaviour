@@ -193,7 +193,7 @@ def main(args, train_env):
     # Normalize observations based on their empirical mean and variance
     if args.state_rep == 1:
         obs_dim = obs_space.low.size
-    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4 or args.state_rep == 221: 
+    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4 or args.state_rep == 221 or args.state_rep == 222: 
         obs_dim = obs_space.n
     elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23 or args.state_rep == 31:
         obs_dim = obs_space.nvec.size
@@ -219,7 +219,7 @@ def main(args, train_env):
 
     if args.state_rep == 22 or args.state_rep == 23:
        input_dim_D = obs_dim + 1 # - args.n_experts  # Let discriminator see dummy encoding
-    elif args.state_rep == 221:
+    elif args.state_rep == 221 or args.state_rep == 222:
         input_dim_D = obs_dim + 1 - args.n_experts  # Do not let discriminator see dummy encoding
     elif args.state_rep == 24 or args.state_rep == 31:
         input_dim_D = obs_dim + 1 # - 10  # Let discriminator see dummy encoding
@@ -459,7 +459,7 @@ if __name__ == '__main__':
         train_env = None
 
     assert args.n_experts % args.n_processes == 0
-    if args.state_rep == 221: assert args.update_interval == args.n_experts * args.episode_length
+    if args.state_rep == 221 or args.state_rep == 222: assert args.update_interval == args.n_experts * args.episode_length
 
     main(args, train_env)
 
