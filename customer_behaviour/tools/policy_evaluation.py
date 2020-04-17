@@ -30,7 +30,7 @@ def get_cluster_labels(T):
 ##### Sample generators #####
 #############################
 
-def get_env_and_model(args, model_dir_path, sample_length, model_path=None):
+def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only_env=False):
     '''
     Creates and returns
         - the environment specified by the the parameters in args
@@ -66,6 +66,8 @@ def get_env_and_model(args, model_dir_path, sample_length, model_path=None):
             seed_expert=args['seed_expert']
             )
 
+    if only_env: return env
+
     # Initialize model and observation normalizer
     if 'G_layers' in args:
         hidden_sizes = args['G_layers']
@@ -78,7 +80,7 @@ def get_env_and_model(args, model_dir_path, sample_length, model_path=None):
     elif args['state_rep'] == 11:
         model = A3CFFSoftmax(2 + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(2 + args['n_historical_events'], clip_threshold=5)
-    elif args['state_rep'] == 22:
+    elif args['state_rep'] == 22 or args['state_rep'] == 221:
         model = A3CFFSoftmax(args['n_experts'] + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_experts'] + args['n_historical_events'], clip_threshold=5)
     elif args['state_rep'] == 23:
