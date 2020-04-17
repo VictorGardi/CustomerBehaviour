@@ -24,11 +24,14 @@ class GAIL(PPO):
         self.episode_length = episode_length
 
         self.discriminator = discriminator
-
-        #self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
-        #self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
-        self.demo_states = [*demonstrations['states']]
-        self.demo_actions = [*demonstrations['actions']]
+        
+        
+        if isinstance(self.env.case, Case221):
+            self.demo_states = [*demonstrations['states']]
+            self.demo_actions = [*demonstrations['actions']]
+        else:
+            self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
+            self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
 
         self.expert_ratio = [get_purchase_ratio(i) for i in demonstrations['actions']]
 
@@ -44,43 +47,111 @@ class GAIL(PPO):
         xp = self.xp
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
-        dataset_states = []
-        dataset_actions = []
-        for expert in range(self.n_experts):
-            min_idx = expert*self.episode_length
-            max_idx = (expert + 1)*self.episode_length 
-            dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
-            dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
 
-        loss_mean = 0
-        n_mb = int(self.episode_length/self.minibatch_size)
-        for epoch in range(self.epochs):
-
+        if isinstance(self.env.case, Case221):
+            dataset_states = []
+            dataset_actions = []
             for expert in range(self.n_experts):
-                demo_states = self.demo_states[expert]
-                demo_actions = self.demo_actions[expert]
-                states = dataset_states[expert]
-                actions = dataset_actions[expert]
-                states, actions = shuffle(np.array(states), np.array(actions))
-                demo_states, demo_actions = shuffle(demo_states, demo_actions)
+                min_idx = expert*self.episode_length
+                max_idx = (expert + 1)*self.episode_length 
+                dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
+                dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
 
-                for mb in range(n_mb):
-                    min_idx = mb*self.minibatch_size
-                    max_idx = (mb + 1)*self.minibatch_size
-                    mb_states = states[min_idx:max_idx,:]
-                    mb_actions = actions[min_idx:max_idx]
-                    mb_demo_states = states[min_idx:max_idx,:]
-                    mb_demo_actions = actions[min_idx:max_idx]
+            loss_mean = 0
+            n_mb = int(self.episode_length/self.minibatch_size)
+            for epoch in range(self.epochs):
 
-                    if self.obs_normalizer:
-                        mb_states = self.obs_normalizer(mb_states, update=False)
-                        demo_states = self.obs_normalizer(mb_demo_states, update=False)
+                for expert in range(self.n_experts):
+                    demo_states = self.demo_states[expert]
+                    demo_actions = self.demo_actions[expert]
+                    states = dataset_states[expert]
+                    actions = dataset_actions[expert]
+                    states, actions = shuffle(np.array(states), np.array(actions))
+                    demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
-                    self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
-                                            self.convert_data_to_feed_discriminator(mb_states, mb_actions))
-                    loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+                    for mb in range(n_mb):
+                        min_idx = mb*self.minibatch_size
+                        max_idx = (mb + 1)*self.minibatch_size
+                        mb_states = states[min_idx:max_idx,:]
+                        mb_actions = actions[min_idx:max_idx]
+                        mb_demo_states = demo_states[min_idx:max_idx,:]
+                        mb_demo_actions = demo_actions[min_idx:max_idx]
+                        #demonstrations_indices = xp.random.permutation(len(self.demo_states))[:len(states)]
 
-                    self.discriminator_loss_record.append(float(loss_mean.array))
+                        #demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
+
+                        if self.obs_normalizer:
+                            mb_states = self.obs_normalizer(mb_states, update=False)
+                            mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
+
+                        self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
+                                                self.convert_data_to_feed_discriminator(mb_states, mb_actions))
+                        loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+
+                        self.discriminator_loss_record.append(float(loss_mean.array))
+
+        # elif isinstance(self.env.case, Case222):
+        #     dataset_states = []
+        #     dataset_actions = []
+        #     for expert in range(self.n_experts):
+        #         min_idx = expert*self.episode_length
+        #         max_idx = (expert + 1)*self.episode_length 
+        #         dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
+        #         dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
+
+        #     loss_mean = 0
+        #     n_mb = int(self.episode_length/self.minibatch_size)
+        #     for epoch in range(self.epochs):
+
+        #         for mb in range(n_mb):
+        #             min_idx = mb*self.minibatch_size
+        #             max_idx = (mb + 1)*self.minibatch_size
+        #             #mb_states = states[min_idx:max_idx,:]
+        #             #mb_actions = actions[min_idx:max_idx]
+        #             #mb_demo_states = states[min_idx:max_idx,:]
+        #             #mb_demo_actions = actions[min_idx:max_idx]
+
+        #             for expert in range(self.n_experts):
+        #                 mb_demo_states = self.demo_states[expert][min_idx:max_idx,:]
+        #                 mb_demo_actions = self.demo_actions[expert][min_idx:max_idx]
+        #                 mb_states = dataset_states[expert][min_idx:max_idx,:]
+        #                 mb_actions = dataset_actions[expert][min_idx:max_idx]
+        #                 states, actions = shuffle(np.array(states), np.array(actions))
+        #                 demo_states, demo_actions = shuffle(demo_states, demo_actions)
+
+        #                 if self.obs_normalizer:
+        #                     mb_states = self.obs_normalizer(mb_states, update=False)
+        #                     demo_states = self.obs_normalizer(mb_demo_states, update=False)
+
+        #                 self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
+        #                                         self.convert_data_to_feed_discriminator(mb_states, mb_actions))
+        #                 loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+
+        #                 self.discriminator_loss_record.append(float(loss_mean.array))
+
+
+        else:
+            dataset_iter = chainer.iterators.SerialIterator(
+            dataset, self.minibatch_size, shuffle=True)
+            loss_mean = 0
+            while dataset_iter.epoch < self.epochs:
+                batch = dataset_iter.__next__()
+                states = self.batch_states([b['state'] for b in batch], xp, self.phi)
+                actions = xp.array([b['action'] for b in batch])
+
+                self.demonstrations_indexes = xp.random.permutation(len(self.demo_states))[:len(states)]
+
+                demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
+
+                if self.obs_normalizer:
+                    states = self.obs_normalizer(states, update=False)
+                    demo_states = self.obs_normalizer(demo_states, update=False)
+
+                self.discriminator.train(self.convert_data_to_feed_discriminator(demo_states, demo_actions),
+                                        self.convert_data_to_feed_discriminator(states, actions))
+                loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+
+                self.discriminator_loss_record.append(float(loss_mean.array))
         super(self.__class__, self)._update(dataset)
 
     def _update_if_dataset_is_ready(self):
@@ -206,7 +277,8 @@ class GAIL(PPO):
                 #print(np.asarray(stacked).shape)
                 #quit()
                 return chainer.Variable(xp.asarray(stacked, dtype=xp.float32))
-        return F.concat((xp.array(states), xp.array(actions, dtype=xp.float32).reshape((-1,1))))
+
+        return F.concat((xp.array(states, dtype=xp.float32), xp.array(actions, dtype=xp.float32).reshape((-1,1))))
     
     def get_statistics(self):
         return [('average_discriminator_loss', mean_or_nan(self.discriminator_loss_record)),
