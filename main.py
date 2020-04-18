@@ -223,14 +223,20 @@ def main(args, train_env):
     opt = chainer.optimizers.Adam(alpha=args.lr, eps=10e-1)
     opt.setup(model)
 
-    if args.state_rep == 22 or args.state_rep == 23:
-       input_dim_D = obs_dim + 1 # - args.n_experts  # Let discriminator see dummy encoding
-    elif args.state_rep == 221 or args.state_rep == 222 or args.state_rep == 7:
-        input_dim_D = obs_dim + 1 - args.n_experts  # Do not let discriminator see dummy encoding
-    elif args.state_rep == 24 or args.state_rep == 31:
-        input_dim_D = obs_dim + 1 # - 10  # Let discriminator see dummy encoding
-    else:
-       input_dim_D = obs_dim + 1
+    # if args.state_rep == 22 or args.state_rep == 23:
+    #    input_dim_D = obs_dim + 1 # - args.n_experts  # Let discriminator see dummy encoding
+    # elif args.state_rep == 221 or args.state_rep == 222 or args.state_rep == 7:
+    #     input_dim_D = obs_dim + 1 - args.n_experts  # Do not let discriminator see dummy encoding
+    # elif args.state_rep == 24 or args.state_rep == 31:
+    #     input_dim_D = obs_dim + 1 # - 10  # Let discriminator see dummy encoding
+    # else:
+    #    input_dim_D = obs_dim + 1
+
+    if args.show_D_dummy: # Let discriminator see dummy
+        input_dim_D = obs_dim + 1
+    elif not args.show_D_dummy: # Do not let discriminator see dummy
+        input_dim_D = obs_dim + 1 - args.n_experts
+
 
     if args.weight_decay > 0:
         opt.add_hook(NonbiasWeightDecay(args.weight_decay))
@@ -263,7 +269,8 @@ def main(args, train_env):
                      noise=args.noise,
                      n_experts=args.n_experts,
                      episode_length=args.episode_length,
-                     adam_days=args.adam_days)
+                     adam_days=args.adam_days,
+                     dummy_D=args.show_D_dummy)
         
     elif args.algo == 'gail2':
         from customer_behaviour.algorithms.irl.gail import GAIL2
@@ -494,6 +501,7 @@ if __name__ == '__main__':
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     parser.add_argument('--n_processes', type=int, default=1)
     parser.add_argument('--adam_days', type=int, default=10)
+    parser.add_argument('--show_D_dummy', type=str2bool, nargs='?', const=True, default=False)
 
     args = parser.parse_args()
     args.D_layers = tuple(args.D_layers)

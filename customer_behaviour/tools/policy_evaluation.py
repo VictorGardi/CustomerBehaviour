@@ -290,7 +290,7 @@ def get_info(args):
     info = ''
 
     for a in ['algo', 'n_experts', 'length_expert_TS', 'episode_length', 'n_training_episodes', 'n_historical_events', \
-    'state_rep', 'D_layers', 'G_layers', 'PAC_k', 'gamma', 'noise', 'batchsize', 'n_processes', 'normalize_obs']:
+    'state_rep', 'D_layers', 'G_layers', 'PAC_k', 'gamma', 'noise', 'batchsize', 'n_processes', 'show_D_dummy', 'normalize_obs']:
         try:
             if a == 'state_rep':
                 info += a + ': ' + str(args[a]) + '\n'

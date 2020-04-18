@@ -5,7 +5,7 @@ import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import customer_behaviour.tools.policy_evaluation as pe
+from customer_behaviour.tools import policy_evaluation as pe
 from os.path import join
 from customer_behaviour.tools.tools import save_plt_as_png
 #from evaluate_policy import Expert
@@ -13,7 +13,8 @@ from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
 from matplotlib.ticker import MaxNLocator
 
-dir_path = 'temp/2020-04-15_12-47-19'
+#dir_path = 'temp/2020-04-15_12-47-19'
+dir_path = 'ozzy_results/temp/2020-04-17_07-41-43'
 
 sample_length = 10000
 normalize = True
@@ -278,4 +279,4 @@ def eval_training(
     if show_plots: plt.show()
 
 if __name__ == '__main__':
-    main()
+    eval_training()

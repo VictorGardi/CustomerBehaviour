@@ -12,7 +12,7 @@ from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case3
 
 
 class GAIL(PPO):
-    def __init__(self, env, discriminator, demonstrations, n_experts, episode_length, adam_days, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, n_experts, episode_length, adam_days, dummy_D=0, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
@@ -22,6 +22,7 @@ class GAIL(PPO):
         self.noise = noise
         self.n_experts = n_experts
         self.episode_length = episode_length
+        self.dummy_D = dummy_D
 
         self.discriminator = discriminator
         
@@ -241,9 +242,10 @@ class GAIL(PPO):
 
                 temp.append(np.concatenate((dummy, new_h[-self.env.n_historical_events:])).astype(xp.float32))
             states = temp
-
+        """
         if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7):
             states = [s[self.env.n_experts:] for s in states]
+            
         
         if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
             # Do not show dummy encoding to discriminator
@@ -253,7 +255,10 @@ class GAIL(PPO):
         if isinstance(self.env.case, Case24):
             # Do not show dummy encoding to discriminator
             #states = [s[10:] for s in states]
-            pass  # Let discriminator see dummy encoding
+            pass  # Let discriminator see dummy encoding"""
+
+        if not self.dummy_D:
+            states = [s[self.env.n_experts:] for s in states]
 
         if self.PAC_k > 1: #PACGAIL
             # merge state and actions into s-a pairs

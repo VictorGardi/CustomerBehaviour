@@ -61,6 +61,9 @@ from scipy.stats import wasserstein_distance
 # Case 4
 # dir_path = 'case4/2020-04-09_12-00-51'
 
+# Case 221
+dir_path = 'ozzy_results/temp/2020-04-17_07-41-43'
+
 model_path = None # join(os.getcwd(), dir_path, '12288000_checkpoint', 'model.npz')
 
 sample_length = 10000
