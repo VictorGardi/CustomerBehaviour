@@ -28,7 +28,7 @@ class GAIL(PPO):
         self.discriminator = discriminator
         
         
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23):
             self.demo_states = [*demonstrations['states']]
             self.demo_actions = [*demonstrations['actions']]
         else:
@@ -50,7 +50,7 @@ class GAIL(PPO):
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
 
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23):
             dataset_states = []
             dataset_actions = []
             for expert in range(self.n_experts):
@@ -71,13 +71,13 @@ class GAIL(PPO):
                     states, actions = shuffle(np.array(states), np.array(actions))
                     demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
-                    for demo_state, state in zip(demo_states, states):
-                        demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                        dummy = list(map(int, list(state[:self.n_experts])))
-                        if not demo_dummy == dummy:
-                            raise NameError('States are in the wrong order!')
-                        else:
-                            pass # the order of expert and agent is correct
+                    #for demo_state, state in zip(demo_states, states):
+                    #    demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                    #    dummy = list(map(int, list(state[:self.n_experts])))
+                    #    if not demo_dummy == dummy:
+                    #        raise NameError('States are in the wrong order!')
+                    #    else:
+                    #        pass # the order of expert and agent is correct
 
                     for mb in range(n_mb):
                         min_idx = mb*self.minibatch_size
