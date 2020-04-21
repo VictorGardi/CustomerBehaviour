@@ -72,12 +72,17 @@ class GAIL(PPO):
                     demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
                     for demo_state, state in zip(demo_states, states):
-                       demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                       dummy = list(map(int, list(state[:self.n_experts])))
-                       if not demo_dummy == dummy:
-                           raise NameError('States are in the wrong order!')
-                       else:
-                           pass # the order of expert and agent is correct
+                        demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                        dummy = list(map(int, list(state[:self.n_experts])))
+
+                        if isinstance(self.env.case, Case7):
+                            if not dummy in self.env.case.adam_baskets[expert]:
+                                raise NameError('States are in the wrong order!')
+                        else: 
+                            if not demo_dummy == dummy:
+                                raise NameError('States are in the wrong order!')
+                            else:
+                                pass # the order of expert and agent is correct
 
                     for mb in range(n_mb):
                         min_idx = mb*self.minibatch_size
