@@ -4,6 +4,7 @@ import collections
 import numpy as np
 from gym import spaces
 from customer_behaviour.tools import dgm as dgm
+from customer_behaviour.tools import dgm2 as dgm2
 
 
 def categorize_age(age):
@@ -634,8 +635,9 @@ class Case4():  # [dummy + product 1 + product 2]
         return sample
 
     def get_action(self, receipt):
-        purchase_product1 = np.count_nonzero(receipt[:3]) > 0
-        purchase_product2 = np.count_nonzero(receipt[3:]) > 0
+
+        purchase_product1 = receipt[0] > 0
+        purchase_product2 = receipt[1] > 0
 
         if purchase_product1 and purchase_product2:
             action = 0
@@ -649,8 +651,8 @@ class Case4():  # [dummy + product 1 + product 2]
         return action
 
     def get_initial_state(self, history, seed):
-        temp1 = np.sum(history[:3, :], axis=0)
-        temp2 = np.sum(history[3:, :], axis=0)
+        temp1 = history[0, :]
+        temp2 = history[1, :]
 
         temp1[temp1 > 0] = 1
         temp2[temp2 > 0] = 1
@@ -734,6 +736,8 @@ class DiscreteBuyingEvents(gym.Env):
             adam_days=None
             ):
         temp = define_case(case)
+        if case == 4: self.model = dgm2.DGM()
+
         self.case = temp(self.model, n_experts, adam_days)
 
         self.n_historical_events = n_historical_events
@@ -850,7 +854,7 @@ class DiscreteBuyingEvents(gym.Env):
             if isinstance(self.case, Case24) or isinstance(self.case, Case31):
                 # Choose between Expert 2 and Expert 6
                 seed = np.random.choice([1, 5])
-            elif isinstance(self.case, Case221) or isinstance(self.case, Case222) or isinstance(self.case, Case7) or isinstance(self.case, Case23):
+            elif isinstance(self.case, Case221) or isinstance(self.case, Case222) or isinstance(self.case, Case7) or isinstance(self.case, Case23) or isinstance(self.case, Case4):
                 seed = self.i_reset % self.n_experts
                 if self.n_processes:
                     self.i_reset += self.n_processes
