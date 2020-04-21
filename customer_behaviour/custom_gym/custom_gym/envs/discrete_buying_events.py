@@ -844,7 +844,7 @@ class DiscreteBuyingEvents(gym.Env):
             if isinstance(self.case, Case24) or isinstance(self.case, Case31):
                 # Choose between Expert 2 and Expert 6
                 seed = np.random.choice([1, 5])
-            elif isinstance(self.case, Case221) or isinstance(self.case, Case222) or isinstance(self.case, Case7):
+            elif isinstance(self.case, Case221) or isinstance(self.case, Case222) or isinstance(self.case, Case7)  or isinstance(self.case, Case23):
                 seed = self.i_reset % self.n_experts
                 if self.n_processes:
                     self.i_reset += self.n_processes

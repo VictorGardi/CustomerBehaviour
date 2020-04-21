@@ -71,13 +71,13 @@ class GAIL(PPO):
                     states, actions = shuffle(np.array(states), np.array(actions))
                     demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
-                    #for demo_state, state in zip(demo_states, states):
-                    #    demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                    #    dummy = list(map(int, list(state[:self.n_experts])))
-                    #    if not demo_dummy == dummy:
-                    #        raise NameError('States are in the wrong order!')
-                    #    else:
-                    #        pass # the order of expert and agent is correct
+                    for demo_state, state in zip(demo_states, states):
+                       demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                       dummy = list(map(int, list(state[:self.n_experts])))
+                       if not demo_dummy == dummy:
+                           raise NameError('States are in the wrong order!')
+                       else:
+                           pass # the order of expert and agent is correct
 
                     for mb in range(n_mb):
                         min_idx = mb*self.minibatch_size
