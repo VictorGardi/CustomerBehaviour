@@ -51,9 +51,6 @@ class Discriminator:
             # discriminator is trained to predict a p(expert|x)
             self.loss = loss_gan + loss_grad
 
-        elif self.loss_type == 'presgan':
-            pass
-
         else:
             raise NotImplementedError
 

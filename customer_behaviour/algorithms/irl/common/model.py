@@ -8,13 +8,15 @@ def pass_fn(x):
 
 
 class MLP(chainer.ChainList):
-    def __init__(self, n_layer, n_units, n_out, activation=F.leaky_relu, out_activation=pass_fn, hook=None, hook_params=None):
+    def __init__(self, n_layer, n_units, n_out, n_in, activation=F.leaky_relu, out_activation=pass_fn, hook=None, hook_params=None):
         super().__init__()
-
-        for _ in range(n_layer-1):
-            self.add_link(L.Linear(None, n_units))
-        self.add_link(L.Linear(None, n_out))
-        self.activations = [activation] * (n_layer - 1) + [out_activation]
+        self.add_link(L.Linear(n_in, n_units))
+        #for _ in range(n_layer):
+        #    self.add_link(L.Linear(None, n_units))
+        self.add_link(L.Linear(n_units, n_units))
+        self.add_link(L.Linear(n_units, n_units))
+        self.add_link(L.Linear(n_units, n_out))
+        self.activations = [activation] * (3) + [out_activation]
 
         if hook:
             hook_params = dict() if hook_params is None else hook_params

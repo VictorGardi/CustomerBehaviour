@@ -254,7 +254,7 @@ def main(args, train_env):
         from customer_behaviour.algorithms.irl.gail import Discriminator as D
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers, PAC_k=args.PAC_k, PAC_eps=args.PAC_eps)
+        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers, PAC_k=args.PAC_k, PAC_eps=args.PAC_eps, loss_type=args.loss_type)
         
         agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
@@ -287,19 +287,27 @@ def main(args, train_env):
                     standardize_advantages=args.standardize_advantages,)
 
     elif args.algo == 'airl':
-        from customer_behaviour.algorithms.irl.airl import AIRL as Agent
-        from customer_behaviour.algorithms.irl.airl import Discriminator
+        from customer_behaviour.algorithms.irl.airl import AIRL as G
+        from customer_behaviour.algorithms.irl.airl import Discriminator as D
         # obs_normalizer = None
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = Discriminator(gpu=args.gpu, hidden_sizes=args.D_layers)
-        agent = Agent(case=args.state_rep, demonstrations=demonstrations, discriminator=D,
-                      model=model, optimizer=opt,
-                      obs_normalizer=obs_normalizer,
-                      gpu=args.gpu,
-                      update_interval=args.update_interval,
-                      minibatch_size=args.batchsize, epochs=args.epochs,
-                      clip_eps_vf=None, entropy_coef=args.entropy_coef,
-                      standardize_advantages=args.standardize_advantages,)
+        D = D(gpu=args.gpu, input_dim = input_dim_D - 1, hidden_sizes=args.D_layers) # AIRL only inputs state to D
+        
+        agent = G(env=sample_env, 
+                    demonstrations=demonstrations, 
+                    discriminator=D,
+                    model=model, optimizer=opt,
+                    obs_normalizer=obs_normalizer,
+                    gpu=args.gpu,
+                    update_interval=args.update_interval,
+                    minibatch_size=args.batchsize, epochs=args.epochs,
+                    clip_eps_vf=None, entropy_coef=args.entropy_coef,
+                    standardize_advantages=args.standardize_advantages,
+                    noise=args.noise,
+                    n_experts=args.n_experts,
+                    episode_length=args.episode_length,
+                    adam_days=args.adam_days,
+                    dummy_D=args.show_D_dummy)
 
     if args.load:
         # By default, not in here
@@ -502,6 +510,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_processes', type=int, default=1)
     parser.add_argument('--adam_days', type=int, default=10)
     parser.add_argument('--show_D_dummy', type=str2bool, nargs='?', const=True, default=False)
+    parser.add_argument('--loss_type', default='wgangp', choices=['gan', 'wgangp'], type=str)
 
     args = parser.parse_args()
     args.D_layers = tuple(args.D_layers)

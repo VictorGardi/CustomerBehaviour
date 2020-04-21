@@ -1,9 +1,10 @@
 import numpy as np
 import copy
 from itertools import chain
+from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221, Case222, Case7
 
 
-def get_states_actions_next_states(states, actions, xp=np):
+def get_states_actions_next_states(states, actions, case, xp=np):
     # Prepare demonstrations
     # deep copy is necessary because demo_states can be list of lists
     next_states = copy.deepcopy(states)
@@ -25,8 +26,12 @@ def get_states_actions_next_states(states, actions, xp=np):
             del demo_action_epi[-1]
             # delete first state to make demo_next_states_epi[i] be the next states of the demo_states_epi[i]
             del demo_next_state_epi[0]
-
-    states = xp.asarray(np.array(list(chain(*states))).astype(dtype=np.float32))
-    next_states = xp.asarray(np.array(list(chain(*next_states))).astype(dtype=np.float32))
-    actions = xp.asarray(np.array(list(chain(*actions))).astype(dtype=np.float32))
+    if isinstance(case, Case221) or isinstance(case, Case222) or isinstance(case, Case7) or isinstance(case, Case23):
+        states = [*states]
+        actions = [*actions]
+        next_states = [*next_states]
+    else:
+        states = xp.asarray(np.array(list(chain(*states))).astype(dtype=np.float32))
+        next_states = xp.asarray(np.array(list(chain(*next_states))).astype(dtype=np.float32))
+        actions = xp.asarray(np.array(list(chain(*actions))).astype(dtype=np.float32))
     return states, actions, next_states

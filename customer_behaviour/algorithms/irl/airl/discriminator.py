@@ -5,15 +5,12 @@ from chainer.link_hooks.spectral_normalization import SpectralNormalization
 
 
 class Discriminator:
-    def __init__(self, hidden_sizes = (64,64,64), gpu=-1):
+    def __init__(self, input_dim, hidden_sizes=(64,64,64), gpu=-1):
         n_layers = len(hidden_sizes)
         n_units = hidden_sizes[0]
-        print(n_layers)
-        print(n_units)
-        quit()
 
-        self.reward_net = MLP(n_layers, n_units, 1, hook=SpectralNormalization, hook_params=dict(factor=1))
-        self.value_net = MLP(n_layers, n_units, 1)  # , hook=SpectralNormalization, hook_params=dict(factor=10))
+        self.reward_net = MLP(n_layers, n_units, n_out=1, n_in=input_dim, hook=SpectralNormalization, hook_params=dict(factor=1))
+        self.value_net = MLP(n_layers, n_units, n_out=1, n_in=input_dim)  # , hook=SpectralNormalization, hook_params=dict(factor=10))
         if gpu >= 0:
             self.reward_net.to_gpu(gpu)
             self.value_net.to_gpu(gpu)
