@@ -31,8 +31,11 @@ class Discriminator:
             # loss = dw [ E_agent(log(D)) + E_expert(log(1-D)) ]
             # D = MLP ---> should apply sigmoid afterwards
 
-            self.loss = F.mean(F.log(self(fake_data)))
-            self.loss += F.mean(F.log(1-self(expert_data)))
+            d_expert = self.model(expert_data)
+            d_fake = self.model(fake_data)
+            # discriminator is trained to predict a p(expert|x)
+            self.loss = F.mean(F.softplus(-d_expert))
+            self.loss += F.mean(F.softplus(d_fake))
 
 
             # self.loss = F.mean(F.softplus(-d_expert))
