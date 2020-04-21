@@ -388,9 +388,13 @@ def main(args, train_env):
     print('Running evaluate training...')
     eval_training(a_dir_path=dst)
     print('Done')
+
+    if args.save_folder is not None:
+        print('Saving result to ' + args.save_folder)
+        os.makedirs(os.path.join(os.getcwd(), args.save_folder), exist_ok=True)
+        from distutils.dir_util import copy_tree
+        copy_tree(os.path.join(os.getcwd(), dst), os.path.join(os.getcwd(), args.save_folder, args.outdir.split('/')[-2]))
     
-
-
 def make_par_env(args, rank, seed=0):
     def _init():
         env = gym.make(args.env)
@@ -471,6 +475,8 @@ if __name__ == '__main__':
                         help="Activate expert seed mode.")
     # parser.add_argument('--agent_seed', type=int, default=None)
     parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
+
+    parser.add_argument('--save_folder', default=None, type=str)
 
     parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=False)
     
