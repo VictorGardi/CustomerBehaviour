@@ -205,7 +205,7 @@ def main(args, train_env):
         obs_dim = obs_space.nvec.size
     else:
         raise NotImplementedError
-    
+
     if args.normalize_obs:
         obs_normalizer = chainerrl.links.EmpiricalNormalization(obs_dim, clip_threshold=5)  # shape: Shape of input values except batch axis
     else:
@@ -515,7 +515,7 @@ if __name__ == '__main__':
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     parser.add_argument('--n_processes', type=int, default=1)
     parser.add_argument('--adam_days', type=int, default=10)
-    parser.add_argument('--show_D_dummy', type=str2bool, nargs='?', const=True, default=False)
+    parser.add_argument('--show_D_dummy', type=str2bool, nargs='?', const=True, default=True)
     parser.add_argument('--loss_type', default='wgangp', choices=['gan', 'wgangp'], type=str)
 
     args = parser.parse_args()
