@@ -87,6 +87,10 @@ def train_agent_batch(agent, env, steps, outdir,
 
             for _ in range(num_envs):
                 t += 1
+                if t < checkpoint_freq and t % 100000 == 0:
+                    save_agent(agent, t, outdir, logger,
+                               suffix='_checkpoint')
+
                 if checkpoint_freq and t % checkpoint_freq == 0:
                     save_agent(agent, t, outdir, logger,
                                suffix='_checkpoint')
