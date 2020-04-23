@@ -289,7 +289,7 @@ class Case221():  # dummy encoding (dynamic) for generator but no dummy for disc
         temp[temp > 0] = 1
 
         dummy = np.zeros(self.n_experts)
-        dummy[seed] = 1
+        if not seed >= self.n_experts: dummy[seed] = 1
 
         initial_state = np.concatenate((dummy, temp))
 
@@ -578,7 +578,13 @@ class Case7():
             self.adam_baskets.append(temp_basket)
 
     def get_spaces(self, n_historical_events):
-        observation_space = spaces.MultiBinary(self.adam_days + n_historical_events) 
+        # observation_space = spaces.MultiBinary(self.adam_days + n_historical_events) 
+
+        sex_age = [2, 6]
+        adam = self.adam_days * [100]
+        history = n_historical_events * [2]
+        space = sex_age + adam + history
+        observation_space = spaces.MultiDiscrete(space)
 
         action_space = spaces.Discrete(2)
 
@@ -602,14 +608,16 @@ class Case7():
 
         temp[temp > 0] = 1
 
-        initial_state = np.concatenate((adam, temp))
+        sex_age = [self.model.sex, categorize_age2(self.model.age)]
+
+        initial_state = np.concatenate((sex_age, adam, temp))
 
         return initial_state
 
-    def get_step(self, state, action):  # ska man byta till annan adam här??? initerar agent med random adam så måste måste finnas bland expertdemos?
-        adam = state[:self.adam_days]
-        history = state[self.adam_days:]
-        new_state = [*adam, *history[1:], action]
+    def get_step(self, state, action):  # ska man byta till annan adam här??? initerar agent med random adam så måste måste finnas bland expertdemos?    
+        adam = state[2:self.adam_days+2]
+        history = state[self.adam_days+2:]
+        new_state = [self.model.sex, categorize_age2(self.model.age), *adam, *history[1:], action]
         return new_state
 
 
