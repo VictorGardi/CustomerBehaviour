@@ -10,7 +10,6 @@ import numpy as np
 from chainerrl import agent
 from chainerrl.misc.batch_states import batch_states
 
-
 def _mean_or_nan(xs):
     """Return its mean a non-empty sequence, numpy.nan for a empty one."""
     return np.mean(xs) if xs else np.nan
@@ -312,6 +311,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
                  entropy_stats_window=1000,
                  value_loss_stats_window=100,
                  policy_loss_stats_window=100,
+                 arch=None
                  ):
         self.model = model
         self.optimizer = optimizer
@@ -322,7 +322,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
             self.model.to_gpu(device=gpu)
             if self.obs_normalizer is not None:
                 self.obs_normalizer.to_gpu(device=gpu)
-
+        
         self.gamma = gamma
         self.lambd = lambd
         self.phi = phi
@@ -338,6 +338,7 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
         self.recurrent = recurrent
         self.max_recurrent_sequence_len = max_recurrent_sequence_len
         self.act_deterministically = act_deterministically
+        self.arch = arch
 
         self.xp = self.model.xp
 
@@ -691,17 +692,35 @@ class PPO(agent.AttributeSavingMixin, agent.BatchAgent):
 
         # action_distrib will be recomputed when computing gradients
         with chainer.using_config('train', False), chainer.no_backprop_mode():
-            if self.recurrent:
-                assert self.train_prev_recurrent_states is None
-                self.train_prev_recurrent_states = self.train_recurrent_states
-                (action_distrib, value), self.train_recurrent_states =\
-                    self.model(b_state, self.train_prev_recurrent_states)
+            if self.arch == 'MLP':
+                logits = self.model.pi(b_state)
+                value = self.model.v(b_state)
+                if logits[0].data > 0.5:
+                    idx = np.argmax(logits[1:].data)
+                    if idx == 0:
+                        action = 2
+                    elif idx == 1:
+                        action = 1
+                    else:
+                        action = 0
+                else:
+                    action = 3
+                #self.entropy_record.append(float(action_distrib.entropy.array))
+                action = np.array(action)
+                self.value_record.append(float(value.array))
             else:
-                action_distrib, value = self.model(b_state)
-            action = chainer.cuda.to_cpu(action_distrib.sample().array)[0]
-            self.entropy_record.append(float(action_distrib.entropy.array))
-            self.value_record.append(float(value.array))
+                if self.recurrent:
+                    assert self.train_prev_recurrent_states is None
+                    self.train_prev_recurrent_states = self.train_recurrent_states
+                    (action_distrib, value), self.train_recurrent_states =\
+                        self.model(b_state, self.train_prev_recurrent_states)
+                
+                else:
+                    action_distrib, value = self.model(b_state)
 
+                action = chainer.cuda.to_cpu(action_distrib.sample().array)[0]
+                self.entropy_record.append(float(action_distrib.entropy.array))
+                self.value_record.append(float(value.array))
         self.last_state = obs
         self.last_action = action
 
