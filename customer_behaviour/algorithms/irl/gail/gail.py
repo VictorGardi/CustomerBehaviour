@@ -24,6 +24,7 @@ class GAIL(PPO):
         self.n_experts = n_experts
         self.episode_length = episode_length
         self.dummy_D = dummy_D
+        self.adam_days = adam_days
 
         self.discriminator = discriminator
         
@@ -72,13 +73,16 @@ class GAIL(PPO):
                     demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
                     for demo_state, state in zip(demo_states, states):
-                        demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                        dummy = list(map(int, list(state[:self.n_experts])))
-
+                    
                         if isinstance(self.env.case, Case7):
+                            demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
+                            dummy = list(map(int, list(state[2:self.adam_days+2])))
+
                             if not dummy in self.env.case.adam_baskets[expert]:
                                 raise NameError('States are in the wrong order!')
                         else: 
+                            demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                            dummy = list(map(int, list(state[:self.n_experts])))
                             if not demo_dummy == dummy:
                                 raise NameError('States are in the wrong order!')
                             else:
@@ -273,6 +277,8 @@ class GAIL(PPO):
 
         if not self.dummy_D:
             states = [s[self.env.n_experts:] for s in states]
+            if isinstance(self.env.case, Case7):
+                states = [s[2+self.adam_days:] for s in states]
 
         if self.PAC_k > 1: #PACGAIL
             # merge state and actions into s-a pairs

@@ -263,9 +263,9 @@ def main(args, train_env):
     # Normalize observations based on their empirical mean and variance
     if args.state_rep == 1:
         obs_dim = obs_space.low.size
-    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4 or args.state_rep == 221 or args.state_rep == 222 or args.state_rep == 7: 
+    elif args.state_rep == 2 or args.state_rep == 21 or args.state_rep == 22 or args.state_rep == 24 or args.state_rep == 4 or args.state_rep == 221 or args.state_rep == 222: 
         obs_dim = obs_space.n
-    elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23 or args.state_rep == 31:
+    elif args.state_rep == 3 or args.state_rep == 11 or args.state_rep == 23 or args.state_rep == 31 or args.state_rep == 7:
         obs_dim = obs_space.nvec.size
     else:
         raise NotImplementedError
