@@ -105,6 +105,9 @@ def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only
     elif args['state_rep'] == 7:
         model = A3CFFSoftmax(2 + args['adam_days'] + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(2 + args['adam_days'] + args['n_historical_events'], 2, clip_threshold=5)
+    elif args['state_rep'] == 71:
+        model = A3CFFSoftmax(args['adam_days'] + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(2 + args['adam_days'] + args['n_historical_events'], 2, clip_threshold=5)
     else:
         raise NotImplementedError
     

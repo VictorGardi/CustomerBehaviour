@@ -9,7 +9,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4
+from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4, Case71
 
 
 class GAIL(PPO):
@@ -29,7 +29,8 @@ class GAIL(PPO):
         self.discriminator = discriminator
         
         
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) \
+        or isinstance(self.env.case, Case71):
             self.demo_states = [*demonstrations['states']]
             self.demo_actions = [*demonstrations['actions']]
         else:
@@ -51,7 +52,8 @@ class GAIL(PPO):
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
 
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) \
+        or isinstance(self.env.case, Case71):
             dataset_states = []
             dataset_actions = []
             for expert in range(self.n_experts):
@@ -77,6 +79,12 @@ class GAIL(PPO):
                         if isinstance(self.env.case, Case7):
                             demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
                             dummy = list(map(int, list(state[2:self.adam_days+2])))
+
+                            if not dummy in self.env.case.adam_baskets[expert]:
+                                raise NameError('States are in the wrong order!')
+                        elif isinstance(self.env.case, Case71):
+                            demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
+                            dummy = list(map(int, list(state[:self.adam_days])))
 
                             if not dummy in self.env.case.adam_baskets[expert]:
                                 raise NameError('States are in the wrong order!')
@@ -281,6 +289,8 @@ class GAIL(PPO):
             states = [s[self.env.n_experts:] for s in states]
             if isinstance(self.env.case, Case7):
                 states = [s[2+self.adam_days:] for s in states]
+            elif isinstance(self.env.case, Case71):
+                states = [s[self.adam_days:] for s in states]
 
         if self.PAC_k > 1: #PACGAIL
             # merge state and actions into s-a pairs
