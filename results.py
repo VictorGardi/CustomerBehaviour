@@ -1,4 +1,8 @@
 import os
+import sys 
+from os.path import join
+tools_path = join(os.getcwd(), 'customer_behaviour/tools')
+sys.path.insert(1, tools_path)
 import gym
 import json
 import random
