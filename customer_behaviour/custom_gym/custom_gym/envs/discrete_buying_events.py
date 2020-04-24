@@ -629,7 +629,7 @@ class Case71():
 
         self.adam_baskets = []
 
-        self.N = 5  # items in basket
+        self.N = 100  # items in basket
         self.i_expert = 0
 
         for i in range(n_experts):
