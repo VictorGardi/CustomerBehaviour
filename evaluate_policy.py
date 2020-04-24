@@ -1,8 +1,9 @@
 import sys
-sys.path.insert(1, '/Users/victor/Documents/CAS_2/Master_thesis/CustomerBehaviour/customer_behaviour/tools')
-
 import os, re, json, random, itertools, time
 from os.path import join
+tools_path = join(os.getcwd(), 'customer_behaviour/tools')
+sys.path.insert(1, tools_path)
+
 import policy_evaluation as pe
 from result import Result
 from tools import save_plt_as_eps, save_plt_as_png

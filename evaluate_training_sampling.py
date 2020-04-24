@@ -1,9 +1,9 @@
 import sys
-sys.path.insert(1, '/Users/victor/Documents/CAS_2/Master_thesis/CustomerBehaviour/customer_behaviour/tools')
-import os
-import json
+import os, json, random
+from os.path import join
+tools_path = join(os.getcwd(), 'customer_behaviour/tools')
+sys.path.insert(1, tools_path)
 import seaborn
-import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
