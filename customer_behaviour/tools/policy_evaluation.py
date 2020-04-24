@@ -51,7 +51,8 @@ def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only
             n_demos_per_expert=1,
             n_expert_time_steps=sample_length,  # length of expert sample
             seed_agent=args['seed_agent'],
-            seed_expert=args['seed_expert']
+            seed_expert=args['seed_expert'],
+            adam_days=args['adam_days']
             )
     except KeyError:
         # seed_agent was not an argument 
@@ -101,6 +102,9 @@ def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only
     elif args['state_rep'] == 222:
         model = A3CFFSoftmax(args['n_experts'] + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
         obs_normalizer = chainerrl.links.EmpiricalNormalization(args['n_experts'] + args['n_historical_events'], clip_threshold=5)
+    elif args['state_rep'] == 7:
+        model = A3CFFSoftmax(2 + args['adam_days'] + args['n_historical_events'], 2, hidden_sizes=hidden_sizes)
+        obs_normalizer = chainerrl.links.EmpiricalNormalization(2 + args['adam_days'] + args['n_historical_events'], 2, clip_threshold=5)
     else:
         raise NotImplementedError
     
@@ -153,6 +157,31 @@ def sample_from_policy(env, model, obs_normalizer, initial_state=None):
 #############################
 ##### Validation states #####
 #############################
+
+def get_val_states(states, actions, n, m):
+    val_states = []
+    states = np.reshape(states, (-1, states.shape[-1]))
+    actions = np.reshape(actions, (-1,))
+    
+    for s in states:
+        temp = [1 if x > 0 else 0 for x in s[-n:]]
+        val_states.append(temp)
+
+    val_states = reduce_dimensionality(val_states, m)
+
+    assert len(val_states) == len(actions)
+
+    temp = []
+    for vs, a in zip(val_states, actions):
+        if np.sum(vs) == len(vs):
+            temp.append(vs + [1])
+        elif np.sum(vs) + a > m:
+            temp.append((n + 1) * [1])
+        else:
+            temp.append(vs + [a])
+    val_states = temp
+
+    return val_states 
 
 def get_cond_val_states(states, actions, n):
     n_trajectories = len(states)
@@ -240,6 +269,37 @@ def extract_time_series(states, n_last_days, n_dummies=10):
 
     return extracted
 
+def get_possible_val_states_2(n_last_days, max_n_purchases):
+    possible_val_states = get_possible_val_states(n_last_days, max_n_purchases)
+
+    temp1 = []
+    temp2 = []
+    for s in possible_val_states[:-1]:
+        temp1.append(s + [0])
+        if np.sum(s) + 1 > max_n_purchases:
+            pass
+        else:
+            temp2.append(s + [1])
+    temp3 = [possible_val_states[-1] + [1]]
+
+    possible_val_states = temp1 + temp2 + temp3
+
+    possible_val_states = sort_possible_val_states(possible_val_states)
+
+    return possible_val_states
+
+
+def get_distrib(states, actions):
+    n_last_days = 7
+    max_n_purchases = 2
+
+    val_states = get_val_states(states, actions, n_last_days, max_n_purchases)
+
+    possible_val_states = get_possible_val_states_2(n_last_days, max_n_purchases)
+
+    distrib = get_counts(val_states, possible_val_states, normalize=True)
+
+    return distrib
 
 def get_cond_distribs(states, actions, n_last_days, max_n_purchases, normalize, case):
     if case == 31: states = extract_time_series(states, n_last_days, n_dummies=10)
