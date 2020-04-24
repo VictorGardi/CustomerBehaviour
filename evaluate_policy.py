@@ -62,7 +62,10 @@ from scipy.stats import wasserstein_distance
 # dir_path = 'case4/2020-04-09_12-00-51'
 
 # Case 221
-dir_path = 'ozzy_results/temp/2020-04-17_07-41-43'
+#dir_path = 'ozzy_results/temp/2020-04-17_07-41-43'
+#dir_path = 'ozzy_results/temp7/2020-04-22_08-19-57'
+#dir_path = 'ozzy_results/temp8/2020-04-22_06-46-07'
+dir_path = 'ozzy_results/temp9/2020-04-22_06-46-46'
 
 model_path = None # join(os.getcwd(), dir_path, '12288000_checkpoint', 'model.npz')
 
@@ -72,7 +75,7 @@ n_demos_per_expert = 10
 n_last_days = 7
 max_n_purchases_per_n_last_days = 2
 show_info = True
-show_plots = True
+show_plots = False
 save_plots = True
 cluster_comparison = False
 
@@ -93,10 +96,12 @@ def main():
 
     # purchase_ratio(args, model_dir_path)
 
-    # evaluate_policy_at_population_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
-    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
-    evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
-    compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
+    #evaluate_policy_at_individual_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
+
+    #evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    #evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
+    #compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 
     fig_stats = plot_statistics(dir_path)
@@ -652,7 +657,7 @@ def plot_distr_categories(
     ax2.set_ylabel('Probability')
     
     if show_info: fig.text(0.5, 0.025, info, ha='center')
-    if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'pop' + ending_png))
+    if save_plots: save_plt_as_png(fig, path=join(dir_path, 'figs', 'pop' + 'cat' + str(category) + ending_png))
 
     if args['state_rep'] == 23:
         # Plot histogram of purchase amounts

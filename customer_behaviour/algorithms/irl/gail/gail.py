@@ -93,11 +93,13 @@ class GAIL(PPO):
                         max_idx = (mb + 1)*self.minibatch_size
                         mb_states = states[min_idx:max_idx,:]
                         mb_actions = actions[min_idx:max_idx]
-                        mb_demo_states = demo_states[min_idx:max_idx,:]
-                        mb_demo_actions = demo_actions[min_idx:max_idx]
-                        #demonstrations_indices = xp.random.permutation(len(self.demo_states))[:len(states)]
-
-                        #demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
+                        if states.shape[0] > demo_states.shape[0]:
+                            indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
+                            mb_demo_states = np.take(demo_states, indices, axis=0)
+                            mb_demo_actions = np.take(demo_actions, indices, axis=0)
+                        else:
+                            mb_demo_states = demo_states[min_idx:max_idx,:]
+                            mb_demo_actions = demo_actions[min_idx:max_idx]
 
                         if self.obs_normalizer:
                             mb_states = self.obs_normalizer(mb_states, update=False)
