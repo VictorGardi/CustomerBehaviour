@@ -1,8 +1,11 @@
+import sys
+sys.path.insert(1, '/Users/victor/Documents/CAS_2/Master_thesis/CustomerBehaviour/customer_behaviour/tools')
+
 import os, re, json, random, itertools, time
 from os.path import join
-import customer_behaviour.tools.policy_evaluation as pe
-from customer_behaviour.tools.result import Result
-from customer_behaviour.tools.tools import save_plt_as_eps, save_plt_as_png
+import policy_evaluation as pe
+from result import Result
+from tools import save_plt_as_eps, save_plt_as_png
 import gym
 import custom_gym
 import chainer

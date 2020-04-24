@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(1, '/Users/victor/Documents/CAS_2/Master_thesis/CustomerBehaviour/customer_behaviour/tools')
 import os
 import json
 import seaborn
@@ -5,9 +7,9 @@ import random
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from customer_behaviour.tools import policy_evaluation as pe
+import policy_evaluation as pe
 from os.path import join
-from customer_behaviour.tools.tools import save_plt_as_png
+from tools import save_plt_as_png
 #from evaluate_policy import Expert
 from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
