@@ -19,6 +19,7 @@ import functools
 
 import chainer
 from chainer import functions as F
+import chainer.links as L
 import chainerrl
 import logging
 
@@ -29,6 +30,69 @@ from chainerrl import links
 from chainerrl import misc
 from chainerrl.optimizers.nonbias_weight_decay import NonbiasWeightDecay
 from chainerrl import policies
+
+def pass_fn(x):
+    return x
+
+class MLP(chainer.ChainList):
+    def __init__(self, n_layer, n_units, n_out, n_in, activation=F.leaky_relu, out_activation=pass_fn, hook=None, hook_params=None):
+        super().__init__()
+        self.n_layer = n_layer
+        self.n_out = n_out
+        self.add_link(L.Linear(n_in, n_units))
+        #for _ in range(n_layer):
+        #    self.add_link(L.Linear(None, n_units))
+        self.add_link(L.Linear(n_units, n_units))
+        self.add_link(L.Linear(n_units, n_units))
+        self.add_link(L.Linear(n_units, n_out))
+        self.activations = [activation] * (3) + [out_activation]
+
+        if hook:
+            hook_params = dict() if hook_params is None else hook_params
+            for link in self.children():
+                link.add_hook(hook(**hook_params))
+
+    def forward(self, x):
+        i = 0
+        for link, act in zip(self.children(), self.activations):
+            if i == self.n_layer and self.n_out == 4:
+                x = act(link(x))
+                prob = F.sigmoid(x[0][0]).data
+                action = F.softmax(x[0][1:].data.reshape((1,-1))).data.tolist()
+                temp = [prob]
+                temp.extend(*action)
+                temp = np.array(temp)
+                x = chainer.Variable(temp)
+            else:
+                x = act(link(x))
+            i+=1
+        return x
+
+    def __call__(self, x):
+        return self.forward(x)
+
+class Test(chainer.ChainList, a3c.A3CModel):
+    def __init__(self, n_layer, n_units, n_out, n_in):
+        self.pi = MLP(n_layer, n_units, n_out, n_in)
+        self.v = MLP(n_layer, n_units, 1, n_in)
+        super().__init__(self.pi, self.v)
+    
+    def pi_and_v(self, state):
+        return self.pi(state), self.v(state)
+
+
+
+class A3CFFSoftmax(chainer.ChainList, a3c.A3CModel):
+    """An example of A3C feedforward softmax policy."""
+
+    def __init__(self, ndim_obs, n_actions, hidden_sizes=(64,64)):
+        self.pi = policies.SoftmaxPolicy(
+            model=links.MLP(ndim_obs, n_actions, hidden_sizes))
+        self.v = links.MLP(ndim_obs, 1, hidden_sizes=hidden_sizes)
+        super().__init__(self.pi, self.v)
+
+    def pi_and_v(self, state):
+        return self.pi(state), self.v(state)
 
 
 class A3CFFSoftmax(chainer.ChainList, a3c.A3CModel):
@@ -219,6 +283,8 @@ def main(args, train_env):
     elif args.arch == 'FFGaussian':
         model = A3CFFGaussian(obs_space.low.size, action_space,
                               bound_mean=args.bound_mean)
+    elif args.arch == 'MLP':
+        model = Test(n_layer=3, n_units=64, n_out=4, n_in=obs_dim)
 
     opt = chainer.optimizers.Adam(alpha=args.lr, eps=10e-1)
     opt.setup(model)
@@ -270,7 +336,8 @@ def main(args, train_env):
                      n_experts=args.n_experts,
                      episode_length=args.episode_length,
                      adam_days=args.adam_days,
-                     dummy_D=args.show_D_dummy)
+                     dummy_D=args.show_D_dummy,
+                     arch=args.arch)
         
     elif args.algo == 'gail2':
         from customer_behaviour.algorithms.irl.gail import GAIL2
@@ -489,7 +556,7 @@ if __name__ == '__main__':
     parser.add_argument('--PAC_eps', type=float, default=1)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
-                                 'FFGaussian'))
+                                 'FFGaussian', 'MLP'))
     parser.add_argument('--bound-mean', action='store_true', default=False)  # only for FFGaussian
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed [0, 2 ** 32)')
