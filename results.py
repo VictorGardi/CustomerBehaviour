@@ -194,11 +194,21 @@ def evaluate_on_pop_level(args, model_path, avg_expert_distrib):
     env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False)
 
     n_experts = args['n_experts']
-        
+
     agent_states = []
     agent_actions = []
     for i in range(n_experts):
-        initial_state = random.choice(expert_states[i])
+        env.model.spawn_new_customer(i)
+        sample = env.case.get_sample(
+                n_demos_per_expert=1, 
+                n_historical_events=args['n_historical_events'], 
+                n_time_steps=1000
+                )
+        all_data = np.hstack(sample[0])  # history, data = sample[0]
+        j = np.random.randint(0, all_data.shape[1] - args['n_historical_events'])
+        history = all_data[:, j:j + args['n_historical_events']]
+        initial_state = env.case.get_initial_state(history, i)
+
         states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
         agent_states.append(states)
         agent_actions.append(actions)
