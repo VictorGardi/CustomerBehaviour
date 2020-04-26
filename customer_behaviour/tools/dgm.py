@@ -16,6 +16,8 @@ class DGM:
         self.N = len(self.prices)
         self.prices = self.prices / np.max(self.prices)
 
+        self.probs = []
+
     def spawn_new_customer(self, seed=None):
 
         if seed is not None: np.random.seed(seed)
@@ -51,6 +53,7 @@ class DGM:
         f = self.beta0 + np.sum(trigg) + 2*self.week_customer[day,0] 
         f = np.divide(1,1 + np.exp(-f)) 
         #print("Prob:      ", f)
+        self.probs.append(f)
         return f > np.random.uniform(0,1)
     
     def _update(self, day):
