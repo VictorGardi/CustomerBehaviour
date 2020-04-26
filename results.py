@@ -193,6 +193,8 @@ def load_data():
 def evaluate_on_pop_level(args, model_path, avg_expert_distrib):
     env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False)
 
+    n_experts = args['n_experts']
+        
     agent_states = []
     agent_actions = []
     for i in range(n_experts):
@@ -234,7 +236,7 @@ def evaluate_on_new_customers(args, model_path, expert_distribs, new_distribs):
     abs_diffs = []
     errors = []
 
-    n_experts = len(expert_distribs)
+    n_experts = args['n_experts']
 
     for i, nb in enumerate(new_distribs):
         distances = [wd(nb, v) for v in expert_distribs]
