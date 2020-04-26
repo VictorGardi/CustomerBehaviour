@@ -176,7 +176,7 @@ def load_data():
                 models[n_train_steps] = (distribs, abs_diffs, errors, emd_avg)
 
             final_model_path = next((d for d in [x[0] for x in os.walk(path)] if d.endswith('finish')), None)
-            distribs, abs_diffs, errors = evaluate_on_new_customers(args, final_model_path)
+            distribs, abs_diffs, errors = evaluate_on_new_customers(args, final_model_path, expert_distribs, new_distribs)
             
             models['final'] = (distribs, abs_diffs, errors)
 
