@@ -169,7 +169,7 @@ def load_data():
             model_paths = [d for d in [x[0] for x in os.walk(path)] if d.endswith('checkpoint')]
             model_paths.sort(key=get_key_from_path)
 
-            for mp in model_paths:
+            for mp in model_paths[9:19]:
                 distribs, abs_diffs, errors = evaluate_on_new_customers(args, mp, expert_distribs, new_distribs)
                 emd_avg = evaluate_on_pop_level(args, mp, avg_expert_distrib)
                 n_train_steps = get_key_from_path(mp)
