@@ -11,6 +11,7 @@ import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
 import evaluate_policy as ep
 import evaluate_training_sampling as ets
+import results as res 
 import numpy as np
 import gym
 import custom_gym
@@ -444,11 +445,18 @@ def main(args, train_env):
     # Move result files to correct folder and remove empty folder
     move_dir(args.outdir, dst)
     os.rmdir(args.outdir)
-    print('Running evaluate policy...')
-    ep.eval_policy(a_dir_path=dst)
-    print('Running evaluate training...')
-    ets.eval_training(a_dir_path=dst)
-    print('Done')
+
+    if args.save_results:
+        print('Saving result...')
+        res.save_data(dst, 10000, 50, compare_features=False)
+        
+    else:
+        print('Running evaluate policy...')
+        ep.eval_policy(a_dir_path=dst)
+        print('Running evaluate training...')
+        ets.eval_training(a_dir_path=dst)
+        print('Done')
+
 
     if args.save_folder is not None:
         print('Saving result to ' + args.save_folder)
@@ -540,6 +548,8 @@ if __name__ == '__main__':
     parser.add_argument('--save_folder', default=None, type=str)
 
     parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=False)
+
+    parser.add_argument('--save_results', type=str2bool, nargs='?', const=True, default=False)
     
     parser.add_argument('--n_historical_events', type=int, default=20)
     parser.add_argument('--gpu', type=int, default=-1)

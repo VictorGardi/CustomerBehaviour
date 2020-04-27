@@ -30,7 +30,7 @@ def get_cluster_labels(T):
 ##### Sample generators #####
 #############################
 
-def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only_env=False):
+def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only_env=False, n_experts_in_adam_basket=None):
     '''
     Creates and returns
         - the environment specified by the the parameters in args
@@ -40,6 +40,8 @@ def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only
     
     if model_path is None: model_path = join(model_dir_path, 'model.npz')
 
+    N = args['n_experts'] if n_experts_in_adam_basket is None else n_experts_in_adam_basket
+
     # Create environment
     env = gym.make('discrete-buying-events-v0')
     try:
@@ -47,7 +49,7 @@ def get_env_and_model(args, model_dir_path, sample_length, model_path=None, only
             case=args['state_rep'], 
             n_historical_events=args['n_historical_events'], 
             episode_length=sample_length,  # length of agent sample
-            n_experts=args['n_experts'],
+            n_experts=N,
             n_demos_per_expert=1,
             n_expert_time_steps=sample_length,  # length of expert sample
             seed_agent=args['seed_agent'],
