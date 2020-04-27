@@ -131,7 +131,6 @@ class GAIL(PPO):
                 self.iteration += 1
             
             else:
-
                 dataset_states = []
                 dataset_actions = []
                 for expert in range(self.n_experts):
@@ -157,6 +156,13 @@ class GAIL(PPO):
                             if isinstance(self.env.case, Case7):
                                 demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
                                 dummy = list(map(int, list(state[2:self.adam_days+2])))
+
+                                if not dummy in self.env.case.adam_baskets[expert]:
+                                    raise NameError('States are in the wrong order!')
+
+                            elif isinstance(self.env.case, Case71):
+                                demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
+                                dummy = list(map(int, list(state[:self.adam_days])))
 
                                 if not dummy in self.env.case.adam_baskets[expert]:
                                     raise NameError('States are in the wrong order!')
