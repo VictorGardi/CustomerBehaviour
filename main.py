@@ -331,14 +331,7 @@ def main(args, train_env):
                      minibatch_size=args.batchsize, epochs=args.epochs,
                      clip_eps_vf=None, entropy_coef=args.entropy_coef,
                      standardize_advantages=args.standardize_advantages,
-                     gamma=args.gamma,
-                     PAC_k=args.PAC_k,
-                     noise=args.noise,
-                     n_experts=args.n_experts,
-                     episode_length=args.episode_length,
-                     adam_days=args.adam_days,
-                     dummy_D=args.show_D_dummy,
-                     arch=args.arch)
+                     args = args)
         
     elif args.algo == 'gail2':
         from customer_behaviour.algorithms.irl.gail import GAIL2
@@ -610,7 +603,11 @@ if __name__ == '__main__':
         train_env = None
 
     assert args.n_experts % args.n_processes == 0
-    if args.state_rep == 221 or args.state_rep == 222: assert args.update_interval == args.n_experts * args.episode_length
+    #if args.state_rep == 221 or args.state_rep == 222: assert args.update_interval == args.n_experts * args.episode_length
+    if args.update_interval < args.n_experts * args.episode_length: 
+        args.batch_update = True 
+    else: 
+        args.batch_update = False
 
     main(args, train_env)
 

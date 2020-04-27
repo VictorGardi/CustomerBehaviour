@@ -13,24 +13,27 @@ from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case3
 
 
 class GAIL(PPO):
-    def __init__(self, env, discriminator, demonstrations, n_experts, episode_length, adam_days, dummy_D=0, noise = None, gamma=0, PAC_k=1, discriminator_loss_stats_window=1000, **kwargs):
+    def __init__(self, env, discriminator, demonstrations, args, discriminator_loss_stats_window=1000, **kwargs):
         # super take arguments for dynamic inheritance
         super(self.__class__, self).__init__(**kwargs)
 
         self.env = env
-        self.gamma = gamma
-        self.PAC_k = PAC_k
-        self.noise = noise
-        self.n_experts = n_experts
-        self.episode_length = episode_length
-        self.dummy_D = dummy_D
-        self.adam_days = adam_days
+        self.gamma = args.gamma
+        self.PAC_k = args.PAC_k
+        self.noise = args.noise
+        self.n_experts = args.n_experts
+        self.episode_length = args.episode_length
+        self.dummy_D = args.show_D_dummy
+        self.adam_days = args.adam_days
+        self.batch_update = args.batch_update
+        self.iteration = 0
+        self.max_iteration = args.n_experts*args.episode_length/args.update_interval #2
+        self.n_update_experts = int(args.update_interval/args.episode_length) #2
 
         self.discriminator = discriminator
         
         
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) \
-        or isinstance(self.env.case, Case71):
+        if self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
             self.demo_states = [*demonstrations['states']]
             self.demo_actions = [*demonstrations['actions']]
         else:
@@ -52,72 +55,135 @@ class GAIL(PPO):
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
 
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) \
-        or isinstance(self.env.case, Case71):
-            dataset_states = []
-            dataset_actions = []
-            for expert in range(self.n_experts):
-                min_idx = expert*self.episode_length
-                max_idx = (expert + 1)*self.episode_length 
-                dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
-                dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
+            if self.batch_update:
+                dataset_states = []
+                dataset_actions = []
+                if self.iteration >= self.max_iteration: self.iteration = 0
+                low_lim = self.iteration*self.n_update_experts
+                high_lim = low_lim + self.n_update_experts
 
-            loss_mean = 0
-            n_mb = int(self.episode_length/self.minibatch_size)
-            for epoch in range(self.epochs):
+                for agent in range(self.n_update_experts):
+                    min_idx = agent*self.episode_length
+                    max_idx = (agent + 1)*self.episode_length 
+                    dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
+                    dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
 
-                for expert in range(self.n_experts):
-                    demo_states = self.demo_states[expert]
-                    demo_actions = self.demo_actions[expert]
-                    states = dataset_states[expert]
-                    actions = dataset_actions[expert]
-                    states, actions = shuffle(np.array(states), np.array(actions))
-                    demo_states, demo_actions = shuffle(demo_states, demo_actions)
+                loss_mean = 0
+                n_mb = int(self.episode_length/self.minibatch_size)
+                for epoch in range(self.epochs):
 
-                    for demo_state, state in zip(demo_states, states):
-                    
-                        if isinstance(self.env.case, Case7):
-                            demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
-                            dummy = list(map(int, list(state[2:self.adam_days+2])))
+                    for i, expert in enumerate(range(low_lim, high_lim)):
+                        demo_states = self.demo_states[expert]
+                        demo_actions = self.demo_actions[expert]
+                        demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
-                            if not dummy in self.env.case.adam_baskets[expert]:
-                                raise NameError('States are in the wrong order!')
-                        elif isinstance(self.env.case, Case71):
-                            demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
-                            dummy = list(map(int, list(state[:self.adam_days])))
+                        states = dataset_states[i]
+                        actions = dataset_actions[i]
+                        states, actions = shuffle(np.array(states), np.array(actions))
 
-                            if not dummy in self.env.case.adam_baskets[expert]:
-                                raise NameError('States are in the wrong order!')
-                        else: 
-                            demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                            dummy = list(map(int, list(state[:self.n_experts])))
-                            if not demo_dummy == dummy:
-                                raise NameError('States are in the wrong order!')
+                        for demo_state, state in zip(demo_states, states):
+                        
+                            if isinstance(self.env.case, Case7):
+                                demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
+                                dummy = list(map(int, list(state[2:self.adam_days+2])))
+
+                                if not dummy in self.env.case.adam_baskets[expert]:
+                                    raise NameError('States are in the wrong order!')
+                            else: 
+                                demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                                dummy = list(map(int, list(state[:self.n_experts])))
+                                if not demo_dummy == dummy:
+                                    print(demo_dummy)
+                                    print(dummy)
+                                    raise NameError('States are in the wrong order!')
+                                else:
+                                    pass # the order of expert and agent is correct
+
+                        for mb in range(n_mb):
+                            min_idx = mb*self.minibatch_size
+                            max_idx = (mb + 1)*self.minibatch_size
+                            mb_states = states[min_idx:max_idx,:]
+                            mb_actions = actions[min_idx:max_idx]
+                            if states.shape[0] > demo_states.shape[0]:
+                                indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
+                                mb_demo_states = np.take(demo_states, indices, axis=0)
+                                mb_demo_actions = np.take(demo_actions, indices, axis=0)
                             else:
-                                pass # the order of expert and agent is correct
+                                mb_demo_states = demo_states[min_idx:max_idx,:]
+                                mb_demo_actions = demo_actions[min_idx:max_idx]
 
-                    for mb in range(n_mb):
-                        min_idx = mb*self.minibatch_size
-                        max_idx = (mb + 1)*self.minibatch_size
-                        mb_states = states[min_idx:max_idx,:]
-                        mb_actions = actions[min_idx:max_idx]
-                        if states.shape[0] > demo_states.shape[0]:
-                            indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
-                            mb_demo_states = np.take(demo_states, indices, axis=0)
-                            mb_demo_actions = np.take(demo_actions, indices, axis=0)
-                        else:
-                            mb_demo_states = demo_states[min_idx:max_idx,:]
-                            mb_demo_actions = demo_actions[min_idx:max_idx]
+                            if self.obs_normalizer:
+                                mb_states = self.obs_normalizer(mb_states, update=False)
+                                mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
 
-                        if self.obs_normalizer:
-                            mb_states = self.obs_normalizer(mb_states, update=False)
-                            mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
+                            self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
+                                                    self.convert_data_to_feed_discriminator(mb_states, mb_actions))
+                            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
 
-                        self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
-                                                self.convert_data_to_feed_discriminator(mb_states, mb_actions))
-                        loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+                            self.discriminator_loss_record.append(float(loss_mean.array))
+                self.iteration += 1
+            
+            else:
 
-                        self.discriminator_loss_record.append(float(loss_mean.array))
+                dataset_states = []
+                dataset_actions = []
+                for expert in range(self.n_experts):
+                    min_idx = expert*self.episode_length
+                    max_idx = (expert + 1)*self.episode_length 
+                    dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
+                    dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
+
+                loss_mean = 0
+                n_mb = int(self.episode_length/self.minibatch_size)
+                for epoch in range(self.epochs):
+
+                    for expert in range(self.n_experts):
+                        demo_states = self.demo_states[expert]
+                        demo_actions = self.demo_actions[expert]
+                        states = dataset_states[expert]
+                        actions = dataset_actions[expert]
+                        states, actions = shuffle(np.array(states), np.array(actions))
+                        demo_states, demo_actions = shuffle(demo_states, demo_actions)
+
+                        for demo_state, state in zip(demo_states, states):
+                        
+                            if isinstance(self.env.case, Case7):
+                                demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
+                                dummy = list(map(int, list(state[2:self.adam_days+2])))
+
+                                if not dummy in self.env.case.adam_baskets[expert]:
+                                    raise NameError('States are in the wrong order!')
+                            else: 
+                                demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                                dummy = list(map(int, list(state[:self.n_experts])))
+                                if not demo_dummy == dummy:
+                                    raise NameError('States are in the wrong order!')
+                                else:
+                                    pass # the order of expert and agent is correct
+
+                        for mb in range(n_mb):
+                            min_idx = mb*self.minibatch_size
+                            max_idx = (mb + 1)*self.minibatch_size
+                            mb_states = states[min_idx:max_idx,:]
+                            mb_actions = actions[min_idx:max_idx]
+                            if states.shape[0] > demo_states.shape[0]:
+                                indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
+                                mb_demo_states = np.take(demo_states, indices, axis=0)
+                                mb_demo_actions = np.take(demo_actions, indices, axis=0)
+                            else:
+                                mb_demo_states = demo_states[min_idx:max_idx,:]
+                                mb_demo_actions = demo_actions[min_idx:max_idx]
+
+                            if self.obs_normalizer:
+                                mb_states = self.obs_normalizer(mb_states, update=False)
+                                mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
+
+                            self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
+                                                    self.convert_data_to_feed_discriminator(mb_states, mb_actions))
+                            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
+
+                            self.discriminator_loss_record.append(float(loss_mean.array))
 
         elif isinstance(self.env.case, Case222):
             dataset_states = []
