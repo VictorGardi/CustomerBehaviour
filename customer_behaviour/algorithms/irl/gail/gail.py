@@ -33,7 +33,7 @@ class GAIL(PPO):
         self.discriminator = discriminator
         
         
-        if self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
+        if self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case71):
             self.demo_states = [*demonstrations['states']]
             self.demo_actions = [*demonstrations['actions']]
         else:
@@ -55,7 +55,7 @@ class GAIL(PPO):
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
 
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case71) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
             if self.batch_update:
                 dataset_states = []
                 dataset_actions = []
@@ -87,6 +87,12 @@ class GAIL(PPO):
                             if isinstance(self.env.case, Case7):
                                 demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
                                 dummy = list(map(int, list(state[2:self.adam_days+2])))
+
+                                if not dummy in self.env.case.adam_baskets[expert]:
+                                    raise NameError('States are in the wrong order!')
+                            elif isinstance(self.env.case, Case71):
+                                demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
+                                dummy = list(map(int, list(state[:self.adam_days])))
 
                                 if not dummy in self.env.case.adam_baskets[expert]:
                                     raise NameError('States are in the wrong order!')
@@ -350,6 +356,7 @@ class GAIL(PPO):
             # Do not show dummy encoding to discriminator
             #states = [s[10:] for s in states]
             pass  # Let discriminator see dummy encoding"""
+
 
         if not self.dummy_D:
             states = [s[self.env.n_experts:] for s in states]
