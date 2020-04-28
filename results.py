@@ -266,8 +266,6 @@ def evaluate_on_pop_level(args, model_path, avg_expert, compare_features):
     agent_states = []
     agent_actions = []
     for i in range(n_experts):
-        if args['state_rep'] == 71: adam_basket = np.random.permutation(env.case.adam_baskets[i])
-
         # Initialize agent with data from ith expert
         env.model.spawn_new_customer(i)
         sample = env.case.get_sample(
@@ -278,7 +276,9 @@ def evaluate_on_pop_level(args, model_path, avg_expert, compare_features):
         all_data = np.hstack(sample[0])  # history, data = sample[0]
         j = np.random.randint(0, all_data.shape[1] - args['n_historical_events'])
         history = all_data[:, j:j + args['n_historical_events']]
-        if args['state_rep'] == 71: 
+        if args['state_rep'] == 71:
+            adam_basket = np.random.permutation(env.case.adam_baskets[i])
+            env.case.i_expert = i
             initial_state = env.case.get_initial_state(history, adam_basket[0])
         else:
             initial_state = env.case.get_initial_state(history, i)
@@ -342,7 +342,9 @@ def evaluate_on_new_customers(args, model_path, experts, new_customers, compare_
 
         seed = n_experts + i
 
-        if args['state_rep'] == 71: adam_basket = np.random.permutation(env.case.adam_baskets[seed])
+        if args['state_rep'] == 71: 
+            adam_basket = np.random.permutation(env.case.adam_baskets[seed])
+            env.case.i_expert = seed
 
         env.model.spawn_new_customer(seed)
         sample = env.case.get_sample(
