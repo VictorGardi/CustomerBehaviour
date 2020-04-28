@@ -146,7 +146,9 @@ def save_data(path, sample_length, n_new_customers, compare_features):
 
     for mp in model_paths:
         n_train_steps = get_key_from_path(mp)
-        if n_train_steps < 1000000: continue
+        if int(n_train_steps) < 1000000: continue
+
+        print('Collecting data from model: %s' % n_train_steps)
 
         agent, abs_diffs, errors = evaluate_on_new_customers(args, mp, experts, new_customers, compare_features)
         avg_dist = evaluate_on_pop_level(args, mp, avg_expert, compare_features)
