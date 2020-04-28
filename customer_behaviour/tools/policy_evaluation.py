@@ -132,11 +132,12 @@ def sample_from_policy(env, model, obs_normalizer, initial_state=None):
     states = []
     actions = []
 
-    obs = env.reset().astype('float32')  # Initial state
-
     if initial_state is not None:
         env.state = initial_state
         obs = np.array(initial_state).astype('float32')
+        env.n_time_steps = 0
+    else:
+        obs = env.reset().astype('float32')  # Initial state
 
     states.append(obs)
     done = False

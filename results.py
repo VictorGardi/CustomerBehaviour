@@ -146,7 +146,7 @@ def save_data(path, sample_length, n_new_customers, compare_features):
 
     for mp in model_paths:
         n_train_steps = get_key_from_path(mp)
-        if int(n_train_steps) < 1000000: continue
+        if int(n_train_steps) <= 1000000: continue
 
         print('Collecting data from model saved after %s steps' % n_train_steps)
 
@@ -357,8 +357,10 @@ def evaluate_on_new_customers(args, model_path, experts, new_customers, compare_
         for l in range(N):
             j = np.random.randint(0, all_data.shape[1] - args['n_historical_events'])
             history = all_data[:, j:j + args['n_historical_events']]
-            if args['state_rep'] == 71: dummy = adam_basket[l]
-            initial_state = env.case.get_initial_state(history, dummy)  # We set dummy to closest expert
+            if args['state_rep'] == 71: 
+               initial_state = env.case.get_initial_state(history, adam_basket[l])
+            else:
+                initial_state = env.case.get_initial_state(history, dummy)  # We set dummy to closest expert
 
             states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
             states = np.array(states)
