@@ -677,7 +677,7 @@ class Case71():
 
     def get_step(self, state, action):  # ska man byta till annan adam här??? initerar agent med random adam så måste måste finnas bland expertdemos?    
         adam = state[:self.adam_days]
-        assert list(adam) in self.adam_baskets[self.i_expert]
+        # assert list(adam) in self.adam_baskets[self.i_expert]
         history = state[self.adam_days:]
         # Sample new Adam
         new_adam = random.sample(self.adam_baskets[self.i_expert], 1)[0]
