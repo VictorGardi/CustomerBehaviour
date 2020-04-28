@@ -15,6 +15,8 @@ def get_call(case, par_value):
 
     elif case == 'episode_length':
 
+        print(par_value)
+
         if par_value == 365:
             n_training_episodes = 30000  # -> n_tot_steps = 365 * 30000 = 10 950 000
             update_interval = 10950  # steps
@@ -27,6 +29,8 @@ def get_call(case, par_value):
             n_training_episodes = 10000  # -> n_tot_steps = 1095 * 10000 = 10 950 000
             update_interval = 10950  # steps
             eval_interval = 1095000  # steps
+        else:
+            print('Lennies boys')
 
         call = ['python3', 'main.py', 'gail', '--gpu', '-1', '--case', 'discrete_events', '--n_experts', '10', '--state_rep', '71', '--n_historical_events', '90', \
         '--episode_length', par_value, '--n_training_episodes', n_training_episodes, '--length_expert_TS', '1095', '--seed_expert', 'True', '--seed_agent', 'True', \
