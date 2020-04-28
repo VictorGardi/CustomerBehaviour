@@ -142,60 +142,61 @@ class GAIL(PPO):
                 loss_mean = 0
                 n_mb = int(self.episode_length/self.minibatch_size)
                 for epoch in range(self.epochs):
+                    for ds_iteration in range(int(self.update_interval/(self.n_experts*self.episode_length))):
 
-                    for expert in range(self.n_experts):
-                        demo_states = self.demo_states[expert]
-                        demo_actions = self.demo_actions[expert]
-                        states = dataset_states[expert]
-                        actions = dataset_actions[expert]
-                        states, actions = shuffle(np.array(states), np.array(actions))
-                        demo_states, demo_actions = shuffle(demo_states, demo_actions)
+                        for expert in range(self.n_experts):
+                            demo_states = self.demo_states[expert]
+                            demo_actions = self.demo_actions[expert]
+                            states = dataset_states[expert]
+                            actions = dataset_actions[expert]
+                            states, actions = shuffle(np.array(states), np.array(actions))
+                            demo_states, demo_actions = shuffle(demo_states, demo_actions)
 
-                        for demo_state, state in zip(demo_states, states):
-                        
-                            if isinstance(self.env.case, Case7):
-                                demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
-                                dummy = list(map(int, list(state[2:self.adam_days+2])))
+                            for demo_state, state in zip(demo_states, states):
+                            
+                                if isinstance(self.env.case, Case7):
+                                    demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
+                                    dummy = list(map(int, list(state[2:self.adam_days+2])))
 
-                                if not dummy in self.env.case.adam_baskets[expert]:
-                                    raise NameError('States are in the wrong order!')
+                                    if not dummy in self.env.case.adam_baskets[expert]:
+                                        raise NameError('States are in the wrong order!')
 
-                            elif isinstance(self.env.case, Case71):
-                                demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
-                                dummy = list(map(int, list(state[:self.adam_days])))
+                                elif isinstance(self.env.case, Case71):
+                                    demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
+                                    dummy = list(map(int, list(state[:self.adam_days])))
 
-                                if not dummy in self.env.case.adam_baskets[expert]:
-                                    raise NameError('States are in the wrong order!')
-                            else: 
-                                demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                                dummy = list(map(int, list(state[:self.n_experts])))
-                                if not demo_dummy == dummy:
-                                    raise NameError('States are in the wrong order!')
+                                    if not dummy in self.env.case.adam_baskets[expert]:
+                                        raise NameError('States are in the wrong order!')
+                                else: 
+                                    demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                                    dummy = list(map(int, list(state[:self.n_experts])))
+                                    if not demo_dummy == dummy:
+                                        raise NameError('States are in the wrong order!')
+                                    else:
+                                        pass # the order of expert and agent is correct
+
+                            for mb in range(n_mb):
+                                min_idx = mb*self.minibatch_size
+                                max_idx = (mb + 1)*self.minibatch_size
+                                mb_states = states[min_idx:max_idx,:]
+                                mb_actions = actions[min_idx:max_idx]
+                                if states.shape[0] > demo_states.shape[0]:
+                                    indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
+                                    mb_demo_states = np.take(demo_states, indices, axis=0)
+                                    mb_demo_actions = np.take(demo_actions, indices, axis=0)
                                 else:
-                                    pass # the order of expert and agent is correct
+                                    mb_demo_states = demo_states[min_idx:max_idx,:]
+                                    mb_demo_actions = demo_actions[min_idx:max_idx]
 
-                        for mb in range(n_mb):
-                            min_idx = mb*self.minibatch_size
-                            max_idx = (mb + 1)*self.minibatch_size
-                            mb_states = states[min_idx:max_idx,:]
-                            mb_actions = actions[min_idx:max_idx]
-                            if states.shape[0] > demo_states.shape[0]:
-                                indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
-                                mb_demo_states = np.take(demo_states, indices, axis=0)
-                                mb_demo_actions = np.take(demo_actions, indices, axis=0)
-                            else:
-                                mb_demo_states = demo_states[min_idx:max_idx,:]
-                                mb_demo_actions = demo_actions[min_idx:max_idx]
+                                if self.obs_normalizer:
+                                    mb_states = self.obs_normalizer(mb_states, update=False)
+                                    mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
 
-                            if self.obs_normalizer:
-                                mb_states = self.obs_normalizer(mb_states, update=False)
-                                mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
+                                self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
+                                                        self.convert_data_to_feed_discriminator(mb_states, mb_actions))
+                                loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
 
-                            self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
-                                                    self.convert_data_to_feed_discriminator(mb_states, mb_actions))
-                            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
-
-                            self.discriminator_loss_record.append(float(loss_mean.array))
+                                self.discriminator_loss_record.append(float(loss_mean.array))
 
         elif isinstance(self.env.case, Case222):
             dataset_states = []
