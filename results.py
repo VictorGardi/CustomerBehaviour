@@ -411,4 +411,8 @@ def get_label_from_param(param):
 ############################
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) > 1:
+        path = sys.argv[1]
+        save_data(path, sample_length=10000, n_new_customers=50, compare_features=False)
+    else:
+        main()
