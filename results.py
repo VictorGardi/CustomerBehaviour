@@ -321,6 +321,8 @@ def evaluate_on_new_customers(args, model_path, experts, new_customers, compare_
         closest_experts = np.argsort(distances)[:k]
         dummy = closest_experts[0]
 
+        if args['state_rep'] == 71: adam_basket = np.random.permutation(env.case.adam_baskets[dummy])
+
         temp_agents = []
         temp_abs_diffs = []
         n_errors = 0
@@ -334,9 +336,11 @@ def evaluate_on_new_customers(args, model_path, experts, new_customers, compare_
             )
         all_data = np.hstack(sample[0])  # history, data = sample[0]
 
-        for _ in range(N):
+        for k in range(N):
             j = np.random.randint(0, all_data.shape[1] - args['n_historical_events'])
             history = all_data[:, j:j + args['n_historical_events']]
+            if args['state_rep'] == 71:
+                dummy = adam_basket[k]
             initial_state = env.case.get_initial_state(history, dummy)  # We set dummy to closest expert
 
             states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
