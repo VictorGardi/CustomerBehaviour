@@ -148,9 +148,12 @@ def save_data(path, sample_length, n_new_customers, compare_features):
         n_train_steps = get_key_from_path(mp)
         if int(n_train_steps) < 1000000: continue
 
-        print('Collecting data from model: %s' % n_train_steps)
+        print('Collecting data from model saved after %s steps' % n_train_steps)
 
-        agent, abs_diffs, errors = evaluate_on_new_customers(args, mp, experts, new_customers, compare_features)
+        if args['state_rep'] == 71:
+            agent, abs_diffs, errors = evaluate_on_new_customers(args, mp, experts, new_customers, compare_features, n_new_customers)
+        else:
+            agent, abs_diffs, errors = evaluate_on_new_customers(args, mp, experts, new_customers, compare_features)
         avg_dist = evaluate_on_pop_level(args, mp, avg_expert, compare_features)
         
         models[n_train_steps] = (agent, abs_diffs, errors, avg_dist)
@@ -254,15 +257,17 @@ def load_data():
     return data
 
 def evaluate_on_pop_level(args, model_path, avg_expert, compare_features):
-    env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False)
-
     n_experts = args['n_experts']
+        
+    env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False)
 
     metric = ed if compare_features else wd
 
     agent_states = []
     agent_actions = []
     for i in range(n_experts):
+        if args['state_rep'] == 71: adam_basket = np.random.permutation(env.case.adam_baskets[i])
+
         # Initialize agent with data from ith expert
         env.model.spawn_new_customer(i)
         sample = env.case.get_sample(
@@ -273,7 +278,10 @@ def evaluate_on_pop_level(args, model_path, avg_expert, compare_features):
         all_data = np.hstack(sample[0])  # history, data = sample[0]
         j = np.random.randint(0, all_data.shape[1] - args['n_historical_events'])
         history = all_data[:, j:j + args['n_historical_events']]
-        initial_state = env.case.get_initial_state(history, i)
+        if args['state_rep'] == 71: 
+            initial_state = env.case.get_initial_state(history, adam_basket[0])
+        else:
+            initial_state = env.case.get_initial_state(history, i)
 
         states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
         agent_states.append(states)
@@ -307,16 +315,19 @@ def compare_with_new_customers(agents, experts, new_customers, compare_features)
 
     return errors
 
-def evaluate_on_new_customers(args, model_path, experts, new_customers, compare_features):
+def evaluate_on_new_customers(args, model_path, experts, new_customers, compare_features, n_new_customers=None):
     global k, N
 
-    env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False)
+    n_experts = args['n_experts']
+
+    if n_new_customers is not None:
+        env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False, n_experts_in_adam_basket=n_experts+n_new_customers)
+    else:
+        env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False)
 
     agents = []
     abs_diffs = []
     errors = []
-
-    n_experts = args['n_experts']
 
     metric = ed if compare_features else wd
 
@@ -421,6 +432,6 @@ def get_label_from_param(param):
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         path = sys.argv[1]
-        save_data(path, sample_length=10000, n_new_customers=50, compare_features=False)
+        save_data(path, sample_length=10, n_new_customers=10, compare_features=False)
     else:
         main()
