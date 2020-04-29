@@ -33,5 +33,5 @@ def get_states_actions_next_states(states, actions, case, xp=np):
     else:
         states = xp.asarray(np.array(list(chain(*states))).astype(dtype=np.float32))
         next_states = xp.asarray(np.array(list(chain(*next_states))).astype(dtype=np.float32))
-        actions = xp.asarray(np.array(list(chain(*actions))).astype(dtype=np.float32))
+        actions = xp.asarray(np.array(list(chain(*actions))).astype(dtype=np.int32))
     return states, actions, next_states
