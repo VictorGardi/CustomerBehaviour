@@ -17,19 +17,21 @@ tools_path = join(os.getcwd(), 'customer_behaviour/tools')
 sys.path.insert(1, tools_path)
 import policy_evaluation as pe
 
-dir_path = 'adam_days'  # 'length_expert_TS'  # 'adam_days'
+dir_path = 'adam_days'
 param = dir_path
-n_new_customers = 10
-sample_length = 10
-k = 3  # The number of closest experts
+n_new_customers = 50
+sample_length = 10000
 N = 1  # The number of reinitializations when predicting a new customer 
 
 def main():
-    save_data(dir_path + '/2020-04-27_15-15-59', sample_length, n_new_customers, N)
+    data = load_data()
+    plot(data)
 
 def plot(data):
     # Sample customer data
+    args = json.loads(open(join([join(dir_path, x) for x in os.listdir(dir_path) if x.startswith('2020')][0], 'args.txt'), 'r').read())
     n_experts = args['n_experts']
+
     if args['state_rep'] == 71:
         env = pe.get_env_and_model(args, '', sample_length, only_env=True, n_experts_in_adam_basket=n_experts+n_new_customers)
     else:
@@ -51,13 +53,36 @@ def plot(data):
 
     param_values = list(data.keys())
     n_params = len(param_values)
-
     step_values = list(data[param_values[0]][0].models.keys())
     n_step_values = len(step_values)
 
-    avg_dist_vs_step = [[[] for j in range(n_step_values)] for i in range(n_params)]
+    import seaborn as sns
+    import pandas as pd
 
+    df1 = pd.DataFrame(columns=['param_value', 'n_train_steps', 'diff_train'])
+    df2 = pd.DataFrame(columns=['param_value', 'n_train_steps', 'diff_test'])
 
+    diff_train_vs_step = [[[] for j in range(n_step_values)] for i in range(n_params)]
+    diff_test_vs_step = [[[] for j in range(n_step_values)] for i in range(n_params)]
+
+    for k, (param_value, results) in enumerate(data.items()):
+        print('Processing parameter value {}'.format(param_value))
+        i = param_values.index(param_value)
+        for result in results:
+            for n_train_steps, agent in result.models.items():
+                j = step_values.index(n_train_steps)
+                for l, (a, c) in enumerate(zip(agent, customers)):
+                    assert len(a) == 1
+                    diff = wd(a[0], c)
+                    if l < n_experts:
+                        df1.loc[len(df1.index)] = [get_label_from_param_value(param_value), n_train_steps, diff]
+                    else:
+                        df2.loc[len(df2.index)] = [get_label_from_param_value(param_value), n_train_steps, diff]
+                    
+    sns.relplot(x='n_train_steps', y='diff_train', hue='param_value', ci=95, kind='line', data=df1)
+    sns.relplot(x='n_train_steps', y='diff_test', hue='param_value', ci=95, kind='line', data=df2)
+
+    plt.show()
 
 def load_data():
     data = {}
@@ -73,7 +98,7 @@ def load_data():
         n_experts = args['n_experts']
 
         content = os.listdir(path)
-        assert 'result.pkl' in content
+        assert 'result2.pkl' in content
         result = load_result(path)
 
         if args[param] in data:
@@ -97,14 +122,14 @@ def save_data(path, sample_length, n_new_customers, N):
 
         print('Collecting data from model saved after %s steps' % n_train_steps)
 
-        agent = evaluate(args, mp, n_new_customers, N)
+        agent = evaluate(args, mp, n_new_customers, sample_length, N)
         
         models[n_train_steps] = agent
 
     result = Result(models)
     save_result(result, path)
 
-def evaluate(args, model_path, n_new_customers, N):
+def evaluate(args, model_path, n_new_customers, sample_length, N):
 
     n_experts = args['n_experts']
 
@@ -178,20 +203,26 @@ def load_result(folder):
     return result
 
 def get_label_from_param_value(param_value):
-    if param_value == 365:
-        return '1 year'
-    elif param_value == 730:
-        return '2 years'
-    elif param_value == 1095:
-        return '3 years'
-    elif param_value == 30:
-        return '1 month'
-    elif param_value == 60:
-        return '2 months'
-    elif param_value == 90:
-        return '3 months'
+    if param == 'adam_days':
+        if param_value == 10:
+            return '10 purchases'
+        elif param_value == 20:
+            return '20 purchases'
+        elif param_value == 30:
+            return '30 purchases'
     else:
-        raise NotImplementedError
+        if param_value == 365:
+            return '1 year'
+        elif param_value == 730:
+            return '2 years'
+        elif param_value == 1095:
+            return '3 years'
+        elif param_value == 30:
+            return '1 month'
+        elif param_value == 60:
+            return '2 months'
+        elif param_value == 90:
+            return '3 months'
 
 def get_label_from_param(param):
     if param == 'n_historical_events':
