@@ -9,7 +9,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4, Case71
+from custom_gym.envs.discrete_buying_events import Case21, Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4, Case71
 
 
 class GAIL(PPO):
@@ -32,13 +32,13 @@ class GAIL(PPO):
 
         self.discriminator = discriminator
         
-        
-        if self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case71):
-            self.demo_states = [*demonstrations['states']]
-            self.demo_actions = [*demonstrations['actions']]
-        else:
+        if isinstance(self.env.case, Case21) and self.batch_update: 
             self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
             self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
+            
+        elif self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case71):
+            self.demo_states = [*demonstrations['states']]
+            self.demo_actions = [*demonstrations['actions']]
 
         self.expert_ratio = [get_purchase_ratio(i) for i in demonstrations['actions']]
 
@@ -249,7 +249,6 @@ class GAIL(PPO):
                 actions = xp.array([b['action'] for b in batch])
 
                 self.demonstrations_indexes = xp.random.permutation(len(self.demo_states))[:len(states)]
-
                 demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
 
                 if self.obs_normalizer:
@@ -366,7 +365,8 @@ class GAIL(PPO):
 
 
         if not self.dummy_D:
-            states = [s[self.env.n_experts:] for s in states]
+            if not isinstance(self.env.case, Case21):
+                states = [s[self.env.n_experts:] for s in states]
             if isinstance(self.env.case, Case7):
                 states = [s[2+self.adam_days:] for s in states]
             elif isinstance(self.env.case, Case71):
