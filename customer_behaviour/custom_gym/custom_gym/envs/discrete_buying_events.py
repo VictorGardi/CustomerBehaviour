@@ -813,7 +813,8 @@ def define_case(case):
         31: Case31,
         4: Case4,
         7: Case7,
-        71: Case71
+        71: Case71,
+        17: Case17
     }
     return switcher.get(case)
 
@@ -975,7 +976,7 @@ class DiscreteBuyingEvents(gym.Env):
                 # Choose between Expert 2 and Expert 6
                 seed = np.random.choice([1, 5])
             elif isinstance(self.case, Case221) or isinstance(self.case, Case222) or isinstance(self.case, Case7) or isinstance(self.case, Case23) or isinstance(self.case, Case4) \
-            or isinstance(self.case, Case71):
+            or isinstance(self.case, Case71) or isinstance(self.case, Case17):
                 seed = self.i_reset % self.n_experts
                 if self.n_processes:
                     self.i_reset += self.n_processes
