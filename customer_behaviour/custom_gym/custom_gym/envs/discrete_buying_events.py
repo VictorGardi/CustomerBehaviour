@@ -213,6 +213,45 @@ class Case21():
         return new_state
 
 
+class Case17():
+    def __init__(self, model, n_experts=None, adam_days=None):
+        self.model = model
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(n_historical_events)
+
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
+        return action
+
+    def get_initial_state(self, history, seed=None):
+        temp = history.copy()
+        temp = np.sum(temp, axis=0)
+
+        temp[temp > 0] = 1
+
+        initial_state = temp
+
+        return initial_state
+
+    def get_step(self, state, action):
+        new_state = [*state[1:], action]
+        return new_state
+
+
 class Case22():  # dummy encoding (dynamic)
     def __init__(self, model, n_experts=None, adam_days=None):
         self.model = model
