@@ -11,7 +11,7 @@ import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
 import evaluate_policy as ep
 import evaluate_training_sampling as ets
-import results as res 
+import results2 as res2 
 import numpy as np
 import gym
 import custom_gym
@@ -450,7 +450,10 @@ def main(args, train_env):
 
     if args.save_results:
         print('Saving result...')
-        res.save_data(dst, 10000, 50, compare_features=False)
+        res2.save_data(dst, 10000, 50, N=1)
+
+        print('Running evaluate policy...')
+        ep.eval_policy(a_dir_path=dst)
         
     else:
         print('Running evaluate policy...')
