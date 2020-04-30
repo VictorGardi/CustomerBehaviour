@@ -65,16 +65,15 @@ def plot(data):
     diff_train_vs_step = [[[] for j in range(n_step_values)] for i in range(n_params)]
     diff_test_vs_step = [[[] for j in range(n_step_values)] for i in range(n_params)]
 
-    for k, (param_value, results) in enumerate(data.items()):
+    for param_value, results in data.items():
         print('Processing parameter value {}'.format(param_value))
-        i = param_values.index(param_value)
         for result in results:
             for n_train_steps, agent in result.models.items():
-                j = step_values.index(n_train_steps)
-                for l, (a, c) in enumerate(zip(agent, customers)):
+                if int(n_train_steps) <= 1000000: continue
+                for i, (a, c) in enumerate(zip(agent, customers)):
                     assert len(a) == 1
                     diff = wd(a[0], c)
-                    if l < n_experts:
+                    if i < n_experts:
                         df1.loc[len(df1.index)] = [get_label_from_param_value(param_value), n_train_steps, diff]
                     else:
                         df2.loc[len(df2.index)] = [get_label_from_param_value(param_value), n_train_steps, diff]
@@ -118,7 +117,7 @@ def save_data(path, sample_length, n_new_customers, N):
 
     for mp in model_paths:
         n_train_steps = get_key_from_path(mp)
-        # if int(n_train_steps) <= 1000000: continue
+        if int(n_train_steps) <= 1000000: continue
 
         print('Collecting data from model saved after %s steps' % n_train_steps)
 
@@ -134,7 +133,7 @@ def evaluate(args, model_path, n_new_customers, sample_length, N):
     n_experts = args['n_experts']
 
     if args['state_rep'] == 71:
-        env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False, n_experts_in_adam_basket=n_experts + n_new_customers)
+        env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False, n_experts_in_adam_basket=n_experts+n_new_customers)
     else:
         env, model, obs_normalizer = pe.get_env_and_model(args, model_path, sample_length, only_env=False)
 
