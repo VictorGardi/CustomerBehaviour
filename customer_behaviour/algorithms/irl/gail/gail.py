@@ -9,7 +9,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case21, Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4, Case71
+from custom_gym.envs.discrete_buying_events import Case21, Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4, Case71, Case17
 
 
 class GAIL(PPO):
@@ -36,7 +36,7 @@ class GAIL(PPO):
             self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
             self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
             
-        elif self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case71):
+        elif self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case71) or isinstance(self.env.case, Case17):
             self.demo_states = [*demonstrations['states']]
             self.demo_actions = [*demonstrations['actions']]
 
@@ -55,7 +55,7 @@ class GAIL(PPO):
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
 
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case71) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4):
+        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case71) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case17):
             if self.batch_update:
                 dataset_states = []
                 dataset_actions = []
