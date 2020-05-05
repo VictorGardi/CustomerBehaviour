@@ -303,7 +303,7 @@ def main(args, train_env):
     if args.show_D_dummy: # Let discriminator see dummy
         input_dim_D = obs_dim + 1
     elif not args.show_D_dummy: # Do not let discriminator see dummy
-        if args.state_rep == 21:
+        if args.state_rep == 21 or args.state_rep == 17:
             input_dim_D = obs_dim + 1
         else:
             input_dim_D = obs_dim + 1 - args.n_experts
