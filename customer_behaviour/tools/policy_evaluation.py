@@ -135,6 +135,44 @@ def sample_from_policy(env, model, obs_normalizer, initial_state=None):
     states = []
     actions = []
 
+    obs = env.reset().astype('float32')  # Initial state
+
+    if initial_state is not None:
+        env.state = initial_state
+        obs = np.array(initial_state).astype('float32')
+
+    states.append(obs)
+    done = False
+    while not done:
+        b_state = batch_states([obs], xp, phi)
+        
+        if obs_normalizer:
+            b_state = obs_normalizer(b_state, update=False)
+
+        with chainer.using_config('train', False), chainer.no_backprop_mode():
+            action_distrib, _ = model(b_state)
+            action = chainer.cuda.to_cpu(action_distrib.sample().array)[0]
+
+        actions.append(action)
+
+        new_obs, _, done, _ = env.step(action)
+        obs = new_obs.astype('float32')
+
+        if not done: states.append(obs)
+
+    return states, actions
+
+
+
+def sample_from_policy2(env, model, obs_normalizer, initial_state=None):
+    # This function should only be used in results.py
+
+    xp = np
+    phi = lambda x: x
+
+    states = []
+    actions = []
+
     if initial_state is not None:
         env.state = initial_state
         obs = np.array(initial_state).astype('float32')
