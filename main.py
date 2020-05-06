@@ -456,11 +456,12 @@ def main(args, train_env):
         ep.eval_policy(a_dir_path=dst)
         
     else:
-        print('Running evaluate policy...')
-        ep.eval_policy(a_dir_path=dst)
-        print('Running evaluate training...')
-        ets.eval_training(a_dir_path=dst)
-        print('Done')
+        if args.n_experts <= 10:
+            print('Running evaluate policy...')
+            ep.eval_policy(a_dir_path=dst)
+            # print('Running evaluate training...')
+            # ets.eval_training(a_dir_path=dst)
+            print('Done')
 
 
     if args.save_folder is not None:
