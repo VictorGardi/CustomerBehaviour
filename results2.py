@@ -162,7 +162,7 @@ def evaluate(args, model_path, n_new_customers, sample_length, N):
             else:
                 raise NotImplementedError
 
-            states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)
+            states, actions = pe.sample_from_policy2(env, model, obs_normalizer, initial_state=initial_state)
             states = np.array(states)
             actions = np.array(actions)
 
