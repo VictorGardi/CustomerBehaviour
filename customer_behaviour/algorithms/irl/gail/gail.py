@@ -32,7 +32,7 @@ class GAIL(PPO):
 
         self.discriminator = discriminator
         
-        if isinstance(self.env.case, Case21) and self.batch_update: 
+        if isinstance(self.env.case, Case21) or isinstance(self.env.case, Case22): 
             self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
             self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
             
