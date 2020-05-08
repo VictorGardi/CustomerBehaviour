@@ -59,19 +59,27 @@ expert_actions = np.array(customer_trajectories['actions'][:n_experts])
 experts = customers[:n_experts]
 avg_expert = pe.get_distrib(expert_states, expert_actions)
 
-# Sample agent data
 def sample_agent_data(N, env, model, obs_normalizer):
     agent_states = []
     agent_actions = []
     for i in range(N):
         # Initialize agent with data from ith expert
         initial_state = random.choice(customer_states[i])
+        if args['state_rep'] == 221 and i >= n_experts:
+            # Find closest expert
+            c = customers[i]
+            distances = [wd(c, e) for e in experts]
+            closest_experts = np.argsort(distances)
+            dummy = closest_experts[0]
+            initial_state[dummy] = 1
         states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)    
         agent_states.append(states)
         agent_actions.append(actions)
     agent_states = np.array(agent_states)
     agent_actions = np.array(agent_actions)
     return agent_states, agent_actions
+
+# Sample agent data
 # agent_states, agent_actions = sample_agent_data(n_experts, env, model, obs_normalizer)
 
 # Plot average distributions
@@ -169,7 +177,7 @@ for mdp in model_dir_paths:
 df = pd.DataFrame(data, columns=['Number of training steps', 'Wasserstein distance', 'Comparison with'])
 df.to_csv('df_dummies.csv', index=False)
 
-# df = pd.read_csv('df_airl.csv')
+# df = pd.read_csv('df_dummies.csv')
 # sns.set(style='darkgrid')
 # g = sns.relplot(x='Number of training steps', y='Wasserstein distance', hue='Comparison with', ci=95, kind='line', data=df)
 # g._legend.set_bbox_to_anchor([0.70, 0.85])
