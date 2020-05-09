@@ -27,7 +27,7 @@ import results2 as res
 dir_path = 'dummy'
 
 sample_length = 10000
-n_new_customers = 50
+n_new_customers = 0
 
 ##### ##### LOAD ARGUMENTS ##### #####
 
@@ -35,7 +35,7 @@ args_path = join(dir_path, 'args.txt')
 args = json.loads(open(args_path, 'r').read())
 
 ##### ##### FINAL MODEL ##### #####
-'''
+
 final_model_dir_path = next((d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('finish')), None)
 
 n_experts = args['n_experts']
@@ -69,7 +69,7 @@ def sample_agent_data(N, env, model, obs_normalizer):
     for i in range(N):
         # Initialize agent with data from ith expert
         initial_state = random.choice(customer_states[i])
-        if args['state_rep'] == 221 and i >= n_experts:
+        if args['state_rep'] == 22 or args['state_rep'] == 221 and i >= n_experts:
             # Find closest expert
             c = customers[i]
             distances = [wd(c, e) for e in experts]
@@ -89,8 +89,6 @@ def sample_agent_data(N, env, model, obs_normalizer):
 # Plot average distributions
 # avg_agent = pe.get_distrib(agent_states, agent_actions)
 
-# print(wd(avg_expert, avg_agent))
-
 # fig, ax = plt.subplots()
 # data = {'Average expert': avg_expert, 'Average agent': avg_agent}
 # pe.bar_plot(ax, data, colors=None, total_width=0.7, legend=False)
@@ -102,9 +100,6 @@ def sample_agent_data(N, env, model, obs_normalizer):
 # Plot some individual customers
 # agent2 = pe.get_distrib(agent_states[1], agent_actions[1])
 # expert2 = pe.get_distrib(expert_states[1], expert_actions[1])
-
-# print(wd(avg_expert, agent2))
-# print(wd(expert2, agent2))
 
 # fig, ax = plt.subplots()
 # data = {'Agent 2': agent2, 'Expert 2': expert2, 'Average expert': avg_expert}
@@ -136,6 +131,9 @@ def sample_agent_data(N, env, model, obs_normalizer):
 #     # temp.append(wd(a, avg_expert))
 #     distances.append(temp)
 
+# print(distances)
+# print(np.mean(distances))
+
 # columns = ['Expert {}'.format(i + 1) for i in range(n_experts)]
 # columns.append('Avg. expert')
 # index = ['Agent {}'.format(i + 1) for i in range(n_experts)]
@@ -146,7 +144,7 @@ def sample_agent_data(N, env, model, obs_normalizer):
 # fig.subplots_adjust(bottom=0.25)
 # sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'})
 # plt.show()
-'''
+
 ##### ##### BASELINE ##### #####
 
 model_dir_paths = [d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('checkpoint')]
@@ -183,7 +181,7 @@ for mdp in model_dir_paths:
 
 df = pd.DataFrame(data, columns=['Number of training steps', 'Wasserstein distance', 'Comparison with'])
 df.to_csv('df_dummies.csv', index=False)
-'''
+
 df = pd.read_csv('df_gail.csv')
 df['Number of training episodes'] = [x / 1095 for x in df['Number of training steps'].values.tolist()]
 indices = df[df['Comparison with'] == 'Closest expert'].index
@@ -196,7 +194,7 @@ ax = g.axes[0][0]
 ax.set_ylim([0, 0.01])
 plt.legend(loc='upper center')
 plt.show()
-'''
+
 ##### ##### HEATMAPS ##### #####
 '''
 model_dir_paths = [d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('checkpoint')]
