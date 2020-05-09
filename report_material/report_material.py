@@ -23,6 +23,7 @@ import results2 as res
 
 # dir_path = 'gail_baseline'
 # dir_path = 'airl_baseline'
+# dir_path = 'ail-md_dummy'
 dir_path = 'dummy'
 
 sample_length = 10000
@@ -34,7 +35,7 @@ args_path = join(dir_path, 'args.txt')
 args = json.loads(open(args_path, 'r').read())
 
 ##### ##### FINAL MODEL ##### #####
-
+'''
 final_model_dir_path = next((d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('finish')), None)
 
 n_experts = args['n_experts']
@@ -145,7 +146,7 @@ def sample_agent_data(N, env, model, obs_normalizer):
 # fig.subplots_adjust(bottom=0.25)
 # sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'})
 # plt.show()
-
+'''
 ##### ##### BASELINE ##### #####
 
 model_dir_paths = [d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('checkpoint')]
@@ -182,18 +183,20 @@ for mdp in model_dir_paths:
 
 df = pd.DataFrame(data, columns=['Number of training steps', 'Wasserstein distance', 'Comparison with'])
 df.to_csv('df_dummies.csv', index=False)
+'''
+df = pd.read_csv('df_gail.csv')
+df['Number of training episodes'] = [x / 1095 for x in df['Number of training steps'].values.tolist()]
+indices = df[df['Comparison with'] == 'Closest expert'].index
+df.drop(indices , inplace=True)
 
-# df = pd.read_csv('df_dummies_2.csv')
-
-# indexNames = df[ df['Comparison with'] == 'New customers' ].index
-# df.drop(indexNames , inplace=True)
-
-# sns.set(style='darkgrid')
-# g = sns.relplot(x='Number of training steps', y='Wasserstein distance', hue='Comparison with', ci=95, kind='line', data=df)
-# g._legend.set_bbox_to_anchor([0.70, 0.85])
-# plt.savefig('gail_vs_train.eps', format='eps', transparent=True)
-# plt.show()
-
+sns.set(style='darkgrid')
+g = sns.relplot(x='Number of training episodes', y='Wasserstein distance', hue='Comparison with', ci=95, kind='line', data=df,  \
+    facet_kws={'legend_out': False})
+ax = g.axes[0][0]
+ax.set_ylim([0, 0.01])
+plt.legend(loc='upper center')
+plt.show()
+'''
 ##### ##### HEATMAPS ##### #####
 '''
 model_dir_paths = [d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('checkpoint')]
