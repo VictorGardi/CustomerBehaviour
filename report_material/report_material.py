@@ -23,10 +23,11 @@ import results2 as res
 
 # dir_path = 'gail_baseline'
 # dir_path = 'airl_baseline'
+# dir_path = 'ail-md_dummy'
 dir_path = 'dummy'
 
 sample_length = 10000
-n_new_customers = 50
+n_new_customers = 0
 
 ##### ##### LOAD ARGUMENTS ##### #####
 
@@ -62,30 +63,31 @@ avg_expert = pe.get_distrib(expert_states, expert_actions)
 def sample_agent_data(N, env, model, obs_normalizer):
     agent_states = []
     agent_actions = []
+
+    closest_expert = N * [0]
+
     for i in range(N):
         # Initialize agent with data from ith expert
         initial_state = random.choice(customer_states[i])
-        if args['state_rep'] == 221 and i >= n_experts:
+        if args['state_rep'] == 22 or args['state_rep'] == 221 and i >= n_experts:
             # Find closest expert
             c = customers[i]
             distances = [wd(c, e) for e in experts]
-            closest_experts = np.argsort(distances)
-            dummy = closest_experts[0]
+            dummy = np.argsort(distances)[0]
+            closest_expert[i] = dummy
             initial_state[dummy] = 1
         states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)    
         agent_states.append(states)
         agent_actions.append(actions)
     agent_states = np.array(agent_states)
     agent_actions = np.array(agent_actions)
-    return agent_states, agent_actions
+    return agent_states, agent_actions, closest_expert
 
 # Sample agent data
-# agent_states, agent_actions = sample_agent_data(n_experts, env, model, obs_normalizer)
+# agent_states, agent_actions, _ = sample_agent_data(n_experts+n_new_customers, env, model, obs_normalizer)
 
 # Plot average distributions
 # avg_agent = pe.get_distrib(agent_states, agent_actions)
-
-# print(wd(avg_expert, avg_agent))
 
 # fig, ax = plt.subplots()
 # data = {'Average expert': avg_expert, 'Average agent': avg_agent}
@@ -98,9 +100,6 @@ def sample_agent_data(N, env, model, obs_normalizer):
 # Plot some individual customers
 # agent2 = pe.get_distrib(agent_states[1], agent_actions[1])
 # expert2 = pe.get_distrib(expert_states[1], expert_actions[1])
-
-# print(wd(avg_expert, agent2))
-# print(wd(expert2, agent2))
 
 # fig, ax = plt.subplots()
 # data = {'Agent 2': agent2, 'Expert 2': expert2, 'Average expert': avg_expert}
@@ -132,6 +131,9 @@ def sample_agent_data(N, env, model, obs_normalizer):
 #     # temp.append(wd(a, avg_expert))
 #     distances.append(temp)
 
+# print(distances)
+# print(np.mean(distances))
+
 # columns = ['Expert {}'.format(i + 1) for i in range(n_experts)]
 # columns.append('Avg. expert')
 # index = ['Agent {}'.format(i + 1) for i in range(n_experts)]
@@ -162,9 +164,10 @@ for mdp in model_dir_paths:
     else:
         env, model, obs_normalizer = pe.get_env_and_model(args, mdp, sample_length)
 
-    agent_states, agent_actions = sample_agent_data(n_experts+n_new_customers, env, model, obs_normalizer)
+    agent_states, agent_actions, closest_expert = sample_agent_data(n_experts+n_new_customers, env, model, obs_normalizer)
 
     agents = res.get_distribs(agent_states, agent_actions)
+    avg_agent = pe.get_distrib(agent_states[:n_experts], agent_actions[:n_experts])
 
     temp = []
     for i, (a, c) in enumerate(zip(agents, customers)):
@@ -172,17 +175,25 @@ for mdp in model_dir_paths:
             data.append([n_steps, wd(a, c), 'Experts'])
         else:
             data.append([n_steps, wd(a, c), 'New customers'])
-        data.append([n_steps, wd(a, avg_expert), 'Average expert'])
+            data.append([n_steps, wd(a, experts[closest_expert[i]]), 'Closest expert'])
+
+    data.append([n_steps, wd(avg_agent, avg_expert), 'Average expert'])
 
 df = pd.DataFrame(data, columns=['Number of training steps', 'Wasserstein distance', 'Comparison with'])
 df.to_csv('df_dummies.csv', index=False)
 
-# df = pd.read_csv('df_dummies.csv')
-# sns.set(style='darkgrid')
-# g = sns.relplot(x='Number of training steps', y='Wasserstein distance', hue='Comparison with', ci=95, kind='line', data=df)
-# g._legend.set_bbox_to_anchor([0.70, 0.85])
-# plt.savefig('gail_vs_train.eps', format='eps', transparent=True)
-# plt.show()
+df = pd.read_csv('df_gail.csv')
+df['Number of training episodes'] = [x / 1095 for x in df['Number of training steps'].values.tolist()]
+indices = df[df['Comparison with'] == 'Closest expert'].index
+df.drop(indices , inplace=True)
+
+sns.set(style='darkgrid')
+g = sns.relplot(x='Number of training episodes', y='Wasserstein distance', hue='Comparison with', ci=95, kind='line', data=df,  \
+    facet_kws={'legend_out': False})
+ax = g.axes[0][0]
+ax.set_ylim([0, 0.01])
+plt.legend(loc='upper center')
+plt.show()
 
 ##### ##### HEATMAPS ##### #####
 '''
@@ -204,7 +215,7 @@ for mdp in model_dir_paths:
     else:
         env, model, obs_normalizer = pe.get_env_and_model(args, mdp, sample_length)
 
-    agent_states, agent_actions = sample_agent_data(n_experts, env, model, obs_normalizer)
+    agent_states, agent_actions, _ = sample_agent_data(n_experts, env, model, obs_normalizer)
 
     agents = res.get_distribs(agent_states, agent_actions)
     distances = []
@@ -216,8 +227,12 @@ for mdp in model_dir_paths:
 
     fig, ax = plt.subplots()
     fig.subplots_adjust(bottom=0.25)
-    sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'})
-    ax.set_title('%s training steps' % n_steps)
+    # sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'}, square=True)
+    # ax.set_title('%s training steps' % n_steps)
+    sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar=False, square=True)
+    ax.set_xticks([], [])
+    ax.set_yticks([], [])
+    ax.set_title('%d training episodes' % (int(n_steps) / 1095))
     plt.show()
 '''
 ##### ##### EXPERT VISUALIZATION ##### #####
@@ -237,6 +252,6 @@ df = pd.DataFrame(squareform(pdist(np.array(experts), lambda u, v: wd(u, v))), c
 
 fig, ax = plt.subplots()
 fig.subplots_adjust(bottom=0.16)
-sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'})
+sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'}, square=True)
 plt.show()
 '''

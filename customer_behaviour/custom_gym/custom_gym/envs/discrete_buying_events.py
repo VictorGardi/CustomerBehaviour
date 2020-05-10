@@ -283,7 +283,7 @@ class Case22():  # dummy encoding (dynamic)
         temp[temp > 0] = 1
 
         dummy = np.zeros(self.n_experts)
-        dummy[seed] = 1
+        if not seed >= self.n_experts: dummy[seed] = 1
 
         initial_state = np.concatenate((dummy, temp))
 
