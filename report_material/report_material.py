@@ -24,10 +24,12 @@ import results2 as res
 # dir_path = 'gail_baseline'
 # dir_path = 'airl_baseline'
 # dir_path = 'ail-md_dummy'
-dir_path = 'dummy'
+# dir_path = 'dummy'
+dir_path = '71_100'
+# dir_path = '71_100novel'
 
 sample_length = 10000
-n_new_customers = 0
+n_new_customers = 50
 
 ##### ##### LOAD ARGUMENTS ##### #####
 
@@ -82,7 +84,7 @@ def sample_agent_data(N, env, model, obs_normalizer):
     agent_states = np.array(agent_states)
     agent_actions = np.array(agent_actions)
     return agent_states, agent_actions, closest_expert
-
+'''
 # Sample agent data
 # agent_states, agent_actions, _ = sample_agent_data(n_experts+n_new_customers, env, model, obs_normalizer)
 
@@ -126,25 +128,27 @@ def sample_agent_data(N, env, model, obs_normalizer):
 # Plot heatmap
 # agents = res.get_distribs(agent_states, agent_actions)
 # distances = []
+# # distances2 = []
 # for i, a in enumerate(agents):
 #     temp = [wd(a, e) for e in experts]
 #     # temp.append(wd(a, avg_expert))
 #     distances.append(temp)
+#     # distances2.append(wd(a, experts[i]))
 
-# print(distances)
-# print(np.mean(distances))
+# # print(distances2)
+# # print(np.mean(distances2))
 
 # columns = ['Expert {}'.format(i + 1) for i in range(n_experts)]
-# columns.append('Avg. expert')
+# # columns.append('Avg. expert')
 # index = ['Agent {}'.format(i + 1) for i in range(n_experts)]
 
 # df = pd.DataFrame(distances, columns=columns, index=index)
 
 # fig, ax = plt.subplots()
 # fig.subplots_adjust(bottom=0.25)
-# sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'})
+# sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'}, square=True)
 # plt.show()
-
+'''
 ##### ##### BASELINE ##### #####
 
 model_dir_paths = [d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('checkpoint')]
@@ -180,21 +184,29 @@ for mdp in model_dir_paths:
     data.append([n_steps, wd(avg_agent, avg_expert), 'Average expert'])
 
 df = pd.DataFrame(data, columns=['Number of training steps', 'Wasserstein distance', 'Comparison with'])
-df.to_csv('df_dummies.csv', index=False)
+df.to_csv('df_71_novel.csv', index=False)
+'''
+df1 = pd.read_csv('df_ail-md_dummies.csv')
+df2 = pd.read_csv('df_dummies.csv')
 
-df = pd.read_csv('df_gail.csv')
-df['Number of training episodes'] = [x / 1095 for x in df['Number of training steps'].values.tolist()]
-indices = df[df['Comparison with'] == 'Closest expert'].index
-df.drop(indices , inplace=True)
+df1['Algorithm'] = len(df1.index) * ['AIL-MD with dummies']
+df2['Algorithm'] = len(df2.index) * ['GAIL with dummies']
+
+for df in (df1, df2):
+    df['Number of training episodes'] = [x / 1095 for x in df['Number of training steps'].values.tolist()]
+    indices = df[df['Comparison with'] == 'Closest expert'].index
+    df.drop(indices, inplace=True)
+
+df = pd.concat((df1, df2))
 
 sns.set(style='darkgrid')
 g = sns.relplot(x='Number of training episodes', y='Wasserstein distance', hue='Comparison with', ci=95, kind='line', data=df,  \
-    facet_kws={'legend_out': False})
+    facet_kws={'legend_out': False}, style='Algorithm')
 ax = g.axes[0][0]
 ax.set_ylim([0, 0.01])
-plt.legend(loc='upper center')
+plt.legend(loc='upper right')
 plt.show()
-
+'''
 ##### ##### HEATMAPS ##### #####
 '''
 model_dir_paths = [d for d in [x[0] for x in os.walk(dir_path)] if d.endswith('checkpoint')]
