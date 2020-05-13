@@ -416,7 +416,7 @@ class Case23():  # Consider purchase amounts
         temp = [categorize_amount(x) for x in temp]
 
         dummy = np.zeros(self.n_experts)
-        dummy[seed] = 1
+        if not seed >= self.n_experts: dummy[seed] = 1
 
         initial_state = np.concatenate((dummy, temp))
 
