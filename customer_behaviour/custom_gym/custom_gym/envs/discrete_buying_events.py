@@ -798,6 +798,70 @@ class Case4():  # [dummy + product 1 + product 2]
         new_state = [*dummy, *history1[1:], a1, *history2[1:], a2]
         return new_state
 
+class Case81():
+    def __init__(self, model, n_experts=None, adam_days=None):
+        self.model = model
+        self.n_experts = n_experts
+        self.adam_days = adam_days
+
+        self.adam_baskets = []
+
+        self.N = 100  # items in basket
+        self.i_expert = 0
+
+        for i in range(n_experts):
+            self.model.spawn_new_customer(i)
+
+            sample = self.model.sample(self.adam_days + (self.N-1))
+
+            sample = np.sum(sample, axis=0)
+            sample[sample > 0] = 1
+            sample = list(sample)
+
+            temp_basket = []
+            for i in range(self.N):
+                temp_basket.append(sample[i:i+self.adam_days])
+
+            self.adam_baskets.append(temp_basket)
+
+    def get_spaces(self, n_historical_events):
+        observation_space = spaces.MultiBinary(self.adam_days + n_historical_events) 
+        action_space = spaces.Discrete(2)
+
+        return observation_space, action_space
+
+    def get_sample(self, n_demos_per_expert, n_historical_events, n_time_steps):
+        temp_sample = self.model.sample(n_demos_per_expert * (n_historical_events + n_time_steps))
+        sample = []
+        for subsample in np.split(temp_sample, n_demos_per_expert, axis=1):
+            history = subsample[:, :n_historical_events]
+            data = subsample[:, n_historical_events:]
+            sample.append((history, data))
+        return sample
+
+    def get_action(self, receipt):
+        action = 1 if np.count_nonzero(receipt) > 0 else 0
+        return action
+
+    def get_initial_state(self, history, adam):
+        temp = np.sum(history, axis=0)
+
+        temp[temp > 0] = 1
+
+        initial_state = np.concatenate((adam, temp))
+
+        return initial_state
+
+    def get_step(self, state, action):  # ska man byta till annan adam här??? initerar agent med random adam så måste måste finnas bland expertdemos?    
+        adam = state[:self.adam_days]
+        # assert list(adam) in self.adam_baskets[self.i_expert]
+        history = state[self.adam_days:]
+        # Sample new Adam
+        new_adam = random.sample(self.adam_baskets[self.i_expert], 1)[0]
+
+        new_state = [*new_adam, *history[1:], action]
+        return new_state
+
 def define_case(case):
     switcher = {
         1: Case1,
@@ -814,7 +878,8 @@ def define_case(case):
         4: Case4,
         7: Case7,
         71: Case71,
-        17: Case17
+        17: Case17,
+        81: Case81
     }
     return switcher.get(case)
 
@@ -888,7 +953,7 @@ class DiscreteBuyingEvents(gym.Env):
 
         for i_expert in experts:
             self.model.spawn_new_customer(i_expert) if seed_expert else self.model.spawn_new_customer()
-            if isinstance(self.case, Case71): self.case.i_expert = i_expert 
+            if isinstance(self.case, Case71) or isinstance(self.case, Case81): self.case.i_expert = i_expert 
             
             sex.append(self.model.sex)
             age.append(self.model.age)
@@ -897,7 +962,7 @@ class DiscreteBuyingEvents(gym.Env):
                 assert n_expert_time_steps % self.case.N == 0
                 sample = self.case.get_sample(self.case.N, self.n_historical_events, int(n_expert_time_steps / self.case.N))
                 baskets = np.random.permutation(self.case.adam_baskets[i_expert])
-            elif isinstance(self.case, Case71):
+            elif isinstance(self.case, Case71) or isinstance(self.case, Case81):
                 # Not the nicest solution but it works
                 # Only baskets[0] will be used
                 # For each step, the expert will randomly change its representation
@@ -913,7 +978,7 @@ class DiscreteBuyingEvents(gym.Env):
                 history = subsample[0]
                 data = subsample[1]
 
-                if isinstance(self.case, Case7) or isinstance(self.case, Case71):
+                if isinstance(self.case, Case7) or isinstance(self.case, Case71) or isinstance(self.case, Case81):
                     # adam = random.sample(self.case.adam_baskets[i_expert], 1)
                     adam = baskets[j]
                     initial_state = self.case.get_initial_state(history, adam)
@@ -1020,7 +1085,7 @@ class DiscreteBuyingEvents(gym.Env):
         if isinstance(self.case, Case7):
             adam = random.sample(self.case.adam_baskets[seed], 1)[0]
             self.state = self.case.get_initial_state(history, adam)
-        if isinstance(self.case, Case71):
+        if isinstance(self.case, Case71) or isinstance(self.case, Case81):
             adam = random.sample(self.case.adam_baskets[seed], 1)[0]
             self.state = self.case.get_initial_state(history, adam)
             self.case.i_expert = seed

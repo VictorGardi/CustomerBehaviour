@@ -9,7 +9,7 @@ from chainerrl.agents import PPO, TRPO
 from chainerrl.policies import SoftmaxPolicy
 from itertools import chain
 from customer_behaviour.algorithms.irl.common.utils.mean_or_nan import mean_or_nan
-from custom_gym.envs.discrete_buying_events import Case21, Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4, Case71, Case17
+from custom_gym.envs.discrete_buying_events import Case21, Case22, Case23, Case24, Case31, Case221, Case222, Case7, Case4, Case71, Case17, Case81
 
 
 class GAIL(PPO):
@@ -32,7 +32,7 @@ class GAIL(PPO):
 
         self.discriminator = discriminator
         
-        if isinstance(self.env.case, Case21) or isinstance(self.env.case, Case22): 
+        if isinstance(self.env.case, Case21) or isinstance(self.env.case, Case22) or isinstance(self.env.case, Case81): 
             self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
             self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
             
