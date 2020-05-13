@@ -493,7 +493,7 @@ def bar_plot(ax, data, colors=None, total_width=0.8, single_width=1, legend=True
 
     # Draw legend if we need
     if legend:
-        ax.legend(bars, data.keys())    if loc is not None:
+        if loc is not None:
             ax.legend(bars, data.keys(), loc=loc)
         else:
             ax.legend(bars, data.keys())
