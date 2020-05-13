@@ -430,7 +430,7 @@ def set_xticks(ax, possible_val_states, n):
     ax.set_xticklabels(labels)
     ax.xaxis.set_tick_params(rotation=90)
 
-def bar_plot(ax, data, colors=None, total_width=0.8, single_width=1, legend=True):
+def bar_plot(ax, data, colors=None, total_width=0.8, single_width=1, legend=True, loc=None):
     """Draws a bar plot with multiple bars per data point.
 
     Parameters
@@ -493,4 +493,7 @@ def bar_plot(ax, data, colors=None, total_width=0.8, single_width=1, legend=True
 
     # Draw legend if we need
     if legend:
-        ax.legend(bars, data.keys())
+        ax.legend(bars, data.keys())    if loc is not None:
+            ax.legend(bars, data.keys(), loc=loc)
+        else:
+            ax.legend(bars, data.keys())
