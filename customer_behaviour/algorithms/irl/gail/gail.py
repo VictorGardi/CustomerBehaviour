@@ -179,7 +179,32 @@ class GAIL(PPO):
                             #     mb_demo_actions = np.take(demo_actions, indices, axis=0)
                             # else:
                             #     mb_demo_states = demo_states[min_idx:max_idx,:]
-                            #     mb_demo_actions = demo_actions[min_idx:max_idx]                           
+                            #     mb_demo_actions = demo_actions[min_idx:max_idx]     
+                            # 
+                            if self.dummy_D:
+                                for demo_state, state in zip(demo_states, states):
+                                
+                                    if isinstance(self.env.case, Case7):
+                                        demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
+                                        dummy = list(map(int, list(state[2:self.adam_days+2])))
+
+                                        if not dummy in self.env.case.adam_baskets[expert]:
+                                            raise NameError('States are in the wrong order!')
+                                    elif isinstance(self.env.case, Case71):
+                                        demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
+                                        dummy = list(map(int, list(state[:self.adam_days])))
+
+                                        if not dummy in self.env.case.adam_baskets[expert]:
+                                            raise NameError('States are in the wrong order!')
+                                    else: 
+                                        demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
+                                        dummy = list(map(int, list(state[:self.n_experts])))
+                                        if not demo_dummy == dummy:
+                                            print(demo_dummy)
+                                            print(dummy)
+                                            raise NameError('States are in the wrong order!')
+                                        else:
+                                            pass # the order of expert and agent is correct                      
                         
                             
 
