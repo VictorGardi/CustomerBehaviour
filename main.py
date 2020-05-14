@@ -1,17 +1,11 @@
-"""An example of training PPO against OpenAI Gym Envs.
 
-This script is an example of training a PPO agent against OpenAI Gym envs.
-Both discrete and continuous action spaces are supported.
-
-To solve CartPole-v0, run:
-    python train_ppo_gym.py --env CartPole-v0
-"""
 import os
 import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
 import evaluate_policy as ep
 import evaluate_training_sampling as ets
 import results2 as res2 
+from report import report_material
 import numpy as np
 import gym
 import custom_gym
@@ -455,13 +449,39 @@ def main(args, train_env):
         print('Running evaluate policy...')
         ep.eval_policy(a_dir_path=dst)
         
-    else:
-        if args.n_experts <= 10:
-            print('Running evaluate policy...')
-            ep.eval_policy(a_dir_path=dst)
-            # print('Running evaluate training...')
-            # ets.eval_training(a_dir_path=dst)
-            print('Done')
+    # else:
+    #     if args.n_experts <= 10:
+    #         print('Running evaluate policy...')
+    #         ep.eval_policy(a_dir_path=dst)
+    #         # print('Running evaluate training...')
+    #         # ets.eval_training(a_dir_path=dst)
+    #         print('Done')
+
+    if args.save_report_material:
+        print('Saving dataframe...')
+        if args.state_rep == 21:
+            if args.algo == 'gail':
+                folder_name = 'gail'
+            elif args.algo == 'airl':
+                folder_name = 'airl'
+        elif args.state_rep == 22: 
+            if args.algo == 'gail':
+                folder_name = 'gail_dummies'
+            elif args.algo == 'airl':
+                folder_name = 'airl_dummies'
+        elif args.state_rep == 81:
+            if args.algo == 'gail':
+                folder_name = 'gail_adams'
+            elif args.algo == 'airl':
+                folder_name = 'airl_adams'
+        elif args.state_rep == 17:
+            folder_name = 'ail'
+        elif args.state_rep == 221:
+            folder_name = 'ail_dummies'
+        elif args.state_rep == 71:
+            folder_name = 'ail_adams'
+
+        report_material.save_df(dst, folder_name, 1, 1)
 
 
     if args.save_folder is not None:
@@ -552,11 +572,9 @@ if __name__ == '__main__':
     parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
 
     parser.add_argument('--save_folder', default=None, type=str)
-
     parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=False)
-
     parser.add_argument('--save_results', type=str2bool, nargs='?', const=True, default=False)
-    
+    parser.add_argument('--save_report_material', type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument('--n_historical_events', type=int, default=20)
     parser.add_argument('--gpu', type=int, default=-1)
     parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
