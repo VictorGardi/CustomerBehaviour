@@ -35,8 +35,8 @@ class GAIL(PPO):
         self.discriminator = discriminator
         
         if isinstance(self.env.case, Case21) or isinstance(self.env.case, Case22) or isinstance(self.env.case, Case81): 
-            self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32)).astype(int)
-            self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32)).astype(int)
+            self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
+            self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
             
         elif self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case71) or isinstance(self.env.case, Case17):
             self.demo_states = [*demonstrations['states']]
@@ -157,57 +157,21 @@ class GAIL(PPO):
                     len_state = demo_states[0][0].size
 
                     n_mb = int(self.episode_length*self.n_update_experts/self.minibatch_size)
+                    demo_states = np.array(demo_states).reshape((-1, len_state))
+                    dataset_states = dataset_states.reshape((-1, len_state))
+                    demo_actions = np.array(demo_actions).reshape((-1, 1))
+                    dataset_actions = dataset_actions.reshape((-1, 1))
+
+
                     for epoch in range(self.epochs):
-                        demo_states = np.array(demo_states).reshape((-1, len_state))
-                        dataset_states = dataset_states.reshape((-1, len_state))
-                        demo_actions = np.array(demo_actions).reshape((-1, 1))
-                        dataset_actions = dataset_actions.reshape((-1, 1))
+                        chosen_indices = xp.random.permutation(self.episode_length*self.n_update_experts)
 
-                        indices = xp.random.permutation(self.episode_length*self.n_update_experts)
-                        indices = np.split(indices, n_mb)
-
-                        for mb in range(n_mb):
-                            indexes = indices[mb]
-                            mb_demo_states = np.take(demo_states, indexes, axis=0)
-                            mb_demo_actions = np.take(demo_actions, indexes, axis=0)
-                            mb_states = np.take(dataset_states, indexes, axis=0)
-                            mb_actions = np.take(dataset_actions, indexes, axis=0)
+                        for indices in np.split(chosen_indices, n_mb):
+                            mb_demo_states = np.take(demo_states, indices, axis=0)
+                            mb_demo_actions = np.take(demo_actions, indices, axis=0)
+                            mb_states = np.take(dataset_states, indices, axis=0)
+                            mb_actions = np.take(dataset_actions, indices, axis=0)
                             
-                            # if states.shape[0] > demo_states.shape[0]:
-                            #     indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
-                            #     mb_demo_states = np.take(demo_states, indices, axis=0)
-                            #     mb_demo_actions = np.take(demo_actions, indices, axis=0)
-                            # else:
-                            #     mb_demo_states = demo_states[min_idx:max_idx,:]
-                            #     mb_demo_actions = demo_actions[min_idx:max_idx]     
-                            # 
-                            if self.dummy_D:
-                                for demo_state, state in zip(mb_demo_states, mb_states):
-                                
-                                    if isinstance(self.env.case, Case7):
-                                        demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
-                                        dummy = list(map(int, list(state[2:self.adam_days+2])))
-
-                                        if not dummy in self.env.case.adam_baskets[expert]:
-                                            raise NameError('States are in the wrong order!')
-                                    elif isinstance(self.env.case, Case71):
-                                        demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
-                                        dummy = list(map(int, list(state[:self.adam_days])))
-
-                                        if not dummy in self.env.case.adam_baskets[expert]:
-                                            raise NameError('States are in the wrong order!')
-                                    else: 
-                                        demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                                        dummy = list(map(int, list(state[:self.n_experts])))
-                                        if not demo_dummy == dummy:
-                                            print(demo_dummy)
-                                            print(dummy)
-                                            raise NameError('States are in the wrong order!')
-                                        else:
-                                            pass # the order of expert and agent is correct                      
-                        
-                            
-
                             if self.obs_normalizer:
                                 mb_states = self.obs_normalizer(mb_states, update=False)
                                 mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
