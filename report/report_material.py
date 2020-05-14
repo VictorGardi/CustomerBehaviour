@@ -216,6 +216,7 @@ def save_df(dir_path, folder_name, sample_length=10000, n_new_customers=50):
 
     df = pd.DataFrame(data, columns=['Number of training steps', 'Wasserstein distance', 'Comparison with'])
     
+    os.makedirs(join('report', folder_name), exist_ok=True) 
     counter = len([x for x in os.listdir(join('report', folder_name)) if x.endswith('.csv')])
     df.to_csv(join('report', folder_name, 'df_' + folder_name + str(counter + 1) + '.csv'), index=False)
 
