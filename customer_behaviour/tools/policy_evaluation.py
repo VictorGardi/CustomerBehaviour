@@ -223,6 +223,7 @@ def get_val_states(states, actions, n, m):
 
     temp = []
     for vs, a in zip(val_states, actions):
+        if a > 0: a = 1
         if np.sum(vs) == len(vs):
             temp.append(vs + [1])
         elif np.sum(vs) + a > m:
