@@ -611,6 +611,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_processes', type=int, default=1)
     parser.add_argument('--adam_days', type=int, default=10)
     parser.add_argument('--show_D_dummy', type=str2bool, nargs='?', const=True, default=True)
+    parser.add_argument('--novelnovel', type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument('--loss_type', default='wgangp', choices=['gan', 'wgangp'], type=str)
 
     args = parser.parse_args()
