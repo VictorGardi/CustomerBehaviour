@@ -182,7 +182,7 @@ class GAIL(PPO):
                             #     mb_demo_actions = demo_actions[min_idx:max_idx]     
                             # 
                             if self.dummy_D:
-                                for demo_state, state in zip(demo_states, states):
+                                for demo_state, state in zip(mb_demo_states, mb_states):
                                 
                                     if isinstance(self.env.case, Case7):
                                         demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
