@@ -481,7 +481,7 @@ def main(args, train_env):
         elif args.state_rep == 71:
             folder_name = 'ail_adams'
 
-        report_material.save_df(dst, folder_name, 1, 1)
+        report_material.save_df(dst, folder_name)
 
 
     if args.save_folder is not None:
