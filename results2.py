@@ -18,6 +18,8 @@ sys.path.insert(1, tools_path)
 import policy_evaluation as pe
 
 dir_path = 'adam_days'
+# dir_path = 'n_historical_events'
+# dir_path = 'length_expert_TS'
 param = dir_path
 n_new_customers = 50
 sample_length = 10000
@@ -36,7 +38,7 @@ def plot(data):
         env = pe.get_env_and_model(args, '', sample_length, only_env=True, n_experts_in_adam_basket=n_experts+n_new_customers)
     else:
         env = pe.get_env_and_model(args, '', sample_length, only_env=True)
-
+    
     customer_trajectories = env.generate_expert_trajectories(
         out_dir=None, 
         n_demos_per_expert=1,
@@ -51,19 +53,11 @@ def plot(data):
     expert_actions = np.array(customer_trajectories['actions'][:n_experts])
     avg_expert = pe.get_distrib(expert_states, expert_actions)
 
-    param_values = list(data.keys())
-    n_params = len(param_values)
-    step_values = list(data[param_values[0]][0].models.keys())
-    n_step_values = len(step_values)
-
     import seaborn as sns
     import pandas as pd
 
-    df1 = pd.DataFrame(columns=['param_value', 'n_train_steps', 'diff_train'])
-    df2 = pd.DataFrame(columns=['param_value', 'n_train_steps', 'diff_test'])
-
-    diff_train_vs_step = [[[] for j in range(n_step_values)] for i in range(n_params)]
-    diff_test_vs_step = [[[] for j in range(n_step_values)] for i in range(n_params)]
+    df_experts = pd.DataFrame(columns=['int_value', 'Parameter value', 'Number of training episodes', 'Wasserstein distance'])  
+    df_new_customers = pd.DataFrame(columns=['int_value', 'Parameter value', 'Number of training episodes', 'Wasserstein distance'])
 
     for param_value, results in data.items():
         print('Processing parameter value {}'.format(param_value))
@@ -73,13 +67,38 @@ def plot(data):
                 for i, (a, c) in enumerate(zip(agent, customers)):
                     assert len(a) == 1
                     diff = wd(a[0], c)
+                    n_train_episodes = int(n_train_steps) / args['episode_length']
                     if i < n_experts:
-                        df1.loc[len(df1.index)] = [get_label_from_param_value(param_value), n_train_steps, diff]
+                        df_experts.loc[len(df_experts.index)] = [param_value, get_label_from_param_value(param_value, param), n_train_episodes, diff]
                     else:
-                        df2.loc[len(df2.index)] = [get_label_from_param_value(param_value), n_train_steps, diff]
-                    
-    sns.relplot(x='n_train_steps', y='diff_train', hue='param_value', ci=95, kind='line', data=df1)
-    sns.relplot(x='n_train_steps', y='diff_test', hue='param_value', ci=95, kind='line', data=df2)
+                        df_new_customers.loc[len(df_new_customers.index)] = [param_value, get_label_from_param_value(param_value, param), n_train_episodes, diff]
+    
+    df_experts.sort_values(by=['int_value'])
+    df_new_customers.sort_values(by=['int_value'])
+
+    sns.set(style='darkgrid')
+
+    g1 = sns.relplot(x='Number of training episodes', y='Wasserstein distance', hue='Parameter value', ci=95, kind='line', data=df_experts, \
+        facet_kws={'legend_out': False})
+    g1.fig.subplots_adjust(top=0.95)
+    ax1 = g1.axes[0][0]
+    ax1.set_title('Comparison with experts')
+    
+
+    g2 = sns.relplot(x='Number of training episodes', y='Wasserstein distance', hue='Parameter value', ci=95, kind='line', data=df_new_customers, \
+        facet_kws={'legend_out': False})
+    g2.fig.subplots_adjust(top=0.95)
+    ax2 = g2.axes[0][0]
+    ax2.set_title('Comparison with new customers')
+
+    for ax in (ax1, ax2):
+        handles, labels = ax.get_legend_handles_labels()
+        labels2, handles2 = zip(*sorted(zip(labels[1:], handles[1:]), key=lambda t: int(t[0].split(' ')[0])))
+        labels2 = list(labels2)
+        handles2 = list(handles2)
+        labels2.insert(0, get_label_from_param(param))
+        handles2.insert(0, handles[0])
+        ax.legend(handles2, labels2)
 
     plt.show()
 
@@ -94,7 +113,6 @@ def load_data():
         print('Processing folder {} of {}'.format(i + 1, len(data_paths)))
 
         args = json.loads(open(join(path, 'args.txt'), 'r').read())
-        n_experts = args['n_experts']
 
         content = os.listdir(path)
         assert 'result2.pkl' in content
@@ -107,9 +125,30 @@ def load_data():
 
     return data
 
+def sample_customer_data(env, n_experts, sample_length=10000, n_new_customers=50):
+    customer_trajectories = env.generate_expert_trajectories(
+        out_dir=None, 
+        n_demos_per_expert=1,
+        n_experts=n_experts+n_new_customers,
+        n_expert_time_steps=sample_length
+        )
+    customer_states = np.array(customer_trajectories['states'])
+    customer_actions = np.array(customer_trajectories['actions'])
+
+    return customer_states, customer_actions
+
 def save_data(path, sample_length, n_new_customers, N):
     args = json.loads(open(join(path, 'args.txt'), 'r').read())
-  
+
+    # Sample expert data
+    n_experts = args['n_experts']
+    final_model_dir_path = next((d for d in [x[0] for x in os.walk(path)] if d.endswith('finish')), None)
+    if args['state_rep'] == 71:
+        env, model, obs_normalizer = pe.get_env_and_model(args, final_model_dir_path, sample_length, n_experts_in_adam_basket=n_experts+n_new_customers)
+    else:
+        raise NotImplementedError
+    customer_states, _ = sample_customer_data(env, n_experts, sample_length, n_new_customers)
+    
     models = {}
 
     model_paths = [d for d in [x[0] for x in os.walk(path)] if d.endswith('checkpoint')]
@@ -117,19 +156,19 @@ def save_data(path, sample_length, n_new_customers, N):
 
     for mp in model_paths:
         n_train_steps = get_key_from_path(mp)
-        if int(n_train_steps) <= 1000000: continue
+        # if int(n_train_steps) <= 1000000: continue
+        if int(n_train_steps) != 10950000: continue
 
         print('Collecting data from model saved after %s steps' % n_train_steps)
 
-        agent = evaluate(args, mp, n_new_customers, sample_length, N)
+        agent = evaluate(args, mp, n_new_customers, sample_length, N, customer_states)
         
         models[n_train_steps] = agent
 
     result = Result(models)
     save_result(result, path)
 
-def evaluate(args, model_path, n_new_customers, sample_length, N):
-
+def evaluate(args, model_path, n_new_customers, sample_length, N, customer_states):
     n_experts = args['n_experts']
 
     if args['state_rep'] == 71:
@@ -139,38 +178,55 @@ def evaluate(args, model_path, n_new_customers, sample_length, N):
 
     agents = []
 
-    for seed in range(n_experts + n_new_customers):
+    for i in range(n_experts + n_new_customers):
         temp_agents = []
-
-        if args['state_rep'] == 71: 
-            adam_basket = np.random.permutation(env.case.adam_baskets[seed])
-            env.case.i_expert = seed
-
-        env.model.spawn_new_customer(seed)
-        sample = env.case.get_sample(
-            n_demos_per_expert=1,
-            n_historical_events=args['n_historical_events'], 
-            n_time_steps=1000
-            )
-        all_data = np.hstack(sample[0])  # history, data = sample[0]
-
-        for i in range(N):
-            j = np.random.randint(0, all_data.shape[1] - args['n_historical_events'])
-            history = all_data[:, j:j + args['n_historical_events']]
-            if args['state_rep'] == 71: 
-               initial_state = env.case.get_initial_state(history, adam_basket[i])
-            else:
+        for j in range(N):
+            if args['state_rep'] == 22 or args['state_rep'] == 221 or args['state_rep'] == 23 and i >= n_experts:
                 raise NotImplementedError
-
-            states, actions = pe.sample_from_policy2(env, model, obs_normalizer, initial_state=initial_state)
+            else:
+                initial_state = random.choice(customer_states[i])
+            states, actions = pe.sample_from_policy(env, model, obs_normalizer, initial_state=initial_state)   
             states = np.array(states)
             actions = np.array(actions)
-
+            
             a = pe.get_distrib(states, actions)
 
             temp_agents.append(a)
 
         agents.append(temp_agents)
+
+    # for seed in range(n_experts + n_new_customers):
+    #     temp_agents = []
+
+    #     if args['state_rep'] == 71: 
+    #         adam_basket = np.random.permutation(env.case.adam_baskets[seed])
+    #         env.case.i_expert = seed
+
+    #     env.model.spawn_new_customer(seed)
+    #     sample = env.case.get_sample(
+    #         n_demos_per_expert=1,
+    #         n_historical_events=args['n_historical_events'], 
+    #         n_time_steps=1000
+    #         )
+    #     all_data = np.hstack(sample[0])  # history, data = sample[0]
+
+    #     for i in range(N):
+    #         j = np.random.randint(0, all_data.shape[1] - args['n_historical_events'])
+    #         history = all_data[:, j:j + args['n_historical_events']]
+    #         if args['state_rep'] == 71: 
+    #            initial_state = env.case.get_initial_state(history, adam_basket[i])
+    #         else:
+    #             raise NotImplementedError
+
+    #         states, actions = pe.sample_from_policy2(env, model, obs_normalizer, initial_state=initial_state)
+    #         states = np.array(states)
+    #         actions = np.array(actions)
+
+    #         a = pe.get_distrib(states, actions)
+
+    #         temp_agents.append(a)
+
+    #     agents.append(temp_agents)
 
     return agents
 
@@ -201,33 +257,47 @@ def load_result(folder):
         result = pickle.load(f)
     return result
 
-def get_label_from_param_value(param_value):
-    if param == 'adam_days':
-        if param_value == 10:
-            return '10 purchases'
-        elif param_value == 20:
-            return '20 purchases'
-        elif param_value == 30:
-            return '30 purchases'
-    else:
-        if param_value == 365:
-            return '1 year'
-        elif param_value == 730:
-            return '2 years'
-        elif param_value == 1095:
-            return '3 years'
-        elif param_value == 30:
-            return '1 month'
-        elif param_value == 60:
-            return '2 months'
-        elif param_value == 90:
-            return '3 months'
+def get_label_from_param_value(param_value, param):
+        if param == 'length_expert_TS':
+            if param_value == 365:
+                return '12 months'
+            elif param_value == 730:
+                return '24 months'
+            elif param_value == 1095:
+                return '3 years'
+            elif param_value == 1460:
+                return '4 years'
+            elif param_value == 1825:
+                return '5 years'
+            else:
+                raise NotImplementedError
+        else:
+            if param_value == 30:
+                return '1 month'
+            elif param_value == 60:
+                return '2 months'
+            elif param_value == 90:
+                return '3 months'
+            elif param_value == 180:
+                return '6 months'
+            elif param_value == 365:
+                return '12 months'
+            elif param_value == 730:
+                return '24 months'
+            elif param_value == 1095:
+                return '36 months'
+            elif param_value == 10:
+                return '10 days'
+            elif param_value == 20:
+                return '20 days'
+            else:
+                raise NotImplementedError
 
 def get_label_from_param(param):
     if param == 'n_historical_events':
         return 'Number of historical events'
     elif param == 'adam_days':
-        return 'Number of Adam days'
+        return 'Adam days'
     elif param == 'length_expert_TS':
         return 'Length of expert time-series'
     else:
