@@ -48,7 +48,7 @@ def sample_customer_data(env, n_experts, sample_length=10000, n_new_customers=50
 
     return customer_states, customer_actions
 
-def sample_agent_data(N, args, env, model, obs_normalizer, customers, customer_states):
+def sample_agent_data(N, args, env, model, obs_normalizer, customers, customer_states, experts):
     agent_states = []
     agent_actions = []
 
@@ -57,7 +57,7 @@ def sample_agent_data(N, args, env, model, obs_normalizer, customers, customer_s
     for i in range(N):
         # Initialize agent with data from ith expert
         initial_state = random.choice(customer_states[i])
-        if args['state_rep'] == 22 or args['state_rep'] == 221 or args['state_rep'] == 23 and i >= n_experts:
+        if args['state_rep'] == 22 or args['state_rep'] == 221 or args['state_rep'] == 23 and i >= args['n_experts']:
             # Find closest expert
             c = customers[i]
             distances = [wd(c, e) for e in experts]
@@ -199,7 +199,7 @@ def save_df(dir_path, folder_name, sample_length=10000, n_new_customers=50):
         else:
             env, model, obs_normalizer = pe.get_env_and_model(args, mdp, sample_length)
 
-        agent_states, agent_actions, closest_expert = sample_agent_data(n_experts+n_new_customers, args, env, model, obs_normalizer, customers, customer_states)
+        agent_states, agent_actions, closest_expert = sample_agent_data(n_experts+n_new_customers, args, env, model, obs_normalizer, customers, customer_states, experts)
 
         agents = res.get_distribs(agent_states, agent_actions)
         avg_agent = pe.get_distrib(agent_states[:n_experts], agent_actions[:n_experts])
