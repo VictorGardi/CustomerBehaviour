@@ -156,9 +156,8 @@ def save_data(path, sample_length, n_new_customers, N):
 
     for mp in model_paths:
         n_train_steps = get_key_from_path(mp)
-        # if int(n_train_steps) <= 1000000: continue
-        if int(n_train_steps) != 10950000: continue
-
+        if int(n_train_steps) <= 1000000: continue
+        
         print('Collecting data from model saved after %s steps' % n_train_steps)
 
         agent = evaluate(args, mp, n_new_customers, sample_length, N, customer_states)
