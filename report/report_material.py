@@ -30,6 +30,7 @@ import results2 as res
 # dir_path = 'gail_dummy' 
 # dir_path = '71_100'
 # dir_path = '71_100novel'
+dir_path = '80_gail_9090'
 
 sample_length = 10000
 n_new_customers = 50
@@ -54,7 +55,7 @@ def sample_agent_data(N, args, env, model, obs_normalizer, customers, customer_s
 
     closest_expert = N * [0]
 
-    for i in range(N):
+    for i in range(10):
         # Initialize agent with data from ith expert
         initial_state = random.choice(customer_states[i])
         if args['state_rep'] == 22 or args['state_rep'] == 221 or args['state_rep'] == 23 and i >= args['n_experts']:
@@ -72,7 +73,7 @@ def sample_agent_data(N, args, env, model, obs_normalizer, customers, customer_s
     return agent_states, agent_actions, closest_expert
 
 ##### ##### FINAL MODEL ##### #####
-'''
+"""
 args_path = join(dir_path, 'args.txt')
 args = json.loads(open(args_path, 'r').read())
 
@@ -161,7 +162,7 @@ fig.subplots_adjust(bottom=0.25)
 sns.heatmap(df, cmap='BuPu', ax=ax, linewidth=1, cbar_kws={'label': 'Wasserstein distance'}, square=True)
 ax.set_title('GAIL')
 plt.show()
-'''
+"""
 ##### ##### TRAINING PROCESS ##### #####
 
 def save_df(dir_path, folder_name, sample_length=10000, n_new_customers=50):

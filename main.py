@@ -29,67 +29,6 @@ from chainerrl import policies
 def pass_fn(x):
     return x
 
-class MLP(chainer.ChainList):
-    def __init__(self, n_layer, n_units, n_out, n_in, activation=F.leaky_relu, out_activation=pass_fn, hook=None, hook_params=None):
-        super().__init__()
-        self.n_layer = n_layer
-        self.n_out = n_out
-        self.add_link(L.Linear(n_in, n_units))
-        #for _ in range(n_layer):
-        #    self.add_link(L.Linear(None, n_units))
-        self.add_link(L.Linear(n_units, n_units))
-        self.add_link(L.Linear(n_units, n_units))
-        self.add_link(L.Linear(n_units, n_out))
-        self.activations = [activation] * (3) + [out_activation]
-
-        if hook:
-            hook_params = dict() if hook_params is None else hook_params
-            for link in self.children():
-                link.add_hook(hook(**hook_params))
-
-    def forward(self, x):
-        i = 0
-        for link, act in zip(self.children(), self.activations):
-            if i == self.n_layer and self.n_out == 4:
-                x = act(link(x))
-                prob = F.sigmoid(x[0][0]).data
-                action = F.softmax(x[0][1:].data.reshape((1,-1))).data.tolist()
-                temp = [prob]
-                temp.extend(*action)
-                temp = np.array(temp)
-                x = chainer.Variable(temp)
-            else:
-                x = act(link(x))
-            i+=1
-        return x
-
-    def __call__(self, x):
-        return self.forward(x)
-
-class Test(chainer.ChainList, a3c.A3CModel):
-    def __init__(self, n_layer, n_units, n_out, n_in):
-        self.pi = MLP(n_layer, n_units, n_out, n_in)
-        self.v = MLP(n_layer, n_units, 1, n_in)
-        super().__init__(self.pi, self.v)
-    
-    def pi_and_v(self, state):
-        return self.pi(state), self.v(state)
-
-
-
-class A3CFFSoftmax(chainer.ChainList, a3c.A3CModel):
-    """An example of A3C feedforward softmax policy."""
-
-    def __init__(self, ndim_obs, n_actions, hidden_sizes=(64,64)):
-        self.pi = policies.SoftmaxPolicy(
-            model=links.MLP(ndim_obs, n_actions, hidden_sizes))
-        self.v = links.MLP(ndim_obs, 1, hidden_sizes=hidden_sizes)
-        super().__init__(self.pi, self.v)
-
-    def pi_and_v(self, state):
-        return self.pi(state), self.v(state)
-
-
 class A3CFFSoftmax(chainer.ChainList, a3c.A3CModel):
     """An example of A3C feedforward softmax policy."""
 
@@ -142,7 +81,6 @@ def convert_logits_to_probs(logits):
     odds = np.exp(logits)
     probs = odds/(np.sum(odds))
     return probs
-
 
 def save_agent_demo(env, agent, out_dir, max_t=10000):
     import numpy as np
@@ -279,20 +217,9 @@ def main(args, train_env):
     elif args.arch == 'FFGaussian':
         model = A3CFFGaussian(obs_space.low.size, action_space,
                               bound_mean=args.bound_mean)
-    elif args.arch == 'MLP':
-        model = Test(n_layer=3, n_units=64, n_out=4, n_in=obs_dim)
 
     opt = chainer.optimizers.Adam(alpha=args.lr, eps=10e-1)
     opt.setup(model)
-
-    # if args.state_rep == 22 or args.state_rep == 23:
-    #    input_dim_D = obs_dim + 1 # - args.n_experts  # Let discriminator see dummy encoding
-    # elif args.state_rep == 221 or args.state_rep == 222 or args.state_rep == 7:
-    #     input_dim_D = obs_dim + 1 - args.n_experts  # Do not let discriminator see dummy encoding
-    # elif args.state_rep == 24 or args.state_rep == 31:
-    #     input_dim_D = obs_dim + 1 # - 10  # Let discriminator see dummy encoding
-    # else:
-    #    input_dim_D = obs_dim + 1
 
     if args.show_D_dummy: # Let discriminator see dummy
         input_dim_D = obs_dim + 1
@@ -318,7 +245,7 @@ def main(args, train_env):
         from customer_behaviour.algorithms.irl.gail import Discriminator as D
         
         demonstrations = np.load(dst + '/expert_trajectories.npz')
-        D = D(gpu=args.gpu, input_dim = input_dim_D*args.PAC_k, hidden_sizes=args.D_layers, PAC_k=args.PAC_k, PAC_eps=args.PAC_eps, loss_type=args.loss_type)
+        D = D(gpu=args.gpu, input_dim = input_dim_D, hidden_sizes=args.D_layers, loss_type=args.loss_type)
         
         agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
                      model=model, optimizer=opt,
@@ -329,20 +256,6 @@ def main(args, train_env):
                      clip_eps_vf=None, entropy_coef=args.entropy_coef,
                      standardize_advantages=args.standardize_advantages,
                      args = args)
-        
-    elif args.algo == 'gail2':
-        from customer_behaviour.algorithms.irl.gail import GAIL2
-        from customer_behaviour.algorithms.irl.gail import Discriminator2
-
-        D = Discriminator2(obs_dim, action_space.n, hidden_sizes=(64, 64), loss_type='gan', gpu=args.gpu)
-        agent = GAIL2(demonstrations=demonstrations, discriminator=D,
-                    model=model, optimizer=opt,
-                    obs_normalizer=obs_normalizer,
-                    gpu=args.gpu,
-                    update_interval=args.update_interval,
-                    minibatch_size=args.batchsize, epochs=args.epochs,
-                    clip_eps_vf=None, entropy_coef=args.entropy_coef,
-                    standardize_advantages=args.standardize_advantages,)
 
     elif args.algo == 'airl':
         from customer_behaviour.algorithms.irl.airl import AIRL as G
@@ -366,6 +279,23 @@ def main(args, train_env):
                     episode_length=args.episode_length,
                     adam_days=args.adam_days,
                     dummy_D=args.show_D_dummy)
+
+    elif args.algo == 'mmct-gail':
+        from customer_behaviour.algorithms.irl.gail.mmct_gail import MMCTGAIL as G
+        from customer_behaviour.algorithms.irl.gail import Discriminator as D
+        
+        demonstrations = np.load(dst + '/expert_trajectories.npz')
+        D = D(gpu=args.gpu, input_dim = input_dim_D, hidden_sizes=args.D_layers, loss_type=args.loss_type)
+        
+        agent = G(env=sample_env, demonstrations=demonstrations, discriminator=D,
+                     model=model, optimizer=opt,
+                     obs_normalizer=obs_normalizer,
+                     gpu=args.gpu,
+                     update_interval=args.update_interval,
+                     minibatch_size=args.batchsize, epochs=args.epochs,
+                     clip_eps_vf=None, entropy_coef=args.entropy_coef,
+                     standardize_advantages=args.standardize_advantages,
+                     args = args)
 
     if args.load:
         # By default, not in here
@@ -557,31 +487,28 @@ def make_env(process_idx, test, args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('algo', default='gail', choices=['gail', 'gail2', 'airl'], type=str)
+    parser.add_argument('algo', default='gail', choices=['gail', 'airl', 'mmct-gail'], type=str)
     parser.add_argument('--case', type=str, default='discrete_events')
-    parser.add_argument('--n_experts', type=int, default=1)
-    parser.add_argument('--n_demos_per_expert', type=int, default=10)
-    parser.add_argument('--state_rep', type=int, default=1)
-    parser.add_argument('--length_expert_TS', type=int, default=100)
-    parser.add_argument('--episode_length', type=int, default=100)
-    parser.add_argument('--n_training_episodes', type=int, default=1000)
+    parser.add_argument('--n_experts', type=int, default=10)
+    parser.add_argument('--n_demos_per_expert', type=int, default=0)
+    parser.add_argument('--state_rep', type=int, default=71)
+    parser.add_argument('--length_expert_TS', type=int, default=20)
+    parser.add_argument('--episode_length', type=int, default=20)
+    parser.add_argument('--n_training_episodes', type=int, default=100)
     parser.add_argument('--seed_expert', type=str2bool, nargs='?',
-                        const=True, default=False,
+                        const=True, default=True,
                         help="Activate expert seed mode.")
     # parser.add_argument('--agent_seed', type=int, default=None)
-    parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=False)
+    parser.add_argument('--seed_agent', type=str2bool, nargs='?', const=True, default=True)
 
     parser.add_argument('--save_folder', default=None, type=str)
     parser.add_argument('--normalize_obs', type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument('--save_results', type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument('--save_report_material', type=str2bool, nargs='?', const=True, default=False)
-    parser.add_argument('--n_historical_events', type=int, default=20)
+    parser.add_argument('--n_historical_events', type=int, default=10)
     parser.add_argument('--gpu', type=int, default=-1)
     parser.add_argument('--D_layers', nargs='+', type=int, default=[64,64])
     parser.add_argument('--G_layers', nargs='+', type=int, default=[64,64])
-    parser.add_argument('--PAC_k', type=int, default=1)
-    parser.add_argument('--gamma', type=float, default=0)
-    parser.add_argument('--PAC_eps', type=float, default=1)
     parser.add_argument('--arch', type=str, default='FFSoftmax',
                         choices=('FFSoftmax', 'FFMellowmax',
                                  'FFGaussian', 'MLP'))
@@ -591,7 +518,7 @@ if __name__ == '__main__':
     parser.add_argument('--noise', type=float, default=0)
     #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
     
-    parser.add_argument('--eval_episode_length', type=int, default=100)
+    parser.add_argument('--eval_episode_length', type=int, default=1)
     parser.add_argument('--eval_interval', type=int, default=10000)
     parser.add_argument('--eval-n-runs', type=int, default=10)
     parser.add_argument('--reward-scale-factor', type=float, default=1e-2)  # does not make sense since we do not have any reward signal
@@ -604,14 +531,13 @@ if __name__ == '__main__':
     #parser.add_argument('--load_demo', type=str, default='')
     parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
     parser.add_argument('--monitor', action='store_true', default=False)
-    parser.add_argument('--update-interval', type=int, default=1024)
-    parser.add_argument('--batchsize', type=int, default=64)  # mini-batch size
+    parser.add_argument('--update-interval', type=int, default=40)
+    parser.add_argument('--batchsize', type=int, default=10)  # mini-batch size
     parser.add_argument('--epochs', type=int, default=10)
     parser.add_argument('--entropy-coef', type=float, default=0.01)
     parser.add_argument('--n_processes', type=int, default=1)
     parser.add_argument('--adam_days', type=int, default=10)
     parser.add_argument('--show_D_dummy', type=str2bool, nargs='?', const=True, default=True)
-    parser.add_argument('--novelnovel', type=str2bool, nargs='?', const=True, default=False)
     parser.add_argument('--loss_type', default='wgangp', choices=['gan', 'wgangp'], type=str)
 
     args = parser.parse_args()
@@ -638,11 +564,12 @@ if __name__ == '__main__':
         train_env = None
 
     assert args.n_experts % args.n_processes == 0
+    assert args.update_interval <= args.n_experts * args.episode_length
     #if args.state_rep == 221 or args.state_rep == 222: assert args.update_interval == args.n_experts * args.episode_length
-    if args.update_interval < args.n_experts * args.episode_length: 
-        args.batch_update = True 
-    else: 
-        args.batch_update = False
+    # if args.update_interval < args.n_experts * args.episode_length: 
+    #     args.batch_update = True 
+    # else: 
+    #     args.batch_update = False
 
     main(args, train_env)
 

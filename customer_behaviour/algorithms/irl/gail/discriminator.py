@@ -4,15 +4,13 @@ from chainerrl import links
 
 
 class Discriminator:
-    def __init__(self, input_dim, hidden_sizes=(64,64,64), loss_type='wgangp', PAC_k=1, PAC_eps=1, gpu=-1):
+    def __init__(self, input_dim, hidden_sizes=(64,64,64), loss_type='wgangp', gpu=-1):
         self.model = links.MLP(input_dim, 1, hidden_sizes=hidden_sizes)
 
         if gpu >= 0:
             self.model.to_gpu(gpu)
-        if PAC_k > 1:
-            self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=PAC_eps) #PACGAIL needs a larger epsilon to prevent divison by zero when gradient is small
-        else:
-            self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=1e-5)
+
+        self.optimizer = chainer.optimizers.Adam(alpha=1e-5, eps=1e-5)
         self.optimizer.setup(self.model)
         self.loss_type = loss_type
         self.loss = None

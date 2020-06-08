@@ -212,7 +212,7 @@ def get_val_states(states, actions, n, m):
     val_states = []
     states = np.reshape(states, (-1, states.shape[-1]))
     actions = np.reshape(actions, (-1,))
-    
+
     for s in states:
         temp = [1 if x > 0 else 0 for x in s[-n:]]
         val_states.append(temp)

@@ -18,29 +18,16 @@ class GAIL(PPO):
         super(self.__class__, self).__init__(**kwargs)
 
         self.env = env
-        self.gamma = args.gamma
-        self.PAC_k = args.PAC_k
         self.noise = args.noise
         self.n_experts = args.n_experts
         self.episode_length = args.episode_length
         self.dummy_D = args.show_D_dummy
         self.adam_days = args.adam_days
-        self.batch_update = args.batch_update
         self.n_historical = args.n_historical_events
-        self.iteration = 0
-        self.max_iteration = args.n_experts*args.episode_length/args.update_interval #2
-        self.n_update_experts = int(args.update_interval/args.episode_length) #2
-        self.novelnovel = args.novelnovel
-
         self.discriminator = discriminator
         
-        if isinstance(self.env.case, Case21) or isinstance(self.env.case, Case22) or isinstance(self.env.case, Case81): 
-            self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
-            self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
-            
-        elif self.batch_update or isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case71) or isinstance(self.env.case, Case17):
-            self.demo_states = [*demonstrations['states']]
-            self.demo_actions = [*demonstrations['actions']]
+        self.demo_states = self.xp.asarray(np.asarray(list(chain(*demonstrations['states']))).astype(np.float32))
+        self.demo_actions = self.xp.asarray(np.asarray(list(chain(*demonstrations['actions']))).astype(np.float32))
 
         self.expert_ratio = [get_purchase_ratio(i) for i in demonstrations['actions']]
 
@@ -57,223 +44,26 @@ class GAIL(PPO):
         #datasets_iter = [chainer.iterators.SerialIterator(
         #    [dataset[i]], self.minibatch_size, shuffle=True) for i in dataset]
 
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case7) or isinstance(self.env.case, Case71) or isinstance(self.env.case, Case23) or isinstance(self.env.case, Case4) or isinstance(self.env.case, Case17):
-            if self.batch_update:
-                if not self.novelnovel:
-                    dataset_states = []
-                    dataset_actions = []
-                    if self.iteration >= self.max_iteration: self.iteration = 0
-                    low_lim = self.iteration*self.n_update_experts #0
-                    high_lim = low_lim + self.n_update_experts #1
+        dataset_iter = chainer.iterators.SerialIterator(
+        dataset, self.minibatch_size, shuffle=True)
+        loss_mean = 0
+        while dataset_iter.epoch < self.epochs:
+            batch = dataset_iter.__next__()
+            states = self.batch_states([b['state'] for b in batch], xp, self.phi)
+            actions = xp.array([b['action'] for b in batch])
 
-                    for agent in range(self.n_update_experts): #Collect dataset for generated data
-                        min_idx = agent*self.episode_length
-                        max_idx = (agent + 1)*self.episode_length 
-                        dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
-                        dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
+            self.demonstrations_indexes = xp.random.permutation(len(self.demo_states))[:len(states)]
+            demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
 
-                    loss_mean = 0
-                    n_mb = int(self.episode_length/self.minibatch_size)
-                    for epoch in range(self.epochs):
-                        for i, expert in enumerate(range(low_lim, high_lim)):
-                            demo_states = self.demo_states[expert] # Collect the correct corresponding expert data
-                            demo_actions = self.demo_actions[expert]
+            if self.obs_normalizer:
+                states = self.obs_normalizer(states, update=False)
+                demo_states = self.obs_normalizer(demo_states, update=False)
 
-                            states = dataset_states[i]
-                            actions = dataset_actions[i]
-                            demo_states, demo_actions = shuffle(demo_states, demo_actions)
-                            states, actions = shuffle(np.array(states), np.array(actions))
+            self.discriminator.train(self.convert_data_to_feed_discriminator(demo_states, demo_actions),
+                                    self.convert_data_to_feed_discriminator(states, actions))
+            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
 
-                            if self.dummy_D:
-                                for demo_state, state in zip(demo_states, states):
-                                
-                                    if isinstance(self.env.case, Case7):
-                                        demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
-                                        dummy = list(map(int, list(state[2:self.adam_days+2])))
-
-                                        if not dummy in self.env.case.adam_baskets[expert]:
-                                            raise NameError('States are in the wrong order!')
-                                    elif isinstance(self.env.case, Case71):
-                                        demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
-                                        dummy = list(map(int, list(state[:self.adam_days])))
-
-                                        if not dummy in self.env.case.adam_baskets[expert]:
-                                            raise NameError('States are in the wrong order!')
-                                    else: 
-                                        demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                                        dummy = list(map(int, list(state[:self.n_experts])))
-                                        if not demo_dummy == dummy:
-                                            print(demo_dummy)
-                                            print(dummy)
-                                            raise NameError('States are in the wrong order!')
-                                        else:
-                                            pass # the order of expert and agent is correct
-                        
-                            for mb in range(n_mb):
-                                min_idx = mb*self.minibatch_size
-                                max_idx = (mb + 1)*self.minibatch_size
-                                mb_states = states[min_idx:max_idx,:]
-                                mb_actions = actions[min_idx:max_idx]
-                                if states.shape[0] > demo_states.shape[0]:
-                                    indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
-                                    mb_demo_states = np.take(demo_states, indices, axis=0)
-                                    mb_demo_actions = np.take(demo_actions, indices, axis=0)
-                                else:
-                                    mb_demo_states = demo_states[min_idx:max_idx,:]
-                                    mb_demo_actions = demo_actions[min_idx:max_idx]
-
-                                if self.obs_normalizer:
-                                    mb_states = self.obs_normalizer(mb_states, update=False)
-                                    mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
-
-                                self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
-                                                        self.convert_data_to_feed_discriminator(mb_states, mb_actions))
-                                loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
-
-                                self.discriminator_loss_record.append(float(loss_mean.array))
-                    self.iteration += 1
-                elif self.novelnovel:
-                    dataset_states = []
-                    dataset_actions = []
-                    if self.iteration >= self.max_iteration: self.iteration = 0
-                    low_lim = self.iteration*self.n_update_experts #0
-                    high_lim = low_lim + self.n_update_experts #1
-
-                    for agent in range(self.n_update_experts): #Collect dataset for generated data
-                        min_idx = agent*self.episode_length
-                        max_idx = (agent + 1)*self.episode_length 
-                        dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
-                        dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
-
-                    dataset_states = np.array(dataset_states)
-                    dataset_actions = np.array(dataset_actions)
-                    demo_states = []
-                    demo_actions = []
-                    for i,expert in enumerate(range(low_lim, high_lim)):
-                        demo_states.append(self.demo_states[expert]) # Collect the correct corresponding expert data
-                        demo_actions.append(self.demo_actions[expert])
-
-                    loss_mean = 0
-                    len_state = demo_states[0][0].size
-
-                    n_mb = int(self.episode_length*self.n_update_experts/self.minibatch_size)
-                    demo_states = np.array(demo_states).reshape((-1, len_state))
-                    dataset_states = dataset_states.reshape((-1, len_state))
-                    demo_actions = np.array(demo_actions).reshape((-1, 1))
-                    dataset_actions = dataset_actions.reshape((-1, 1))
-
-
-                    for epoch in range(self.epochs):
-                        chosen_indices = xp.random.permutation(self.episode_length*self.n_update_experts)
-
-                        for indices in np.split(chosen_indices, n_mb):
-                            mb_demo_states = np.take(demo_states, indices, axis=0)
-                            mb_demo_actions = np.take(demo_actions, indices, axis=0)
-                            mb_states = np.take(dataset_states, indices, axis=0)
-                            mb_actions = np.take(dataset_actions, indices, axis=0)
-                            
-                            if self.obs_normalizer:
-                                mb_states = self.obs_normalizer(mb_states, update=False)
-                                mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
-
-                            self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
-                                                    self.convert_data_to_feed_discriminator(mb_states, mb_actions))
-                            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
-
-                            self.discriminator_loss_record.append(float(loss_mean.array))
-                    self.iteration += 1
-
-                
-            else:
-                dataset_states = []
-                dataset_actions = []
-                for agent in range(self.n_experts):
-                    min_idx = agent*self.episode_length
-                    max_idx = (agent + 1)*self.episode_length 
-                    dataset_states.append([dataset[i]['state'] for i in range(min_idx, max_idx)])
-                    dataset_actions.append([dataset[i]['action'] for i in range(min_idx, max_idx)])
-
-                loss_mean = 0
-                n_mb = int(self.episode_length/self.minibatch_size)
-                for epoch in range(self.epochs):
-
-                    for expert in range(self.n_experts):
-                        demo_states = self.demo_states[expert]
-                        demo_actions = self.demo_actions[expert]
-                        states = dataset_states[expert]
-                        actions = dataset_actions[expert]
-                        states, actions = shuffle(np.array(states), np.array(actions))
-                        demo_states, demo_actions = shuffle(demo_states, demo_actions)
-
-                        if self.dummy_D:
-                            for demo_state, state in zip(demo_states, states):
-                            
-                                if isinstance(self.env.case, Case7):
-                                    demo_dummy = list(map(int, list(demo_state[2:self.adam_days+2])))
-                                    dummy = list(map(int, list(state[2:self.adam_days+2])))
-
-                                    if not dummy in self.env.case.adam_baskets[expert]:
-                                        raise NameError('States are in the wrong order!')
-                                elif isinstance(self.env.case, Case71):
-                                    demo_dummy = list(map(int, list(demo_state[:self.adam_days])))
-                                    dummy = list(map(int, list(state[:self.adam_days])))
-
-                                    if not dummy in self.env.case.adam_baskets[expert]:
-                                        raise NameError('States are in the wrong order!')
-                                else: 
-                                    demo_dummy = list(map(int, list(demo_state[:self.n_experts])))
-                                    dummy = list(map(int, list(state[:self.n_experts])))
-                                    if not demo_dummy == dummy:
-                                        print(demo_dummy)
-                                        print(dummy)
-                                        raise NameError('States are in the wrong order!')
-                                    else:
-                                        pass # the order of expert and agent is correct
-
-                        for mb in range(n_mb):
-                            min_idx = mb*self.minibatch_size
-                            max_idx = (mb + 1)*self.minibatch_size
-                            mb_states = states[min_idx:max_idx,:]
-                            mb_actions = actions[min_idx:max_idx]
-                            if states.shape[0] > demo_states.shape[0]:
-                                indices = np.random.choice(demo_states.shape[0], size=self.minibatch_size)
-                                mb_demo_states = np.take(demo_states, indices, axis=0)
-                                mb_demo_actions = np.take(demo_actions, indices, axis=0)
-                            else:
-                                mb_demo_states = demo_states[min_idx:max_idx,:]
-                                mb_demo_actions = demo_actions[min_idx:max_idx]
-
-                            if self.obs_normalizer:
-                                mb_states = self.obs_normalizer(mb_states, update=False)
-                                mb_demo_states = self.obs_normalizer(mb_demo_states, update=False)
-
-                            self.discriminator.train(self.convert_data_to_feed_discriminator(mb_demo_states, mb_demo_actions),
-                                                    self.convert_data_to_feed_discriminator(mb_states, mb_actions))
-                            loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
-
-                            self.discriminator_loss_record.append(float(loss_mean.array))
-
-        else:
-            dataset_iter = chainer.iterators.SerialIterator(
-            dataset, self.minibatch_size, shuffle=True)
-            loss_mean = 0
-            while dataset_iter.epoch < self.epochs:
-                batch = dataset_iter.__next__()
-                states = self.batch_states([b['state'] for b in batch], xp, self.phi)
-                actions = xp.array([b['action'] for b in batch])
-
-                self.demonstrations_indexes = xp.random.permutation(len(self.demo_states))[:len(states)]
-                demo_states, demo_actions = [d[self.demonstrations_indexes] for d in (self.demo_states, self.demo_actions)]
-
-                if self.obs_normalizer:
-                    states = self.obs_normalizer(states, update=False)
-                    demo_states = self.obs_normalizer(demo_states, update=False)
-
-                self.discriminator.train(self.convert_data_to_feed_discriminator(demo_states, demo_actions),
-                                        self.convert_data_to_feed_discriminator(states, actions))
-                loss_mean += self.discriminator.loss / (self.epochs * self.minibatch_size)
-
-                self.discriminator_loss_record.append(float(loss_mean.array))
+            self.discriminator_loss_record.append(float(loss_mean.array))
 
         super(self.__class__, self)._update(dataset)
 
@@ -291,7 +81,7 @@ class GAIL(PPO):
             states = self.xp.asarray(np.concatenate([transition['state'][None] for transition in transitions]))
             actions = self.xp.asarray(np.concatenate([transition['action'][None] for transition in transitions]))
             with chainer.configuration.using_config('train', False), chainer.no_backprop_mode():
-                D_outputs = self.discriminator.get_rewards(self.convert_data_to_feed_discriminator(states, actions, flag='reward')).array
+                D_outputs = self.discriminator.get_rewards(self.convert_data_to_feed_discriminator(states, actions)).array
             
             self.D_output_mean.append(float(np.mean(D_outputs)))
             
@@ -302,16 +92,8 @@ class GAIL(PPO):
             i = 0
             for episode in self.memory:
                 for transition in episode:
-                    if self.gamma > 0 and (isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23)):              
-                        # get which expert a s_a pair belongs to from dummy variables which are placed in beginning of each s_a pair          
-                        exp_idx = s_a[i,:self.env.n_experts].tolist().index(1)
-                        mod_reward = self.gamma*abs((self.expert_ratio[exp_idx] - get_purchase_ratio(s_a[i,self.env.n_experts:])))
-                        transition['reward'] = float(D_outputs[i])-mod_reward
-                        mod_rewards_temp.append(mod_reward)
-                        rewards_temp.append(transition['reward'])
-                    else:
-                        transition['reward'] = float(D_outputs[i])
-                        rewards_temp.append(transition['reward'])
+                    transition['reward'] = float(D_outputs[i])
+                    rewards_temp.append(transition['reward'])
                     
                     i += 1
             dataset = _make_dataset(
@@ -331,20 +113,15 @@ class GAIL(PPO):
             self.mod_rewards.append(float(np.mean(mod_rewards_temp)))
             self.rewards.append(float(np.mean(rewards_temp)))
 
-    def convert_data_to_feed_discriminator(self, states, actions, flag='loss'):
+    def convert_data_to_feed_discriminator(self, states, actions):
 
         xp = self.model.xp
-        #if isinstance(self.model.pi, SoftmaxPolicy):
-            # if discrete action
-        #    actions = xp.eye(self.model.pi.model.out_size, dtype=xp.float32)[actions.astype(xp.int32)]
         if self.noise > 0:
             states = states.astype(xp.float32)
             states += xp.random.normal(loc=0., scale=self.noise, size=states.shape)
             actions = actions.astype(xp.float32)
             actions += xp.random.normal(loc=0., scale=self.noise, size=actions.shape)
-        #print('convert_data')
-        #print(len(actions))
-        #print(len(states))
+
 
         if isinstance(self.env.case, Case31):
             temp = []
@@ -362,21 +139,6 @@ class GAIL(PPO):
 
                 temp.append(np.concatenate((dummy, new_h[-self.env.n_historical_events:])).astype(xp.float32))
             states = temp
-        """
-        if isinstance(self.env.case, Case221) or isinstance(self.env.case, Case222) or isinstance(self.env.case, Case7):
-            states = [s[self.env.n_experts:] for s in states]
-            
-        
-        if isinstance(self.env.case, Case22) or isinstance(self.env.case, Case23):
-            # Do not show dummy encoding to discriminator
-            #states = [s[self.env.n_experts:] for s in states]
-            pass
-
-        if isinstance(self.env.case, Case24):
-            # Do not show dummy encoding to discriminator
-            #states = [s[10:] for s in states]
-            pass  # Let discriminator see dummy encoding"""
-
 
         if not self.dummy_D:
             if isinstance(self.env.case, Case17):
@@ -387,31 +149,6 @@ class GAIL(PPO):
                 states = [s[2+self.adam_days:] for s in states]
             elif isinstance(self.env.case, Case71):
                 states = [s[self.adam_days:] for s in states]
-
-        if self.PAC_k > 1: #PACGAIL
-            # merge state and actions into s-a pairs
-            s_a = xp.concatenate((xp.array(states), xp.array(actions).reshape((-1,1))), axis=1) #4096*101
-            #print('pac_k')
-            #print(s_a.shape)
-
-            # if reward --> get rewards for the same sequence appended together 
-            if flag == 'reward':
-                s_a = s_a.tolist()
-                stacked_sa = [i*self.PAC_k for i in s_a]
-                #print('reward')
-                #print(np.asarray(stacked_sa).shape)
-                
-                return chainer.Variable(xp.asarray(stacked_sa, dtype=xp.float32))
-            else:
-                #Update D
-                n_sa = s_a.shape[0]
-                assert n_sa % self.PAC_k == 0
-                stacks = xp.split(s_a, int(n_sa/self.PAC_k), axis=0)
-                stacked = [xp.concatenate(i) for i in stacks]
-                #print('update D')
-                #print(np.asarray(stacked).shape)
-                #quit()
-                return chainer.Variable(xp.asarray(stacked, dtype=xp.float32))
 
         return F.concat((xp.array(states, dtype=xp.float32), xp.array(actions, dtype=xp.float32).reshape((-1,1))))
     
