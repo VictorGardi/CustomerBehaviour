@@ -8,3 +8,5 @@
 5. Go to customer_behaviour/chainerrl and run pip install -e .
 6. Go to customer_behaviour/custom_gym and run pip install -e .
 7. Run example by running python main.py mmct-gail --state CS
+
+Note: The first input, i.e., mmct-gail, denotes which algorithm that is running whereas the state parameter denotes the chosen state representation. There are three available algorithms (gail, airl and mmct-gail) and three state representations (basic, one-hot and CS). 
