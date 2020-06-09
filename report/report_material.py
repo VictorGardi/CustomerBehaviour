@@ -77,7 +77,7 @@ def sample_agent_data(N, args, env, model, obs_normalizer, customers, customer_s
     return agent_states, agent_actions, closest_expert
 
 ##### ##### FINAL MODEL ##### #####
-
+'''
 args_path = join(dir_path, 'args.txt')
 args = json.loads(open(args_path, 'r').read())
 
@@ -255,9 +255,9 @@ if args['state_rep'] == 23:
     ax.set_ylabel('Normalized frequency')
     ax.legend()
     plt.show()
-
-##### ##### TRAINING PROCESS ##### #####
 '''
+##### ##### TRAINING PROCESS ##### #####
+
 def save_df(dir_path, folder_name, sample_length=10000, n_new_customers=50):
     args_path = join(dir_path, 'args.txt')
     args = json.loads(open(args_path, 'r').read())
@@ -313,7 +313,7 @@ def save_df(dir_path, folder_name, sample_length=10000, n_new_customers=50):
     os.makedirs(join('report', folder_name), exist_ok=True) 
     counter = len([x for x in os.listdir(join('report', folder_name)) if x.endswith('.csv')])
     df.to_csv(join('report', folder_name, 'df_' + folder_name + str(counter + 1) + '.csv'), index=False)
-'''
+
 ##### ##### PLOT TRAINING PROCESS ##### #####
 '''
 baseline = 'ail_dummies'
