@@ -1,4 +1,3 @@
-
 import os
 import argparse
 from customer_behaviour.tools.tools import get_env, get_outdir, str2bool, move_dir
@@ -448,41 +447,41 @@ def make_par_env(args, rank, seed=0):
     return _init
 
 def make_env(process_idx, test, args):
-        env = gym.make(args.env)
+    env = gym.make(args.env)
 
-        env.initialize_environment(
-            case=args.state_rep, 
-            n_historical_events=args.n_historical_events, 
-            episode_length=args.episode_length,
-            n_experts=args.n_experts,
-            n_demos_per_expert=1,
-            n_expert_time_steps=args.length_expert_TS, 
-            seed_agent=args.seed_agent,
-            seed_expert=args.seed_expert,
-            rank=process_idx,
-            n_processes=args.n_processes,
-            adam_days=args.adam_days
-            )
+    env.initialize_environment(
+        case=args.state_rep, 
+        n_historical_events=args.n_historical_events, 
+        episode_length=args.episode_length,
+        n_experts=args.n_experts,
+        n_demos_per_expert=1,
+        n_expert_time_steps=args.length_expert_TS, 
+        seed_agent=args.seed_agent,
+        seed_expert=args.seed_expert,
+        rank=process_idx,
+        n_processes=args.n_processes,
+        adam_days=args.adam_days
+        )
 
-        # Use different random seeds for train and test envs
-        # process_seed = int(process_seeds[process_idx])
-        # env_seed = 2 ** 32 - 1 - process_seed if test else process_seed
-        # env.seed(env_seed)
+    # Use different random seeds for train and test envs
+    # process_seed = int(process_seeds[process_idx])
+    # env_seed = 2 ** 32 - 1 - process_seed if test else process_seed
+    # env.seed(env_seed)
 
-        # Cast observations to float32 because our model uses float32
-        env = chainerrl.wrappers.CastObservationToFloat32(env)
-        
-        # if args.monitor and process_idx == 0:
-        #     env = chainerrl.wrappers.Monitor(env, args.outdir)
-        
-        # Scale rewards observed by agents
-        if not test:
-            misc.env_modifiers.make_reward_filtered(
-                env, lambda x: x * args.reward_scale_factor)
-        
-        # if args.render and process_idx == 0 and not test:
-        #     env = chainerrl.wrappers.Render(env)
-        return env
+    # Cast observations to float32 because our model uses float32
+    env = chainerrl.wrappers.CastObservationToFloat32(env)
+    
+    # if args.monitor and process_idx == 0:
+    #     env = chainerrl.wrappers.Monitor(env, args.outdir)
+    
+    # Scale rewards observed by agents
+    if not test:
+        misc.env_modifiers.make_reward_filtered(
+            env, lambda x: x * args.reward_scale_factor)
+    
+    # if args.render and process_idx == 0 and not test:
+    #     env = chainerrl.wrappers.Render(env)
+    return env
 
 
 if __name__ == '__main__':
@@ -516,7 +515,7 @@ if __name__ == '__main__':
     parser.add_argument('--seed', type=int, default=0,
                         help='Random seed [0, 2 ** 32)')
     parser.add_argument('--noise', type=float, default=0)
-    #parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
+    # parser.add_argument('--outdir', type=str, default='results', help='Directory path to save output files.'' If it does not exist, it will be created.')
     
     parser.add_argument('--eval_episode_length', type=int, default=1)
     parser.add_argument('--eval_interval', type=int, default=10000)
@@ -528,7 +527,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight-decay', type=float, default=0.0)
     parser.add_argument('--demo', action='store_true', default=False)
     parser.add_argument('--load', type=str, default='')
-    #parser.add_argument('--load_demo', type=str, default='')
+    # parser.add_argument('--load_demo', type=str, default='')
     parser.add_argument('--logger-level', type=int, default=logging.DEBUG)
     parser.add_argument('--monitor', action='store_true', default=False)
     parser.add_argument('--update-interval', type=int, default=40)
@@ -560,7 +559,7 @@ if __name__ == '__main__':
     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
     args.env = get_env(args.case, args.n_experts)  
     args.steps = args.n_training_episodes*args.episode_length
-    assert args.eval_interval > args.steps/50 #to avoid saving too much eval info on ozzy
+    assert args.eval_interval > args.steps/50  # to avoid saving too much eval info on ozzy
 
     if args.n_processes > 1:
         from chainerrl.envs import MultiprocessVectorEnv

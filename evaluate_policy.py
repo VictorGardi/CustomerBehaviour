@@ -102,7 +102,7 @@ def eval_policy(
     ending_eps = '_normalize.eps' if normalize else '.eps'
     ending_png = '_normalize.png' if normalize else '.png'
 
-    # evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
     # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
     compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
 
