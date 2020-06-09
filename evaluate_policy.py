@@ -20,57 +20,7 @@ from scipy.spatial.distance import pdist, squareform
 from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
 
-# dir_path = 'results_anton/2020-03-10_14-04-29'  # 10 experts | 96 historical events | length_expert_TS = 256 | 5 000 episodes
-# dir_path = 'results_anton/2020-03-12_11-14-55'  # 10 experts | 256 historical events | length_expert_TS = 256 | 10 000 episodes
-# dir_path = 'results_anton/2020-03-16_20-13-19'  # 10 experts | 256 historical events | length_expert_TS = 1024 | 15 000 episodes
-# dir_path = 'results_anton/2020-03-18_14-01-33'  # 10 experts | 96 historical events | length_expert_TS = 256 | 5 000 episodes
-# dir_path = 'results_anton/2020-03-17_11-59-59'  # 10 experts | state_rep = 11
-# dir_path = 'results_anton/2020-03-19_09-56-34'  # 10 experts | 96 historical events | length_expert_TS = 256 | 10 000 episodes
-# dir_path = 'results_anton/2020-03-20_12-52-09'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = False
-# dir_path = 'results_anton/2020-03-20_12-47-08'  # 10 experts | state_rep = 22 | 50 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = True
-# dir_path = 'results_anton/2020-03-20_12-51-37'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = True
-# dir_path = 'results_anton/2020-03-27_09-37-13'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
-# dir_path = 'results_anton/2020-03-27_09-38-46'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 512 | 20 000 episodes | norm_obs = False
-# dir_path = 'results_anton/2020-03-27_09-39-34'  # 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 1024 | 20 000 episodes | norm_obs = False
-
-#dir_path = 'ozzy_results/airl/discrete_events/10_expert(s)/case_21/2020-03-12_14-24-08' # AIRL 10 experts | state_rep = 21 | 192 historical events | length_expert_TS = 256 | 10 000 episodes
-#dir_path = 'ozzy_results/airl/discrete_events/10_expert(s)/case_21/2020-03-18_14-02-45' # AIRL 10 experts | state_rep = 21 | 96 historical events | length_expert_TS = 256 | 5 000 episodes
-#dir_path = 'ozzy_results/airl/discrete_events/10_expert(s)/case_22/2020-03-20_13-02-36' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = False
-#dir_path = 'ozzy_results/airl/discrete_events/10_expert(s)/case_22/2020-03-20_13-01-51' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 15 000 episodes | norm_obs = True
-#dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-44' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = False
-#dir_path = 'ozzy_results/discrete_events/10_expert(s)/case_22/2020-03-22_14-25-34' # AIRL 10 experts | state_rep = 22 | 100 historical events | length_expert_TS = 256 | 20 000 episodes | norm_obs = True
-
-# Mode collapse
-# dir_path = 'mode_collapse/2020-04-07_09-24-54'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = False
-# dir_path = 'mode_collapse/2020-04-07_09-24-37'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = False
-# dir_path = 'mode_collapse/2020-04-07_09-25-12'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = False
-# dir_path = 'mode_collapse/2020-04-08_09-39-53'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = True 
-# dir_path = 'mode_collapse/2020-04-08_09-40-34'  # state_rep = 24 | episodes = 15000 | length_expert_TS = 256 | show_dummies_D = True
-# dir_path = 'mode_collapse/2020-04-09_11-57-50'  # state_rep = 22 | n_experts = 3
-# dir_path = 'mode_collapse/2020-04-09_11-58-13'  # state_rep = 22 | n_experts = 4
-# dir_path = 'mode_collapse/2020-04-09_11-58-41'  # state_rep = 22 | n_experts = 5
-
-# Case 23
-# dir_path = 'case23/2020-04-07_21-13-59'  # PAC_k = 2 | gamma = 0.0 | 30000 episodes
-# dir_path = 'case23/2020-04-07_21-11-34'  # PAC_k = 1 | gamma = 0.0 | 20000 episodes
-# dir_path = 'case23/2020-04-07_21-13-26'  # PAC_k = 2 | gamma = 0.0 | 20000 episodes
-# dir_path = 'case23/2020-04-07_21-12-43'  # PAC_k = 1 | gamma = 0.0 | 30000 episodes
-# dir_path = 'case23/2020-04-09_11-11-53'  # PAC_k = 1 | gamma = 0.0 | 40000 episodes | D = 4 * [64] | G = 4 * [64]
-
-# Case 31
-# dir_path = 'case31/2020-04-08_14-47-28'  # show_dummies_D = False
-# dir_path = 'case31/2020-04-09_11-59-25'  # show_dummies_D = True
-# dir_path = 'case31/2020-04-11_10-55-36'  # show_dummies_D = True
-
-# Case 4
-# dir_path = 'case4/2020-04-09_12-00-51'
-
-# Case 221
-#dir_path = 'ozzy_results/temp/2020-04-17_07-41-43'
-#dir_path = 'ozzy_results/temp7/2020-04-22_08-19-57'
-#dir_path = 'ozzy_results/temp8/2020-04-22_06-46-07'
-#dir_path = 'ozzy_results/temp9/2020-04-22_06-46-46'
-dir_path = 'ozzy_results/17_test'
+dir_path = ''  # Add a path to a directory where data is saved
 
 model_path = None # join(os.getcwd(), dir_path, '6570000_checkpoint', 'model.npz')
 
@@ -101,11 +51,11 @@ def main():
 
     # purchase_ratio(args, model_dir_path)
 
-    #evaluate_policy_at_population_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
-    #evaluate_policy_at_individual_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_individual_level_multiple_categories(args, model_dir_path, ending_eps, ending_png, info)
 
-    #evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
-    #evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
+    evaluate_policy_at_population_level(args, model_dir_path, ending_eps, ending_png, info)
+    # evaluate_policy_at_individual_level(args, model_dir_path, ending_eps, ending_png, info)
     compare_clusters(args, model_dir_path, ending_eps, ending_png, info)
     # visualize_experts(n_experts=10)
 

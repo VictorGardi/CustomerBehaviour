@@ -10,13 +10,12 @@ import matplotlib.pyplot as plt
 import policy_evaluation as pe
 from os.path import join
 from tools import save_plt_as_png
-#from evaluate_policy import Expert
+# from evaluate_policy import Expert
 from scipy.cluster.hierarchy import fclusterdata
 from scipy.stats import wasserstein_distance
 from matplotlib.ticker import MaxNLocator
 
-#dir_path = 'temp/2020-04-15_12-47-19'
-dir_path = 'ozzy_results/temp/2020-04-17_07-41-43'
+dir_path = ''  # Add a path to a directory where data is saved
 
 sample_length = 10000
 normalize = True
