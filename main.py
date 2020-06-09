@@ -491,7 +491,7 @@ if __name__ == '__main__':
     parser.add_argument('--case', type=str, default='discrete_events')
     parser.add_argument('--n_experts', type=int, default=10)
     parser.add_argument('--n_demos_per_expert', type=int, default=0)
-    parser.add_argument('--state_rep', type=int, default=71)
+    parser.add_argument('--state', type=str, default='basic')
     parser.add_argument('--length_expert_TS', type=int, default=20)
     parser.add_argument('--episode_length', type=int, default=20)
     parser.add_argument('--n_training_episodes', type=int, default=100)
@@ -541,21 +541,26 @@ if __name__ == '__main__':
     parser.add_argument('--loss_type', default='wgangp', choices=['gan', 'wgangp'], type=str)
 
     args = parser.parse_args()
+
+    if args.algo == 'gail' or args.algo == 'airl' and args.state == 'basic':
+        args.state_rep = 21
+    elif args.algo == 'gail' or args.algo == 'airl' and args.state == 'one-hot':
+        args.state_rep = 22
+    elif args.algo == 'gail' or args.algo == 'airl' and args.state == 'CS':
+        args.state_rep = 81
+    elif args.algo == 'mmct-gail' and args.state == 'basic':
+        args.state_rep = 17
+    elif args.algo == 'mmct-gail' and args.state == 'one-hot':
+        args.state_rep = 221
+    elif args.algo == 'mmct-gail' and args.state == 'CS':
+        args.state_rep = 71
+
     args.D_layers = tuple(args.D_layers)
     args.G_layers = tuple(args.G_layers)
     args.outdir = get_outdir(args.algo, args.case, args.n_experts, args.state_rep)
     args.env = get_env(args.case, args.n_experts)  
     args.steps = args.n_training_episodes*args.episode_length
     assert args.eval_interval > args.steps/50 #to avoid saving too much eval info on ozzy
-
-    '''
-    if args.n_processes > 1:
-        from stable_baselines.common.vec_env import SubprocVecEnv
-        from stable_baselines.common import set_global_seeds
-        train_env = SubprocVecEnv([make_par_env(args, i) for i in range(args.n_processes)])
-    else:
-        train_env = None
-    '''
 
     if args.n_processes > 1:
         from chainerrl.envs import MultiprocessVectorEnv
@@ -565,11 +570,6 @@ if __name__ == '__main__':
 
     assert args.n_experts % args.n_processes == 0
     assert args.update_interval <= args.n_experts * args.episode_length
-    #if args.state_rep == 221 or args.state_rep == 222: assert args.update_interval == args.n_experts * args.episode_length
-    # if args.update_interval < args.n_experts * args.episode_length: 
-    #     args.batch_update = True 
-    # else: 
-    #     args.batch_update = False
 
     main(args, train_env)
 
