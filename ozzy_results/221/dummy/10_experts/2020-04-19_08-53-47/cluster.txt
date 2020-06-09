@@ -1,1 +1,0 @@
-mean_dist	min_dist	max_dist	agent_within_SS	expert_within_SS
